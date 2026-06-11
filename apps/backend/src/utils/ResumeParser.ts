@@ -1,0 +1,25 @@
+export async function parseResume(
+  buffer: Buffer,
+  fileName: string
+): Promise<string> {
+  const ext = fileName.split(".").pop()?.toLowerCase()
+
+  switch (ext) {
+    case "pdf": {
+      const { PDFParse } = await import("pdf-parse")
+      const pdf = new PDFParse({ data: buffer as unknown as Uint8Array })
+      const result = await pdf.getText()
+      return result.text
+    }
+    case "docx": {
+      const mammoth = await import("mammoth")
+      const result = await mammoth.extractRawText({ buffer })
+      return result.value
+    }
+    case "txt": {
+      return buffer.toString("utf-8")
+    }
+    default:
+      throw new Error(`Unsupported file format: .${ext ?? "unknown"}`)
+  }
+}

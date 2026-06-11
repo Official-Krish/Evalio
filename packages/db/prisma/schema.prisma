@@ -11,3 +11,131 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  password      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  candidate     CandidateProfile?
+  resumes       Resume[]
+  githubProfile GithubProfile?
+  interviews    InterviewSession[]
+}
+
+model CandidateProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  githubUsername    String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id])
+}
+
+model Resume {
+  id                String   @id @default(cuid())
+  userId            String
+  version           Int      @default(1)
+  originalUrl       String
+  extractedText     String   @db.Text
+  uploadedAt        DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id])
+  interviews        InterviewSession[]
+
+  @@unique([userId, version])
+  @@index([userId])
+}
+
+model GithubProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  username          String
+  summary           String   @db.Text
+  languages         Json
+  projects          Json
+  analyzedAt        DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id])
+}
+
+model InterviewSession {
+  id                  String   @id @default(cuid())
+  userId              String
+  status              InterviewStatus
+  startedAt           DateTime?
+  endedAt             DateTime?
+  overallScore        Float?
+  communicationScore  Float?
+  technicalScore      Float?
+  problemSolvingScore Float?
+  durationSeconds     Int?
+  position            String?
+  resumeId            String?
+  resume              Resume?  @relation(fields: [resumeId], references: [id])
+  summary             InterviewSummary?
+  turns               InterviewTurn[]
+  transcriptEvents    TranscriptEvent[]
+  createdAt           DateTime @default(now())
+  user                User     @relation(fields: [userId], references: [id])
+}
+
+model InterviewTurn {
+  id              String   @id @default(cuid())
+  interviewId     String
+  orderNumber     Int
+  questionText    String   @db.Text
+  answerText      String   @db.Text
+  questionStartMs Int?
+  answerStartMs   Int?
+  answerEndMs     Int?
+  score           Float?
+  feedback        String?  @db.Text
+  createdAt       DateTime @default(now())
+  interview       InterviewSession   @relation(fields: [interviewId], references: [id])
+  transcriptEvents TranscriptEvent[]
+}
+
+model TranscriptEvent {
+  id            String   @id @default(cuid())
+  interviewId   String
+  turnId        String?
+  role          TranscriptRole
+  text          String   @db.Text
+  startMs       Int?
+  endMs         Int?
+  createdAt     DateTime @default(now())
+  interview     InterviewSession @relation(fields: [interviewId], references: [id])
+  turn          InterviewTurn?   @relation(fields: [turnId], references: [id])
+
+  @@index([interviewId])
+  @@index([turnId])
+}
+
+model InterviewSummary {
+  id                    String   @id @default(cuid())
+  interviewId           String   @unique
+  summary               String   @db.Text
+  strengths             Json
+  weaknesses            Json
+  improvementAreas      Json
+  recommendedTopics     Json
+  generatedAt           DateTime @default(now())
+  interview             InterviewSession @relation(fields: [interviewId], references: [id])
+}
+
+enum InterviewStatus {
+  CREATED
+  ACTIVE
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum TranscriptRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}

@@ -1,5 +1,5 @@
-import { app } from "./src/app"
-import { startWsServer } from "./src/ws"
+import { app } from "./app"
+import { startWsServer } from "./ws"
 
 const port = parseInt(Bun.env.PORT ?? "3000")
 
@@ -8,6 +8,3 @@ app.listen({ port }, ({ hostname, port }) => {
 })
 
 startWsServer()
-
-export { app }
-export type { app as App } from "./src/app"
