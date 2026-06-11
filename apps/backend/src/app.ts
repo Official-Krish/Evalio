@@ -1,5 +1,6 @@
 import { Elysia } from "elysia"
 import { cors } from "@elysiajs/cors"
+import { jwt } from "@elysia/jwt"
 import { authRoutes } from "./routes/auth"
 import { userRoutes } from "./routes/user"
 import { interviewRoutes } from "./routes/interview"
@@ -14,12 +15,21 @@ export const app = new Elysia()
     origin: Bun.env.CORS_ORIGIN ?? "http://localhost:5173",
     credentials: true,
   }))
-  .use(authRoutes)
-  .use(userRoutes)
-  .use(interviewRoutes)
-  .use(turnRoutes)
-  .use(transcriptRoutes)
-  .use(resumeRoutes)
-  .use(githubRoutes)
-  .use(evaluateRoutes)
+  .use(
+    jwt({
+      secret: Bun.env.JWT_SECRET || "dev-secret",
+      exp: "7d",
+    })
+  )
+  .group("/api", (app) =>
+    app
+    .use(authRoutes)
+    .use(userRoutes)
+    .use(interviewRoutes)
+    .use(turnRoutes)
+    .use(transcriptRoutes)
+    .use(resumeRoutes)
+    .use(githubRoutes)
+    .use(evaluateRoutes)
+  )
   .get("/health", () => ({ status: "ok", timestamp: new Date().toISOString() }))

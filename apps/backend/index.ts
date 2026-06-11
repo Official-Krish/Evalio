@@ -10,4 +10,4 @@ app.listen({ port }, ({ hostname, port }) => {
 startWsServer()
 
 export { app }
-export type { app as App } from "./src/app"
+export type App = typeof app

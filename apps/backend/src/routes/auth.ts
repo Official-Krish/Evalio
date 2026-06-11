@@ -1,11 +1,15 @@
 import { Elysia, t } from "elysia"
+import { jwt } from "@elysia/jwt"
 import { prisma } from "../lib/prisma"
 import { authGuard } from "../middleware/auth"
 
+const SECRET = Bun.env.JWT_SECRET || "dev-secret"
+
 export const authRoutes = new Elysia({ prefix: "/auth" })
+  .use(jwt({ secret: SECRET, exp: "7d" }))
   .post(
     "/signup",
-    async ({ body, cookie, set }) => {
+    async ({ body, cookie, jwt, set }) => {
       const existing = await prisma.user.findUnique({
         where: { email: body.email },
       })
@@ -27,8 +31,13 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         select: { id: true, email: true, name: true },
       })
 
+      const token = await jwt.sign({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      })
       cookie.token!.set({
-        value: user.id,
+        value: token,
         httpOnly: true,
         maxAge: 7 * 86400,
         path: "/",
@@ -47,7 +56,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   )
   .post(
     "/login",
-    async ({ body, cookie, set }) => {
+    async ({ body, cookie, jwt, set }) => {
       const user = await prisma.user.findUnique({
         where: { email: body.email },
         select: { id: true, email: true, name: true, password: true },
@@ -63,8 +72,13 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         return { error: "Invalid email or password" }
       }
 
+      const token = await jwt.sign({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      })
       cookie.token!.set({
-        value: user.id,
+        value: token,
         httpOnly: true,
         maxAge: 7 * 86400,
         path: "/",

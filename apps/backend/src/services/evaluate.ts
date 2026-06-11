@@ -159,8 +159,14 @@ export async function evaluateInterview(interviewId: string) {
     },
   })
 
-  if (!interview) throw new Error("Interview not found")
-  if (interview.turns.length === 0) throw new Error("No turns to evaluate")
+  if (!interview) {
+    console.warn(`[evaluation] interview ${interviewId} not found`)
+    return
+  }
+  if (interview.turns.length === 0) {
+    console.warn(`[evaluation] interview ${interviewId} has no turns — skipping`)
+    return
+  }
 
   const github = interview.user.githubProfile
 

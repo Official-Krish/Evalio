@@ -67,22 +67,4 @@ export const resumeRoutes = new Elysia({ prefix: "/resumes" })
         })
         return { resumes }
       })
-      .delete("/:id", async ({ params: { id }, user, set }) => {
-        const resume = await prisma.resume.findUnique({
-          where: { id },
-        })
-        if (!resume || resume.userId !== user.id) {
-          set.status = 404
-          return { error: "Resume not found" }
-        }
-        const inUse = await prisma.interviewSession.findFirst({
-          where: { resumeId: id },
-        })
-        if (inUse) {
-          set.status = 409
-          return { error: "Resume is linked to an interview and cannot be deleted" }
-        }
-        await prisma.resume.delete({ where: { id } })
-        return { success: true }
-      })
   )

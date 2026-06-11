@@ -1,21 +1,28 @@
 import { Elysia } from "elysia"
+import { jwt } from "@elysia/jwt"
 import type { Cookie } from "elysia"
-import { prisma } from "../lib/prisma"
+
+const SECRET = Bun.env.JWT_SECRET || "dev-secret"
 
 export const authGuard = new Elysia({ name: "auth-guard" })
-  .resolve({ as: "scoped" }, async ({ cookie }) => {
+  .use(jwt({ secret: SECRET, exp: "7d" }))
+  .resolve({ as: "scoped" }, async ({ jwt, cookie }) => {
     const t = cookie.token as Cookie<any> | undefined
     const tokenValue = t?.value
     if (typeof tokenValue !== "string") {
       throw new Error("Unauthorized")
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: tokenValue },
-      select: { id: true, email: true, name: true },
-    })
-    if (!user) {
-      throw new Error("User not found")
+    const payload = await jwt.verify(tokenValue)
+    if (!payload || !payload.id || !payload.email) {
+      throw new Error("Unauthorized")
     }
-    return { user }
+
+    return {
+      user: {
+        id: payload.id as string,
+        email: payload.email as string,
+        name: payload.name as string | undefined,
+      },
+    }
   })
