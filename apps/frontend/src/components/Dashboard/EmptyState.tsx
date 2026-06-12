@@ -7,8 +7,8 @@ interface EmptyStateProps {
 export function EmptyState({ onUpload }: EmptyStateProps) {
   return (
     <section className="text-center py-16">
-      <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>No sessions yet</p>
-      <p className="text-xs" style={{ color: "rgba(255,255,255,0.3)", marginTop: "4px", marginBottom: "24px" }}>
+      <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>No sessions yet</p>
+      <p className="text-xs" style={{ color: "var(--color-text-muted)", marginTop: "4px", marginBottom: "24px" }}>
         Upload a r&eacute;sum&eacute; and start your first practice
       </p>
       <div className="flex items-center justify-center gap-3">
@@ -19,8 +19,8 @@ export function EmptyState({ onUpload }: EmptyStateProps) {
             alignItems: "center",
             gap: "6px",
             fontSize: "13px",
-            color: "rgba(255,255,255,0.4)",
-            border: "1px solid rgba(255,255,255,0.1)",
+            color: "var(--color-text-muted)",
+            border: "1px solid var(--color-border)",
             borderRadius: "6px",
             padding: "8px 16px",
             background: "transparent",
@@ -36,7 +36,7 @@ export function EmptyState({ onUpload }: EmptyStateProps) {
             alignItems: "center",
             padding: "8px 20px",
             borderRadius: "6px",
-            background: "#6C63FF",
+            background: "var(--color-accent)",
             color: "#fff",
             fontSize: "13px",
             fontWeight: 500,

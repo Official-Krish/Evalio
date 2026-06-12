@@ -54,7 +54,7 @@ export function Method() {
   }, [visible])
 
   return (
-    <section ref={sectionRef} className="landing-container relative py-[16vh]">
+    <section ref={sectionRef} className="landing-container relative py-[16vh] border-b">
       <motion.div
         ref={headerRef}
         initial={{ opacity: 0, y: 16 }}

@@ -30,7 +30,7 @@ function Sparkline({ scores }: { scores: number[] }) {
 
   return (
     <svg width="80" height="24" viewBox="0 0 80 24" fill="none" style={{ display: "block" }}>
-      <path d={path} stroke="#6C63FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={path} stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -43,7 +43,7 @@ export function WeeklySidebar({ sessions, goal, progress, avgClarity, best, spar
           fontSize: "11px",
           letterSpacing: "0.08em",
           textTransform: "uppercase",
-          color: "rgba(255,255,255,0.35)",
+          color: "var(--color-text-muted)",
           marginBottom: "16px",
         }}
       >
@@ -55,7 +55,7 @@ export function WeeklySidebar({ sessions, goal, progress, avgClarity, best, spar
           style={{
             height: "3px",
             borderRadius: "2px",
-            background: "rgba(255,255,255,0.08)",
+            background: "var(--color-bg-hover)",
             overflow: "hidden",
             marginBottom: "8px",
           }}
@@ -64,31 +64,30 @@ export function WeeklySidebar({ sessions, goal, progress, avgClarity, best, spar
             style={{
               height: "100%",
               borderRadius: "2px",
-              background: "#6C63FF",
+              background: "var(--color-accent)",
               width: `${progress * 100}%`,
               transition: "width 0.8s ease",
             }}
           />
         </div>
-        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>
+        <p style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
           {sessions} of {goal} sessions
         </p>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
         <div>
-          <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", marginBottom: "1px" }}>Sessions</p>
-          <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.5)" }}>{sessions}</p>
+          <p style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "1px" }}>Sessions</p>
+          <p style={{ fontSize: "15px", color: "var(--color-text-secondary)" }}>{sessions}</p>
         </div>
         <div>
-          <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", marginBottom: "1px" }}>Avg clarity</p>
-          <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.5)" }}>
+          <p style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "1px" }}>Avg clarity</p>
+          <p style={{ fontSize: "15px", color: "var(--color-text-secondary)" }}>
             {avgClarity != null ? `${Math.round(avgClarity)}%` : "\u2014"}
           </p>
         </div>
       </div>
 
-      {/* Sparkline */}
       {sparklineScores.length >= 2 && (
         <div style={{ marginBottom: "20px" }}>
           <p
@@ -96,7 +95,7 @@ export function WeeklySidebar({ sessions, goal, progress, avgClarity, best, spar
               fontSize: "11px",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
-              color: "rgba(255,255,255,0.25)",
+              color: "var(--color-text-muted)",
               marginBottom: "8px",
             }}
           >
@@ -106,7 +105,6 @@ export function WeeklySidebar({ sessions, goal, progress, avgClarity, best, spar
         </div>
       )}
 
-      {/* Best session */}
       {best && (
         <div>
           <p
@@ -114,16 +112,16 @@ export function WeeklySidebar({ sessions, goal, progress, avgClarity, best, spar
               fontSize: "11px",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
-              color: "rgba(255,255,255,0.25)",
+              color: "var(--color-text-muted)",
               marginBottom: "6px",
             }}
           >
             BEST SESSION
           </p>
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: 1.4 }}>
+          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", lineHeight: 1.4 }}>
             {best.position || "Interview"}
           </p>
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>
+          <p style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
             {best.overallScore != null ? `${Math.round(best.overallScore)}% clarity` : ""}
             &nbsp;&middot;&nbsp;
             {new Date(best.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}

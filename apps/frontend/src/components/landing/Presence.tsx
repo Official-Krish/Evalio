@@ -29,7 +29,7 @@ export function Presence() {
   const { ref, visible } = useInViewOnce<HTMLElement>(0.15)
 
   return (
-    <section ref={ref} className="landing-container relative py-[14vh]">
+    <section ref={ref} className="landing-container relative py-[14vh] border-b">
       <div className="grid lg:grid-cols-2 gap-16 items-start">
         <div className="lg:sticky lg:top-32">
           <motion.p

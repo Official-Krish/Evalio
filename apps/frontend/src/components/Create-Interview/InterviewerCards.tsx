@@ -32,10 +32,10 @@ export function InterviewerCards({ position, customPosition, onPositionChange, o
                 borderRadius: "12px",
                 border: active
                   ? "1.5px solid #6366f1"
-                  : "1px solid rgba(255,255,255,0.06)",
+                  : "1px solid var(--color-border-light)",
                 background: active
                   ? "rgba(99,102,241,0.06)"
-                  : "rgba(255,255,255,0.02)",
+                  : "transparent",
                 cursor: "pointer",
                 transition: "all 0.2s ease",
                 overflow: "hidden",
@@ -49,7 +49,7 @@ export function InterviewerCards({ position, customPosition, onPositionChange, o
               }}
               onMouseLeave={(e) => {
                 if (!active) {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"
+                  e.currentTarget.style.borderColor = "var(--color-border-light)"
                   e.currentTarget.style.boxShadow = "none"
                 }
               }}
@@ -76,7 +76,7 @@ export function InterviewerCards({ position, customPosition, onPositionChange, o
                       width: "20px",
                       height: "20px",
                       borderRadius: "50%",
-                      background: "#6366f1",
+                      background: "var(--color-accent)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -94,7 +94,7 @@ export function InterviewerCards({ position, customPosition, onPositionChange, o
                     style={{
                       fontSize: "22px",
                       lineHeight: 1,
-                      color: active ? "#818cf8" : "rgba(255,255,255,0.3)",
+                      color: active ? "var(--color-accent)" : "var(--color-text-muted)",
                       transition: "color 0.2s",
                     }}
                   >
@@ -105,7 +105,7 @@ export function InterviewerCards({ position, customPosition, onPositionChange, o
                   style={{
                     fontSize: "16px",
                     fontWeight: 600,
-                    color: active ? "#E2E8F0" : "rgba(255,255,255,0.75)",
+                    color: active ? "var(--color-text)" : "var(--color-text)",
                     lineHeight: 1.2,
                     margin: 0,
                     transition: "color 0.2s",
@@ -116,7 +116,7 @@ export function InterviewerCards({ position, customPosition, onPositionChange, o
                 <p
                   style={{
                     fontSize: "12px",
-                    color: active ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.3)",
+                    color: active ? "var(--color-text-secondary)" : "var(--color-text-muted)",
                     lineHeight: 1.3,
                     margin: 0,
                   }}
@@ -133,11 +133,11 @@ export function InterviewerCards({ position, customPosition, onPositionChange, o
                         borderRadius: "4px",
                         border: active
                           ? "1px solid rgba(99,102,241,0.3)"
-                          : "1px solid rgba(255,255,255,0.08)",
+                          : "1px solid var(--color-border-light)",
                         background: active
                           ? "rgba(99,102,241,0.1)"
-                          : "rgba(255,255,255,0.03)",
-                        color: active ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.25)",
+                          : "var(--color-bg-hover)",
+                        color: active ? "var(--color-text-secondary)" : "var(--color-text-muted)",
                       }}
                     >
                       {f}
@@ -161,13 +161,13 @@ export function InterviewerCards({ position, customPosition, onPositionChange, o
               fontSize: "14px",
               padding: "12px 16px",
               borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.04)",
-              color: "#E2E8F0",
+              border: "1px solid var(--color-border)",
+              background: "var(--color-bg-hover)",
+              color: "var(--color-text)",
               outline: "none",
             }}
-            onFocus={(e) => (e.target.style.borderColor = "#6366f1")}
-            onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
+            onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
           />
         </div>
       )}
@@ -177,7 +177,7 @@ export function InterviewerCards({ position, customPosition, onPositionChange, o
         style={{
           marginTop: "14px",
           fontSize: "13px",
-          color: "rgba(255,255,255,0.3)",
+          color: "var(--color-text-muted)",
           background: "none",
           border: "none",
           padding: "4px 0",

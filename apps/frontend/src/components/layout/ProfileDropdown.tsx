@@ -65,10 +65,10 @@ export function ProfileDropdown({ user }: { user: { name: string; email: string 
             transition={{ duration: 0.12, ease: "easeOut" }}
             className="absolute top-full right-0 mt-2 min-w-[200px] rounded-xl overflow-hidden"
             style={{
-              background: "rgba(8,8,8,0.75)",
+              background: "var(--color-bg-elevated)",
               backdropFilter: "blur(24px)",
               WebkitBackdropFilter: "blur(24px)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              border: "1px solid var(--color-border)",
               transformOrigin: "top right",
             }}
           >
@@ -142,11 +142,11 @@ function DropdownItem({
       onMouseLeave={() => setHovered(false)}
       className="flex items-center justify-between w-full text-left px-3 py-2 rounded-lg text-[13px] transition-colors duration-150"
       style={{
-        color: danger ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.55)",
+        color: danger ? "var(--color-danger)" : "var(--color-text-secondary)",
         background: hovered
           ? danger
             ? "rgba(239,68,68,0.08)"
-            : "rgba(255,255,255,0.04)"
+            : "var(--color-bg-hover)"
           : "transparent",
       }}
     >

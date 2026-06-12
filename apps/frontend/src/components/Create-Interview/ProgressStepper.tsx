@@ -17,7 +17,6 @@ export function ProgressStepper({ current, onStepClick }: ProgressStepperProps) 
       {steps.map((step, i) => {
         const isCompleted = i < current
         const isCurrent = i === current
-        const isFuture = i > current
         const clickable = isCompleted && onStepClick
         return (
           <div
@@ -40,12 +39,12 @@ export function ProgressStepper({ current, onStepClick }: ProgressStepperProps) 
                   fontSize: "11px",
                   fontWeight: 600,
                   border: isCompleted
-                    ? "2px solid #6366f1"
+                    ? "2px solid var(--color-accent)"
                     : isCurrent
-                      ? "2px solid #6366f1"
-                      : "2px solid rgba(255,255,255,0.12)",
-                  background: isCompleted ? "#6366f1" : "transparent",
-                  color: isCompleted ? "#fff" : isCurrent ? "#6366f1" : "rgba(255,255,255,0.25)",
+                      ? "2px solid var(--color-accent)"
+                      : "2px solid var(--color-border-light)",
+                  background: isCompleted ? "var(--color-accent)" : "transparent",
+                  color: isCompleted ? "#fff" : isCurrent ? "var(--color-accent)" : "var(--color-text-muted)",
                   transition: "all 0.2s ease",
                 }}
               >
@@ -62,7 +61,7 @@ export function ProgressStepper({ current, onStepClick }: ProgressStepperProps) 
                   style={{
                     fontSize: "13px",
                     fontWeight: 500,
-                    color: isCompleted || isCurrent ? "#E2E8F0" : "rgba(255,255,255,0.25)",
+                    color: isCompleted || isCurrent ? "var(--color-text)" : "var(--color-text-muted)",
                     transition: "color 0.2s",
                     lineHeight: 1.2,
                   }}
@@ -72,7 +71,7 @@ export function ProgressStepper({ current, onStepClick }: ProgressStepperProps) 
                 <span
                   style={{
                     fontSize: "11px",
-                    color: isCurrent ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.15)",
+                    color: isCurrent ? "var(--color-text-secondary)" : "var(--color-text-muted)",
                     transition: "color 0.2s",
                     lineHeight: 1.2,
                   }}
@@ -87,7 +86,7 @@ export function ProgressStepper({ current, onStepClick }: ProgressStepperProps) 
                   flex: 1,
                   height: "1px",
                   margin: "0 16px",
-                  background: isCompleted ? "#6366f1" : "rgba(255,255,255,0.08)",
+                  background: isCompleted ? "var(--color-accent)" : "var(--color-border-light)",
                   transition: "background 0.3s",
                 }}
               />

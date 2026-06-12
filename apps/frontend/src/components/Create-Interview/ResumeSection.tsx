@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { motion } from "motion/react"
 import { api } from "../../lib/api"
 import { fileNameFromUrl, detectSections } from "./helpers"
@@ -29,8 +28,6 @@ export function ResumeSection({
   onGithubUrlChange,
   onGithubToggle,
 }: ResumeSectionProps) {
-  const [uploading, setUploading] = useState(false)
-
   const selectedResume = selectedResumeId
     ? resumes.find((r) => r.id === selectedResumeId) ?? null
     : null
@@ -40,15 +37,12 @@ export function ResumeSection({
   const handleUploadResume = async (files: File[]) => {
     const file = files[0]
     if (!file) return
-    setUploading(true)
     try {
       await api.uploadResume(file)
       toast.success("Resume uploaded!")
       onResumesRefetch()
     } catch (err) {
       toast.error((err as Error).message)
-    } finally {
-      setUploading(false)
     }
   }
 
@@ -64,7 +58,7 @@ export function ResumeSection({
               fontSize: "11px",
               letterSpacing: "0.05em",
               textTransform: "uppercase",
-              color: "rgba(255,255,255,0.2)",
+              color: "var(--color-text-muted)",
               marginBottom: "8px",
             }}
           >
@@ -84,8 +78,8 @@ export function ResumeSection({
                   gap: "12px",
                   padding: "12px 16px",
                   borderRadius: "10px",
-                  border: active ? "1.5px solid #6366f1" : "1px solid rgba(255,255,255,0.05)",
-                  background: active ? "rgba(99,102,241,0.06)" : "rgba(255,255,255,0.02)",
+                  border: active ? "1.5px solid #6366f1" : "1px solid var(--color-border-light)",
+                  background: active ? "rgba(99,102,241,0.06)" : "transparent",
                   transition: "all 0.15s ease",
                   cursor: "pointer",
                 }}
@@ -96,13 +90,13 @@ export function ResumeSection({
                     width: "32px",
                     height: "32px",
                     borderRadius: "6px",
-                    background: active ? "rgba(99,102,241,0.12)" : "rgba(255,255,255,0.04)",
+                    background: active ? "rgba(99,102,241,0.12)" : "var(--color-bg-hover)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
                     fontSize: "14px",
-                    color: active ? "#818cf8" : "rgba(255,255,255,0.3)",
+                    color: active ? "var(--color-accent)" : "var(--color-text-muted)",
                   }}
                 >
                   {active ? (
@@ -114,10 +108,10 @@ export function ResumeSection({
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: "13px", fontWeight: 500, color: active ? "#E2E8F0" : "rgba(255,255,255,0.6)", margin: 0, lineHeight: 1.3 }}>
+                  <p style={{ fontSize: "13px", fontWeight: 500, color: active ? "var(--color-text)" : "var(--color-text-secondary)", margin: 0, lineHeight: 1.3 }}>
                     {label}
                   </p>
-                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", margin: 0, lineHeight: 1.3, marginTop: "1px" }}>
+                  <p style={{ fontSize: "11px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.3, marginTop: "1px" }}>
                     {new Date(r.uploadedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </p>
                 </div>
@@ -129,9 +123,9 @@ export function ResumeSection({
                   style={{
                     padding: "6px 14px",
                     borderRadius: "6px",
-                    border: active ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                    border: active ? "1px solid rgba(99,102,241,0.3)" : "1px solid var(--color-border-light)",
                     background: active ? "rgba(99,102,241,0.1)" : "transparent",
-                    color: active ? "#818cf8" : "rgba(255,255,255,0.35)",
+                    color: active ? "var(--color-accent)" : "var(--color-text-muted)",
                     fontSize: "12px",
                     cursor: "pointer",
                     whiteSpace: "nowrap",
@@ -157,7 +151,7 @@ export function ResumeSection({
             background: "rgba(99,102,241,0.06)",
             border: "1px solid rgba(99,102,241,0.15)",
             fontSize: "13px",
-            color: "rgba(255,255,255,0.5)",
+            color: "var(--color-text-secondary)",
             lineHeight: 1.5,
           }}
         >
@@ -182,13 +176,13 @@ export function ResumeSection({
                   fontSize: "14px",
                   padding: "10px 14px",
                   borderRadius: "8px",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  background: "rgba(255,255,255,0.04)",
-                  color: "#E2E8F0",
+                  border: "1px solid var(--color-border)",
+                  background: "var(--color-bg-hover)",
+                  color: "var(--color-text)",
                   outline: "none",
                 }}
-                onFocus={(e) => (e.target.style.borderColor = "#6366f1")}
-                onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
+                onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
               />
             </div>
           ) : (
@@ -196,7 +190,7 @@ export function ResumeSection({
               onClick={onGithubToggle}
               style={{
                 fontSize: "13px",
-                color: "rgba(255,255,255,0.25)",
+                color: "var(--color-text-muted)",
                 background: "none",
                 border: "none",
                 padding: 0,

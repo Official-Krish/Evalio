@@ -4,8 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { motion } from "motion/react"
 import { signupSchema, type SignupInput } from "@ai-interview/shared"
 import { useSignup } from "../lib/auth"
-import { Button } from "../components/ui/Button"
-import { Input } from "../components/ui/Input"
+import { AuthLayout } from "@/components/static/AuthLayout"
 import toast from "react-hot-toast"
 
 export function SignupPage() {
@@ -30,54 +29,56 @@ export function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--color-bg)]">
+    <AuthLayout>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-sm"
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-[400px]"
       >
-        <div className="text-center mb-8">
-          <svg width="40" height="40" viewBox="0 0 28 28" fill="none" className="mx-auto mb-4">
-            <rect width="28" height="28" rx="8" fill="var(--color-accent)" />
-            <path d="M8 14c0-3.3 2.7-6 6-6s6 2.7 6 6-2.7 6-6 6-6-2.7-6-6z" fill="white" opacity="0.9" />
-            <path d="M11 14c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3z" fill="var(--color-accent)" />
-            <path d="M14 6v3m0 10v3M6 14h3m10 0h3" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-          </svg>
-          <h1 className="text-2xl font-semibold tracking-tight">Create account</h1>
-          <p className="text-sm text-[var(--color-text-secondary)] mt-1">Start your AI interview practice</p>
+        <div className="mb-8">
+          <p className="static-badge">Get started</p>
+          <h1 className="static-title mt-4 text-[2rem]">Start interviewing.</h1>
+          <p className="static-subtitle mt-2">Free during early access. No card required.</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-[var(--radius-xl)] p-6 space-y-4">
-          <Input
-            label="Name"
-            placeholder="Your name"
-            error={errors.name?.message}
-            {...register("name")}
-          />
-          <Input
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            error={errors.email?.message}
-            {...register("email")}
-          />
-          <Input
-            label="Password"
-            type="password"
-            placeholder="At least 6 characters"
-            error={errors.password?.message}
-            {...register("password")}
-          />
-          <Button type="submit" loading={signupMutation.isPending} className="w-full">
-            Create account
-          </Button>
-          <p className="text-center text-sm text-[var(--color-text-muted)]">
+        <form onSubmit={handleSubmit(onSubmit)} className="static-auth-card space-y-4">
+          <div>
+            <label htmlFor="name" className="static-label">Name</label>
+            <input id="name" type="text" placeholder="Your name" className="static-input" {...register("name")} />
+            {errors.name && <p className="mt-1 text-[12px] text-red-400">{errors.name.message}</p>}
+          </div>
+          <div>
+            <label htmlFor="email" className="static-label">Email</label>
+            <input id="email" type="email" placeholder="you@example.com" className="static-input" {...register("email")} />
+            {errors.email && <p className="mt-1 text-[12px] text-red-400">{errors.email.message}</p>}
+          </div>
+          <div>
+            <label htmlFor="password" className="static-label">Password</label>
+            <input
+              id="password"
+              type="password"
+              placeholder="At least 6 characters"
+              className="static-input"
+              {...register("password")}
+            />
+            {errors.password && <p className="mt-1 text-[12px] text-red-400">{errors.password.message}</p>}
+          </div>
+          <button
+            type="submit"
+            disabled={signupMutation.isPending}
+            className="landing-cta-primary landing-cta-sharp w-full justify-center text-[13px] disabled:opacity-60"
+          >
+            {signupMutation.isPending ? "Creating…" : "Start interview"}
+          </button>
+          <p className="text-center text-[13px] text-[var(--landing-fg-faint)]">
             Already have an account?{" "}
-            <Link to="/login" className="text-accent hover:underline">Sign in</Link>
+            <Link to="/login" className="text-[var(--landing-accent)] hover:underline">
+              Sign in
+            </Link>
           </p>
         </form>
       </motion.div>
-    </div>
+    </AuthLayout>
   )
 }

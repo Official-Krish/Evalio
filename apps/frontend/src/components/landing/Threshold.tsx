@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { motion, AnimatePresence } from "motion/react"
 import { useInViewOnce } from "./hooks"
+import { useSession } from "@/lib/auth"
 
 const questions = [
   "Tell me about yourself.",
@@ -14,6 +15,8 @@ export function Threshold() {
   const { ref, visible } = useInViewOnce<HTMLElement>(0.3)
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0)
   const [qIndex, setQIndex] = useState(0)
+  const { data: session } = useSession();
+  const user = session?.user ?? null;
 
   useEffect(() => {
     if (!visible) return
@@ -36,7 +39,7 @@ export function Threshold() {
   }, [phase])
 
   return (
-    <section ref={ref} className="landing-container relative pt-[16vh] pb-[10vh]">
+    <section ref={ref} className="landing-container relative pt-[16vh] pb-[10vh] min-h-150">
       <div className="relative flex flex-col items-center text-center">
         <motion.p
           initial={{ opacity: 0 }}
@@ -109,7 +112,7 @@ export function Threshold() {
           className="mt-10"
         >
           <Link
-            to="/signup"
+            to={user ? "/dashboard" : "/signup"}
             className="inline-flex items-center gap-2 text-sm font-medium text-[var(--landing-fg-muted)] hover:text-[var(--landing-fg)] transition-colors border border-[var(--landing-border)] hover:border-[var(--landing-fg-faint)] rounded-lg px-5 py-2.5"
           >
             I'm ready

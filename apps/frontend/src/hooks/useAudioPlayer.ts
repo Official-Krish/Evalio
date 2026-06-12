@@ -18,6 +18,7 @@ export function useAudioPlayer() {
   const nextPlayTimeRef = useRef(0)
   const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set())
   const isPlayingRef = useRef(false)
+  const stoppedRef = useRef(false)
 
   const updateIsPlaying = useCallback(() => {
     const stillPlaying = activeSourcesRef.current.size > 0
@@ -28,6 +29,7 @@ export function useAudioPlayer() {
   }, [])
 
   const ensureContext = useCallback(() => {
+    if (stoppedRef.current) return null
     if (!audioContextRef.current) {
       audioContextRef.current = new AudioContext()
       analyserRef.current = audioContextRef.current.createAnalyser()
@@ -47,9 +49,11 @@ export function useAudioPlayer() {
 
   const playPcm = useCallback(
     (base64Pcm: string) => {
+      if (stoppedRef.current) return
       const ctx = ensureContext()
-      const int16 = base64ToInt16(base64Pcm)
+      if (!ctx) return
 
+      const int16 = base64ToInt16(base64Pcm)
       const len = int16.length
       const float32 = new Float32Array(len)
       for (let i = 0; i < len; i++) {
@@ -86,22 +90,46 @@ export function useAudioPlayer() {
   )
 
   const stop = useCallback(() => {
+    stoppedRef.current = true
+
+    const ctx = audioContextRef.current
+    if (gainRef.current && ctx) {
+      try {
+        gainRef.current.gain.setValueAtTime(0, ctx.currentTime)
+      } catch {
+        // context may be closing
+      }
+    }
+
     for (const source of activeSourcesRef.current) {
       try {
-        source.stop()
+        source.stop(0)
+        source.disconnect()
       } catch {
         // already stopped
       }
     }
     activeSourcesRef.current.clear()
-    audioContextRef.current?.close()
+    nextPlayTimeRef.current = 0
+
+    try {
+      analyserRef.current?.disconnect()
+      gainRef.current?.disconnect()
+      void ctx?.close()
+    } catch {
+      // ignore close errors
+    }
+
     audioContextRef.current = null
     analyserRef.current = null
     gainRef.current = null
-    nextPlayTimeRef.current = 0
     isPlayingRef.current = false
     setIsPlaying(false)
   }, [])
 
-  return { playPcm, stop, isPlaying, analyserRef }
+  const reset = useCallback(() => {
+    stoppedRef.current = false
+  }, [])
+
+  return { playPcm, stop, reset, isPlaying, analyserRef }
 }

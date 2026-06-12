@@ -14,14 +14,14 @@ export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
     <section
       style={{
         paddingBottom: "24px",
-        borderBottom: "1px solid rgba(255,255,255,0.07)",
+        borderBottom: "1px solid var(--color-border-light)",
       }}
     >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="min-w-0">
-          <p style={{ fontSize: "16px", fontWeight: 500, color: "var(--landing-fg)", marginBottom: "10px" }}>
+          <p style={{ fontSize: "16px", fontWeight: 500, color: "var(--color-text)", marginBottom: "10px" }}>
             {mostRecent.position || "General"}
-            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", fontWeight: 400 }}>
+            <span style={{ fontSize: "13px", color: "var(--color-text-muted)", fontWeight: 400 }}>
               {" "}&middot; {formatDuration(mostRecent.durationSeconds)}
             </span>
           </p>
@@ -30,7 +30,7 @@ export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
               width: "160px",
               height: "5px",
               borderRadius: "3px",
-              background: "rgba(255,255,255,0.08)",
+              background: "var(--color-bg-hover)",
               overflow: "hidden",
               marginBottom: score != null ? "6px" : 0,
             }}
@@ -40,7 +40,7 @@ export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
                 style={{
                   height: "100%",
                   borderRadius: "3px",
-                  background: "#6C63FF",
+                  background: "var(--color-accent)",
                   opacity: 0.85,
                 }}
                 initial={{ width: 0 }}
@@ -50,7 +50,7 @@ export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
             )}
           </div>
           {score != null && (
-            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>
+            <p style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
               Clarity &middot; {Math.round(score)}%
               {mostRecent.startedAt && isToday(new Date(mostRecent.startedAt)) ? " &middot; Last session today" : ""}
             </p>
@@ -65,7 +65,7 @@ export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
                 alignItems: "center",
                 padding: "8px 20px",
                 borderRadius: "6px",
-                background: "#6C63FF",
+                background: "var(--color-accent)",
                 color: "#fff",
                 fontSize: "13px",
                 fontWeight: 500,

@@ -10,6 +10,7 @@ import { ScrollProgress } from "./ScrollProgress"
 const navItems = [
   { path: "/dashboard", label: "Interviews", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
   { path: "/interview/new", label: "New Interview", icon: "M12 4v16m8-8H4" },
+  { path: "/profile", label: "Profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" },
 ]
 
 function ThemeToggle() {
@@ -79,7 +80,7 @@ export function AppBar() {
                         {active && (
                           <span
                             className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
-                            style={{ background: "rgba(255,255,255,0.6)" }}
+                            style={{ background: "var(--color-accent)" }}
                           />
                         )}
                       </Link>
@@ -88,7 +89,7 @@ export function AppBar() {
                 </nav>
                 <div
                   className="hidden sm:block w-px h-4"
-                  style={{ background: "rgba(255,255,255,0.1)" }}
+                  style={{ background: "var(--color-border)" }}
                 />
               </>
             )}

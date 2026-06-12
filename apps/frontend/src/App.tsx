@@ -13,6 +13,18 @@ import { DashboardPage } from "./pages/Dashboard"
 import { NewInterviewPage } from "./pages/NewInterview"
 import { InterviewPage } from "./pages/Interview"
 import { ResultsPage } from "./pages/Results"
+import { ProfilePage } from "./pages/Profile"
+import { PricingPage } from "./pages/Pricing"
+import { AboutPage } from "./pages/About"
+import { FAQPage } from "./pages/FAQ"
+import { ContactPage } from "./pages/Contact"
+import { BlogPage } from "./pages/Blog"
+import { BlogPostPage } from "./pages/BlogPost"
+import { CareersPage } from "./pages/Careers"
+import { DocsPage } from "./pages/Docs"
+import { PrivacyPage } from "./pages/Privacy"
+import { TermsPage } from "./pages/Terms"
+import { CookiesPage } from "./pages/Cookies"
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { data, isLoading } = useSession()
@@ -23,6 +35,17 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
 const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
+  { path: "/pricing", element: <PricingPage /> },
+  { path: "/about", element: <AboutPage /> },
+  { path: "/faq", element: <FAQPage /> },
+  { path: "/contact", element: <ContactPage /> },
+  { path: "/blog", element: <BlogPage /> },
+  { path: "/blog/:slug", element: <BlogPostPage /> },
+  { path: "/careers", element: <CareersPage /> },
+  { path: "/docs", element: <DocsPage /> },
+  { path: "/privacy", element: <PrivacyPage /> },
+  { path: "/terms", element: <TermsPage /> },
+  { path: "/cookies", element: <CookiesPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/signup", element: <SignupPage /> },
   {
@@ -64,6 +87,17 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <ResultsPage /> },
+    ],
+  },
+  {
+    path: "/profile",
+    element: (
+      <AuthGuard>
+        <AppLayout />
+      </AuthGuard>
+    ),
+    children: [
+      { index: true, element: <ProfilePage /> },
     ],
   },
 ])

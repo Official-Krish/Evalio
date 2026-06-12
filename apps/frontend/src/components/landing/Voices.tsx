@@ -23,7 +23,7 @@ export function Voices() {
   const { ref, visible } = useInViewOnce<HTMLElement>(0.15)
 
   return (
-    <section ref={ref} className="landing-container py-[12vh] overflow-hidden">
+    <section ref={ref} className="landing-container py-[12vh] overflow-hidden border-b">
       <p className="text-[11px] tracking-[0.2em] uppercase text-[var(--landing-fg-faint)] mb-12">
         From the room
       </p>

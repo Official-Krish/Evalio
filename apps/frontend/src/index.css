@@ -733,6 +733,300 @@ html.landing-active {
   border-radius: 6px;
 }
 
+/* ─── Static pages ───────────────────────────────────────────── */
+
+.static-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--landing-fg-faint);
+}
+
+.static-badge::before {
+  content: "";
+  width: 16px;
+  height: 1px;
+  background: var(--landing-accent);
+  opacity: 0.6;
+}
+
+.static-title {
+  font-family: var(--font-sans);
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--landing-fg);
+}
+
+.static-subtitle {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--landing-fg-muted);
+  max-width: 36rem;
+}
+
+.static-subtitle a {
+  color: var(--landing-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.static-card {
+  border: 1px solid var(--landing-line);
+  background: var(--landing-surface);
+  padding: 1.25rem 1.5rem;
+  transition: border-color 0.35s ease;
+}
+
+.static-card:hover {
+  border-color: rgba(184, 168, 138, 0.2);
+}
+
+.static-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--landing-fg);
+  margin-bottom: 0.35rem;
+}
+
+.static-card-body {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--landing-fg-muted);
+}
+
+.static-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.static-list li {
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--landing-fg-muted);
+  padding-left: 14px;
+  position: relative;
+}
+
+.static-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.72em;
+  width: 4px;
+  height: 1px;
+  background: var(--landing-accent);
+  opacity: 0.7;
+}
+
+.static-coming-soon {
+  margin-inline: auto;
+}
+
+.static-coming-soon-inner {
+  border: 1px solid var(--landing-line);
+  background: var(--landing-surface);
+  padding: 2rem 2rem 2.25rem;
+}
+
+.static-prose-section {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--landing-line);
+}
+
+.static-prose-section:last-child {
+  border-bottom: none;
+}
+
+.static-input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  font-size: 13px;
+  color: var(--landing-fg);
+  background: var(--landing-surface);
+  border: 1px solid var(--landing-line);
+  border-radius: 2px;
+  outline: none;
+  transition: border-color 0.25s ease;
+}
+
+.static-input::placeholder {
+  color: var(--landing-fg-faint);
+}
+
+.static-input:focus {
+  border-color: rgba(184, 168, 138, 0.35);
+}
+
+.static-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--landing-fg-faint);
+  margin-bottom: 0.4rem;
+}
+
+.static-auth-card {
+  width: 100%;
+  max-width: 400px;
+  border: 1px solid var(--landing-line);
+  background: var(--landing-surface);
+  padding: 1.75rem;
+}
+
+/* ─── Live interview room ─────────────────────────────────────── */
+
+.interview-room {
+  background: var(--landing-bg);
+  color: var(--landing-fg);
+}
+
+.interview-room-connecting {
+  position: relative;
+  overflow: hidden;
+}
+
+.interview-session-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+}
+
+.interview-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--landing-fg-faint);
+  opacity: 0.5;
+}
+
+.interview-status-dot-active {
+  background: var(--landing-accent);
+  opacity: 1;
+  animation: landing-pulse 2.4s ease-in-out infinite;
+}
+
+.interview-orb-stage {
+  width: min(72vw, 340px);
+  height: min(72vw, 340px);
+  margin-bottom: 1.5rem;
+}
+
+.interview-presence-orb {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.interview-phase-label {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--landing-fg-faint);
+  max-width: 280px;
+}
+
+.interview-caption {
+  min-height: 88px;
+  border-top: 1px solid var(--landing-line);
+  padding-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.interview-caption-role {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--landing-accent);
+  margin-bottom: 0.5rem;
+}
+
+.interview-caption-text {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--landing-fg);
+  max-width: 36rem;
+}
+
+.interview-caption-waiting {
+  font-size: 14px;
+  color: var(--landing-fg-muted);
+}
+
+.interview-caption-previous {
+  margin-top: 0.75rem;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--landing-fg-faint);
+  max-width: 36rem;
+}
+
+.interview-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.interview-control-end {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgba(220, 140, 130, 0.9);
+  padding: 0.5rem 0;
+  transition: opacity 0.2s ease;
+}
+
+.interview-control-end:hover:not(:disabled) {
+  opacity: 0.75;
+}
+
+.interview-control-end:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.interview-control-mic {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--landing-line);
+  background: var(--landing-surface);
+  color: var(--landing-fg-muted);
+  border-radius: 50%;
+  transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
+}
+
+.interview-control-mic:hover:not(:disabled) {
+  border-color: rgba(184, 168, 138, 0.3);
+  color: var(--landing-fg);
+}
+
+.interview-control-mic:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.interview-control-mic-active {
+  border-color: rgba(184, 168, 138, 0.45);
+  background: rgba(184, 168, 138, 0.12);
+  color: var(--landing-fg);
+}
+
+.interview-control-spacer {
+  width: 72px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-pulse-dot,
   .landing-sonar-ring,

@@ -18,9 +18,9 @@ export function Footer() {
             <p className="landing-serif text-2xl leading-[1.4] text-[var(--landing-fg-muted)] mb-4">
               Practice until the real one feels familiar.
             </p>
-            <p className="text-sm text-[var(--landing-fg-faint)]/60 font-medium">
-              Built with <span className="text-[var(--landing-accent)]">&#9829;</span> by Krish Anand
-            </p>
+            <a href="https://github.com/Official-Krish" className="text-sm text-[var(--landing-fg-faint)]/60 font-medium">
+              Built with <span className="text-[var(--landing-accent)]">&#9829;</span> by <span className="hover:underline">Krish Anand</span>
+            </a>
           </div>
 
           {/* product */}
@@ -28,8 +28,7 @@ export function Footer() {
             <h4 className="text-xs tracking-[0.14em] uppercase text-[var(--landing-fg-muted)] mb-4">Product</h4>
             <ul className="space-y-2.5">
               <li><Link to="/" className={linkClass}>Home</Link></li>
-              <li><Link to="/signup" className={linkClass}>Get started</Link></li>
-              <li><Link to="/login" className={linkClass}>Sign in</Link></li>
+              <li><Link to="/pricing" className={linkClass}>Pricing</Link></li>
             </ul>
           </div>
 
@@ -37,9 +36,9 @@ export function Footer() {
           <div>
             <h4 className="text-xs tracking-[0.14em] uppercase text-[var(--landing-fg-muted)] mb-4">Company</h4>
             <ul className="space-y-2.5">
-              <li><a href="#" className={linkClass}>About</a></li>
-              <li><a href="#" className={linkClass}>Blog</a></li>
-              <li><a href="#" className={linkClass}>Careers</a></li>
+              <li><Link to="/about" className={linkClass}>About</Link></li>
+              <li><Link to="/blog" className={linkClass}>Blog</Link></li>
+              <li><Link to="/careers" className={linkClass}>Careers</Link></li>
             </ul>
           </div>
 
@@ -47,9 +46,9 @@ export function Footer() {
           <div>
             <h4 className="text-xs tracking-[0.14em] uppercase text-[var(--landing-fg-muted)] mb-4">Support</h4>
             <ul className="space-y-2.5">
-              <li><a href="#" className={linkClass}>Docs</a></li>
-              <li><a href="#" className={linkClass}>Contact</a></li>
-              <li><a href="#" className={linkClass}>FAQ</a></li>
+              <li><Link to="/docs" className={linkClass}>Docs</Link></li>
+              <li><Link to="/contact" className={linkClass}>Contact</Link></li>
+              <li><Link to="/faq" className={linkClass}>FAQ</Link></li>
             </ul>
           </div>
         </div>
@@ -60,9 +59,9 @@ export function Footer() {
             &copy; {new Date().getFullYear()} Interview Lab. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-[var(--landing-fg-faint)]/50 font-medium">
-            <a href="#" className="hover:text-[var(--landing-fg-muted)] transition-colors">Privacy</a>
-            <a href="#" className="hover:text-[var(--landing-fg-muted)] transition-colors">Terms</a>
-            <a href="#" className="hover:text-[var(--landing-fg-muted)] transition-colors">Cookies</a>
+            <Link to="/privacy" className="hover:text-[var(--landing-fg-muted)] transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-[var(--landing-fg-muted)] transition-colors">Terms</Link>
+            <Link to="/cookies" className="hover:text-[var(--landing-fg-muted)] transition-colors">Cookies</Link>
           </div>
         </div>
       </div>

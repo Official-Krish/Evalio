@@ -29,8 +29,8 @@ export function SessionCard({ position, customPosition, selectedResumeId, resume
         bottom: "24px",
         zIndex: 20,
         borderRadius: "14px",
-        border: "1px solid rgba(255,255,255,0.08)",
-        background: "rgba(20,20,30,0.92)",
+        border: "1px solid var(--color-border-light)",
+        background: "var(--color-bg-elevated)",
         backdropFilter: "blur(16px)",
         padding: "20px 24px",
       }}
@@ -46,17 +46,17 @@ export function SessionCard({ position, customPosition, selectedResumeId, resume
             alignItems: "center",
             justifyContent: "center",
             fontSize: "16px",
-            color: "#818cf8",
+            color: "var(--color-accent)",
             flexShrink: 0,
           }}
         >
           {icon}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: "14px", fontWeight: 500, color: "#E2E8F0", lineHeight: 1.2 }}>
+          <span style={{ fontSize: "14px", fontWeight: 500, color: "var(--color-text)", lineHeight: 1.2 }}>
             {roleTitle}
           </span>
-          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", lineHeight: 1.2 }}>
+          <span style={{ fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.2 }}>
             {resumeLabel} &middot; ~{duration}
           </span>
         </div>
@@ -70,7 +70,7 @@ export function SessionCard({ position, customPosition, selectedResumeId, resume
           padding: "14px",
           borderRadius: "10px",
           border: "none",
-          background: "#6366f1",
+          background: "var(--color-accent)",
           color: "#fff",
           fontSize: "14px",
           fontWeight: 600,

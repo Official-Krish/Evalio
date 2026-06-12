@@ -4,6 +4,7 @@ export class InterviewSocket {
   private ws: WebSocket | null = null
   private handlers = new Map<string, MessageHandler[]>()
   private userId: string
+  private closed = false
 
   constructor(userId: string) {
     this.userId = userId
@@ -23,6 +24,7 @@ export class InterviewSocket {
       }
 
       this.ws.onmessage = (event) => {
+        if (this.closed) return
         try {
           const data = JSON.parse(event.data)
           if (data.type === "ready") {
@@ -66,11 +68,14 @@ export class InterviewSocket {
   }
 
   end() {
+    this.closed = true
     this.send({ type: "end_interview" })
     this.close()
   }
 
   close() {
+    this.closed = true
+    this.handlers.clear()
     this.ws?.close()
     this.ws = null
   }

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom"
 import { motion } from "motion/react"
 import { SonarRings } from "./svg/SonarRings"
 import { InterviewSystem } from "./InterviewSystem"
+import { useSession } from "@/lib/auth"
 
 const PUNCH_LINES = [
   "Uploads your résumé.",
@@ -10,8 +11,10 @@ const PUNCH_LINES = [
 ]
 
 export function Opening() {
+  const { data: session } = useSession();
+  const user = session?.user ?? null;
   return (
-    <section className="landing-hero relative flex flex-col justify-center overflow-hidden pb-[6vh]">
+    <section className="landing-hero relative flex flex-col justify-center overflow-hidden pb-[12vh] border-b">
       <SonarRings className="absolute top-[12%] left-[58%] -translate-x-1/2 opacity-60" />
 
       <div className="landing-hero-grid">
@@ -65,7 +68,7 @@ export function Opening() {
             transition={{ duration: 0.8, delay: 0.75, ease: [0.22, 1, 0.36, 1] }}
             className="mt-10 lg:mt-12 flex items-center gap-6"
           >
-            <Link to="/signup" className="landing-cta-primary landing-cta-sharp">
+            <Link to={user ? "/dashboard" : "/signup"} className="landing-cta-primary landing-cta-sharp">
               Start interview
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
                 <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />

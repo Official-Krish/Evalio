@@ -78,7 +78,7 @@ export function NewInterviewPage() {
                   fontSize: "24px",
                   fontWeight: 600,
                   letterSpacing: "-0.02em",
-                  color: "#E2E8F0",
+                  color: "var(--color-text)",
                   lineHeight: 1.2,
                   margin: 0,
                 }}
@@ -86,7 +86,7 @@ export function NewInterviewPage() {
                 Choose your interviewer
               </h1>
               {lastCompleted && !position && (
-                <p style={{ fontSize: "13px", color: "#94A3B8", marginTop: "6px", margin: "6px 0 0" }}>
+                <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "6px", margin: "6px 0 0" }}>
                   Last session: {lastCompleted.position}
                   {lastCompleted.overallScore != null ? ` \u00B7 ${Math.round(lastCompleted.overallScore)}%` : ""}
                 </p>
@@ -105,8 +105,8 @@ export function NewInterviewPage() {
                   padding: "10px 24px",
                   borderRadius: "8px",
                   border: "none",
-                  background: position ? "#6366f1" : "rgba(255,255,255,0.06)",
-                  color: position ? "#fff" : "rgba(255,255,255,0.25)",
+                  background: position ? "var(--color-accent)" : "var(--color-border-light)",
+                  color: position ? "#fff" : "var(--color-text-muted)",
                   fontSize: "14px",
                   fontWeight: 500,
                   cursor: position ? "pointer" : "default",
@@ -127,14 +127,14 @@ export function NewInterviewPage() {
                   fontSize: "24px",
                   fontWeight: 600,
                   letterSpacing: "-0.02em",
-                  color: "#E2E8F0",
+                  color: "var(--color-text)",
                   lineHeight: 1.2,
                   margin: 0,
                 }}
               >
                 Upload your resume
               </h1>
-              <p style={{ fontSize: "13px", color: "#94A3B8", margin: "6px 0 0" }}>
+              <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", margin: "6px 0 0" }}>
                 We'll tailor questions to your experience
               </p>
             </div>
@@ -157,7 +157,7 @@ export function NewInterviewPage() {
                   borderRadius: "8px",
                   border: "1px solid rgba(255,255,255,0.1)",
                   background: "transparent",
-                  color: "rgba(255,255,255,0.45)",
+                  color: "var(--color-text-secondary)",
                   fontSize: "14px",
                   fontWeight: 500,
                   cursor: "pointer",
@@ -171,8 +171,8 @@ export function NewInterviewPage() {
                   padding: "10px 24px",
                   borderRadius: "8px",
                   border: "none",
-                  background: selectedResumeId ? "#6366f1" : "rgba(255,255,255,0.06)",
-                  color: selectedResumeId ? "#fff" : "rgba(255,255,255,0.25)",
+                  background: selectedResumeId ? "var(--color-accent)" : "var(--color-border-light)",
+                  color: selectedResumeId ? "#fff" : "var(--color-text-muted)",
                   fontSize: "14px",
                   fontWeight: 500,
                   cursor: selectedResumeId ? "pointer" : "default",
@@ -193,14 +193,14 @@ export function NewInterviewPage() {
                   fontSize: "24px",
                   fontWeight: 600,
                   letterSpacing: "-0.02em",
-                  color: "#E2E8F0",
+                  color: "var(--color-text)",
                   lineHeight: 1.2,
                   margin: 0,
                 }}
               >
                 Review your session
               </h1>
-              <p style={{ fontSize: "13px", color: "#94A3B8", margin: "6px 0 0" }}>
+              <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", margin: "6px 0 0" }}>
                 Everything looks ready to go
               </p>
             </div>
@@ -211,7 +211,7 @@ export function NewInterviewPage() {
                 style={{
                   borderRadius: "12px",
                   border: "1px solid rgba(255,255,255,0.06)",
-                  background: "rgba(255,255,255,0.02)",
+                  background: "transparent",
                   overflow: "hidden",
                   marginBottom: "24px",
                 }}
@@ -228,13 +228,13 @@ export function NewInterviewPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <span style={{ fontSize: "16px" }}>{"\u{1F4C4}"}</span>
                     <div>
-                      <p style={{ fontSize: "14px", fontWeight: 500, color: "#E2E8F0", margin: 0 }}>
+                      <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--color-text)", margin: 0 }}>
                         {selectedResume.originalUrl ? (() => {
                           const name = selectedResume.originalUrl.split("/").pop()
                           return name ? name.replace(/\.[^/.]+$/, "") : `Resume v${selectedResume.version}`
                         })() : `Resume v${selectedResume.version}`}
                       </p>
-                      <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)", margin: "2px 0 0" }}>
+                      <p style={{ fontSize: "12px", color: "var(--color-text-muted)", margin: "2px 0 0" }}>
                         Uploaded {new Date(selectedResume.uploadedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </p>
                     </div>
@@ -246,7 +246,7 @@ export function NewInterviewPage() {
                       borderRadius: "6px",
                       border: "1px solid rgba(99,102,241,0.3)",
                       background: "rgba(99,102,241,0.1)",
-                      color: "#818cf8",
+                      color: "var(--color-accent)",
                       fontSize: "12px",
                       cursor: "pointer",
                     }}
@@ -257,12 +257,12 @@ export function NewInterviewPage() {
                 <div
                   style={{
                     height: "200px",
-                    background: "rgba(255,255,255,0.02)",
+                    background: "transparent",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "13px",
-                    color: "rgba(255,255,255,0.2)",
+                    color: "var(--color-text-muted)",
                     cursor: "pointer",
                   }}
                   onClick={() => setPreviewResumeId(selectedResume.id)}
@@ -280,7 +280,7 @@ export function NewInterviewPage() {
                   borderRadius: "8px",
                   border: "1px solid rgba(255,255,255,0.1)",
                   background: "transparent",
-                  color: "rgba(255,255,255,0.45)",
+                  color: "var(--color-text-secondary)",
                   fontSize: "14px",
                   fontWeight: 500,
                   cursor: "pointer",

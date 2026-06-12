@@ -13,7 +13,7 @@ export function Manifesto() {
   const asideOpacity = useTransform(scrollYProgress, [0.2, 0.6], [0, 1])
 
   return (
-    <section ref={sectionRef} className="landing-container relative py-[18vh]">
+    <section ref={sectionRef} className="landing-container relative py-[18vh] border-b">
       <div className="grid lg:grid-cols-12 gap-10 lg:gap-6">
         <div className="lg:col-span-2 hidden lg:flex justify-center">
           <ScanLine className="h-[280px] w-2 text-[var(--landing-fg-faint)]" progress={visible ? 0.6 : 0.1} />

@@ -7,9 +7,24 @@ import { UploadResumeModal } from "../components/Dashboard/UploadResumeModal"
 import { SessionStrip } from "../components/Dashboard/SessionStrip"
 import { PastSessionsTable } from "../components/Dashboard/PastSessionsTable"
 import { QuickStartStrip } from "../components/Dashboard/QuickStartStrip"
-import { WeeklySidebar } from "../components/Dashboard/WeeklySidebar"
 import { EmptyState } from "../components/Dashboard/EmptyState"
-import { greeting, computeTrend, computeStreak } from "../components/Dashboard/helpers"
+import { ReadinessHero } from "../components/Dashboard/ReadinessHero"
+import { AiCoachCard } from "../components/Dashboard/AiCoachCard"
+import { TrendsSection } from "../components/Dashboard/TrendsSection"
+import { WeaknessDetection } from "../components/Dashboard/WeaknessDetection"
+import { LatestInsight } from "../components/Dashboard/LatestInsight"
+import { InterviewerRemembers } from "../components/Dashboard/InterviewerRemembers"
+import { RoleRecommendations } from "../components/Dashboard/RoleRecommendations"
+import { SidebarRight } from "../components/Dashboard/SidebarRight"
+import {
+  computeReadiness,
+  detectWeaknesses,
+  getLatestInsight,
+  analyzeAcrossSessions,
+  computeComparison30Days,
+  computeMilestones,
+  computeRoleRecommendations,
+} from "../components/Dashboard/helpers"
 import type { InterviewSession } from "@ai-interview/shared"
 
 export function DashboardPage() {
@@ -28,100 +43,87 @@ export function DashboardPage() {
   const active = interviews.filter((i) => i.status === "ACTIVE")
   const continueInterview = active[0] ?? null
   const completed = interviews.filter((i) => i.status === "COMPLETED")
-
   const latestCompleted = completed[0] ?? null
   const mostRecent = continueInterview ?? latestCompleted
-
   const totalSessions = interviews.length
-  const clarityScores = completed.map((i) => i.overallScore).filter((s): s is number => s != null)
-  const trendText = computeTrend(clarityScores)
-  const streak = computeStreak(interviews)
-  const weeklyGoal = 5
 
-  const weeklyStats = useMemo(() => {
-    // eslint-disable-next-line react-hooks/purity
-    const cutoff = new Date(Date.now() - 7 * 86400000)
-    const thisWeek = interviews.filter((i) => new Date(i.createdAt) >= cutoff)
-    const thisWeekCompleted = thisWeek.filter((i) => i.status === "COMPLETED")
-    const sessions = thisWeek.length
-    const avgClarity = thisWeekCompleted.length > 0
-      ? thisWeekCompleted.reduce((sum, i) => sum + (i.overallScore ?? 0), 0) / thisWeekCompleted.length
-      : null
-    const best = thisWeekCompleted.length > 0
-      ? thisWeekCompleted.reduce((best, i) =>
-          (i.overallScore ?? 0) > (best.overallScore ?? 0) ? i : best
-        )
-      : null
-    return { sessions, avgClarity, best }
-  }, [interviews])
-
-  const weeklyProgress = Math.min(weeklyStats.sessions / weeklyGoal, 1)
-  const sparklineScores = useMemo(() => clarityScores.slice(-8), [clarityScores])
+  const readinessScore = useMemo(() => computeReadiness(completed), [completed])
+  const weaknesses = useMemo(() => detectWeaknesses(completed), [completed])
+  const insight = useMemo(() => getLatestInsight(completed), [completed])
+  const remembers = useMemo(() => analyzeAcrossSessions(completed), [completed])
+  const comparison = useMemo(() => computeComparison30Days(completed), [completed])
+  const milestones = useMemo(() => computeMilestones(completed), [completed])
+  const roleRecs = useMemo(() => computeRoleRecommendations(completed), [completed])
 
   return (
-    <div>
-      <UploadResumeModal open={showUpload} onClose={() => setShowUpload(false)} />
-      <ResumePreview
-        resumeId={previewResumeId}
-        open={!!previewResumeId}
-        onClose={() => setPreviewResumeId(null)}
+    <div className="py-6" style={{ position: "relative" }}>
+      {/* Page background wash */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "radial-gradient(ellipse at 30% 0%, rgba(124,58,237,0.06) 0%, transparent 60%)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
       />
-
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-10">
-        <div className="space-y-10 min-w-0">
-          {/* Greeting */}
-          <section>
-            {user && (
-              <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", marginBottom: "2px", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span>
-                  {greeting()}, {user.name?.split(" ")[0]}
-                </span>
-                {streak >= 2 && (
-                  <span style={{ fontSize: "12px", color: "rgba(255,180,0,0.7)" }}>
-                    &#x1F525; {streak}-day streak
-                  </span>
-                )}
-              </p>
-            )}
-            <h1
-              style={{
-                fontSize: "32px",
-                fontWeight: 600,
-                letterSpacing: "-0.02em",
-                color: "var(--landing-fg)",
-                lineHeight: 1.2,
-              }}
-            >
-              {totalSessions > 0
-                ? `${totalSessions} session${totalSessions !== 1 ? "s" : ""} in. ${trendText}`
-                : "Start your first practice session."}
-            </h1>
-          </section>
-
-          {mostRecent && (
-            <SessionStrip
-              mostRecent={mostRecent}
-              onViewResume={setPreviewResumeId}
-            />
-          )}
-
-          {completed.length > 0 && <QuickStartStrip />}
-
-          {completed.length > 0 && <PastSessionsTable completed={completed} />}
-
-          {!isLoading && interviews.length === 0 && (
-            <EmptyState onUpload={() => setShowUpload(true)} />
-          )}
-        </div>
-
-        <WeeklySidebar
-          sessions={weeklyStats.sessions}
-          goal={weeklyGoal}
-          progress={weeklyProgress}
-          avgClarity={weeklyStats.avgClarity}
-          best={weeklyStats.best}
-          sparklineScores={sparklineScores}
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <UploadResumeModal open={showUpload} onClose={() => setShowUpload(false)} />
+        <ResumePreview
+          resumeId={previewResumeId}
+          open={!!previewResumeId}
+          onClose={() => setPreviewResumeId(null)}
         />
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-10" style={{ maxWidth: "960px", margin: "0 auto" }}>
+          {/* Main column */}
+          <div className="space-y-6 min-w-0">
+            <ReadinessHero
+              user={user}
+              totalSessions={totalSessions}
+              readinessScore={readinessScore}
+              interviews={interviews}
+            />
+
+            <AiCoachCard completed={completed} totalSessions={totalSessions} />
+
+            {mostRecent && (
+              <SessionStrip mostRecent={mostRecent} onViewResume={setPreviewResumeId} />
+            )}
+
+            {completed.length > 1 && <TrendsSection completed={completed} />}
+
+            {/* Misses + Insight side by side */}
+            {completed.length > 0 && (weaknesses.length > 0 || insight) && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }} className="max-md:grid-cols-1">
+                <WeaknessDetection weaknesses={weaknesses} />
+                <LatestInsight insight={insight} hasData={completed.length > 0} />
+              </div>
+            )}
+
+            <InterviewerRemembers data={remembers} totalSessions={totalSessions} />
+
+            {roleRecs.length > 0 && <RoleRecommendations recommendations={roleRecs} />}
+
+            {completed.length > 0 && <QuickStartStrip />}
+
+            {completed.length > 0 && <PastSessionsTable completed={completed} />}
+
+            {!isLoading && interviews.length === 0 && (
+              <EmptyState onUpload={() => setShowUpload(true)} />
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:sticky lg:top-6 self-start">
+            <SidebarRight
+              interviews={interviews}
+              completed={completed}
+              comparison={comparison}
+              milestones={milestones}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

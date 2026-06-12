@@ -14,7 +14,7 @@ export function QuickStartStrip() {
         paddingBottom: "8px",
       }}
     >
-      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)", whiteSpace: "nowrap" }}>
+      <span style={{ fontSize: "13px", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
         Practice a new role &rarr;
       </span>
       {roles.map((role) => (
@@ -25,19 +25,19 @@ export function QuickStartStrip() {
             fontSize: "12px",
             padding: "4px 14px",
             borderRadius: "20px",
-            border: "1px solid rgba(255,255,255,0.1)",
-            background: "rgba(255,255,255,0.04)",
-            color: "rgba(255,255,255,0.5)",
+            border: "1px solid var(--color-border)",
+            background: "var(--color-bg-hover)",
+            color: "var(--color-text-muted)",
             cursor: "pointer",
             transition: "all 0.15s",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.08)"
-            e.currentTarget.style.color = "var(--landing-fg)"
+            e.currentTarget.style.background = "var(--color-bg-hover)"
+            e.currentTarget.style.color = "var(--color-text)"
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.04)"
-            e.currentTarget.style.color = "rgba(255,255,255,0.5)"
+            e.currentTarget.style.background = "var(--color-bg-hover)"
+            e.currentTarget.style.color = "var(--color-text-muted)"
           }}
         >
           {role}
