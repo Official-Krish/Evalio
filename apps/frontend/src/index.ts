@@ -1,41 +1,23 @@
 import { serve } from "bun";
 import index from "./index.html";
 
+const BACKEND_URL = process.env.VITE_BACKEND_URL || "http://localhost:3001";
+
 const server = serve({
+  port: 5173,
   routes: {
-    // Serve index.html for all unmatched routes.
+    "/api/*": async (req) => {
+      const url = new URL(req.url);
+      return fetch(`${BACKEND_URL}${url.pathname}${url.search}`, req);
+    },
     "/*": index,
-
-    "/api/hello": {
-      async GET(req) {
-        return Response.json({
-          message: "Hello, world!",
-          method: "GET",
-        });
-      },
-      async PUT(req) {
-        return Response.json({
-          message: "Hello, world!",
-          method: "PUT",
-        });
-      },
-    },
-
-    "/api/hello/:name": async req => {
-      const name = req.params.name;
-      return Response.json({
-        message: `Hello, ${name}!`,
-      });
-    },
   },
 
   development: process.env.NODE_ENV !== "production" && {
-    // Enable browser hot reloading in development
     hmr: true,
-
-    // Echo console logs from the browser to the server
     console: true,
   },
 });
 
-console.log(`🚀 Server running at ${server.url}`);
+console.log(`🚀 Frontend at http://localhost:${server.port}`);
+console.log(`🔁 Proxying /api/* -> ${BACKEND_URL}`);
