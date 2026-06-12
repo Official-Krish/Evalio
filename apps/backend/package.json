@@ -25,6 +25,7 @@
     "@elysiajs/cors": "^1.4.2",
     "@google/genai": "^2.8.0",
     "elysia": "^1.4.28",
+    "elysia-rate-limit": "^4.6.2",
     "mammoth": "^1.12.0",
     "pdf-parse": "^2.4.5",
     "ws": "^8.21.0",

@@ -14,12 +14,13 @@ datasource db {
 
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
+  id            String     @id @default(cuid())
+  email         String     @unique
   name          String?
   password      String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  role          UserRole   @default(FREE)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   candidate     CandidateProfile?
   resumes       Resume[]
   githubProfile GithubProfile?
@@ -73,11 +74,11 @@ model InterviewSession {
   problemSolvingScore Float?
   durationSeconds     Int?
   position            String?
+  jobDescription      String?  @db.Text
   resumeId            String?
   resume              Resume?  @relation(fields: [resumeId], references: [id])
   summary             InterviewSummary?
   turns               InterviewTurn[]
-  transcriptEvents    TranscriptEvent[]
   createdAt           DateTime @default(now())
   user                User     @relation(fields: [userId], references: [id])
 }
@@ -95,23 +96,6 @@ model InterviewTurn {
   feedback        String?  @db.Text
   createdAt       DateTime @default(now())
   interview       InterviewSession   @relation(fields: [interviewId], references: [id])
-  transcriptEvents TranscriptEvent[]
-}
-
-model TranscriptEvent {
-  id            String   @id @default(cuid())
-  interviewId   String
-  turnId        String?
-  role          TranscriptRole
-  text          String   @db.Text
-  startMs       Int?
-  endMs         Int?
-  createdAt     DateTime @default(now())
-  interview     InterviewSession @relation(fields: [interviewId], references: [id])
-  turn          InterviewTurn?   @relation(fields: [turnId], references: [id])
-
-  @@index([interviewId])
-  @@index([turnId])
 }
 
 model InterviewSummary {
@@ -122,8 +106,15 @@ model InterviewSummary {
   weaknesses            Json
   improvementAreas      Json
   recommendedTopics     Json
+  resumeStrengths       Json
+  resumeWeaknesses      Json
   generatedAt           DateTime @default(now())
   interview             InterviewSession @relation(fields: [interviewId], references: [id])
+}
+
+enum UserRole {
+  FREE
+  ADMIN
 }
 
 enum InterviewStatus {
@@ -132,10 +123,4 @@ enum InterviewStatus {
   COMPLETED
   FAILED
   CANCELLED
-}
-
-enum TranscriptRole {
-  USER
-  ASSISTANT
-  SYSTEM
 }

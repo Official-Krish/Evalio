@@ -2,14 +2,33 @@ import { Elysia, t } from "elysia"
 import { prisma } from "../lib/prisma"
 import { authGuard } from "../middleware/auth"
 import { extractUsername, parseGithubProfile } from "../utils/githubParser"
+import { strictRateLimit } from "../middleware/rateLimit"
 
 export const interviewRoutes = new Elysia({ prefix: "/interview" })
+  .use(strictRateLimit)
   .guard({}, (app) =>
     app
       .use(authGuard)
       .post(
         "/create",
         async ({ user, body, set }) => {
+          // Rate limit: FREE users can only create 3 interviews per 7 days
+          if (user.role !== "ADMIN") {
+            const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            const recentCount = await prisma.interviewSession.count({
+              where: {
+                userId: user.id,
+                createdAt: { gte: since },
+              },
+            })
+            if (recentCount >= 3) {
+              set.status = 429
+              return {
+                error: "Rate limit reached. Free users can only create 3 interviews per 7 days.",
+              }
+            }
+          }
+
           const latestResume = await prisma.resume.findFirst({
             where: { userId: user.id },
             orderBy: { version: "desc" },
@@ -65,6 +84,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
               userId: user.id,
               status: "CREATED",
               position: body.position,
+              jobDescription: body.jobDescription,
               resumeId: resume.id,
             },
           })
@@ -76,6 +96,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
             position: t.Optional(t.String()),
             resumeId: t.Optional(t.String()),
             githubUrl: t.Optional(t.String()),
+            jobDescription: t.Optional(t.String()),
           }),
         }
       )
@@ -97,10 +118,6 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
           where: { id },
           include: {
             turns: { orderBy: { createdAt: "asc" } },
-            transcriptEvents: {
-              orderBy: { createdAt: "asc" },
-              select: { id: true, role: true, text: true, createdAt: true },
-            },
             summary: true,
             resume: { select: { id: true, version: true, originalUrl: true } },
           },

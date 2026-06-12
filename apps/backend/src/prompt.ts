@@ -2,6 +2,7 @@ export interface PromptInput {
   position: string | null
   candidateName: string | null
   resumeText: string | null
+  jobDescription: string | null
   githubUsername: string | null
   githubSummary: string | null
   githubLanguages: string[]
@@ -11,6 +12,7 @@ export interface PromptInput {
     stars: number
     language: string | null
   }[]
+  durationMinutes: number
 }
 
 export function buildInterviewPrompt(input: PromptInput): string {
@@ -59,6 +61,12 @@ Ask questions conversationally — one at a time — and wait for the candidate'
     }
   }
 
+  if (input.jobDescription) {
+    sections.push(
+      `## Job Description\n${input.jobDescription}`
+    )
+  }
+
   sections.push(
     `## Interview Guidelines
 1. Start with a brief自我介绍 (introduction), then move into questions.
@@ -69,7 +77,8 @@ Ask questions conversationally — one at a time — and wait for the candidate'
 6. If the candidate struggles, offer hints before moving on.
 7. After 4–5 questions, provide a brief verbal summary of strengths and areas for improvement.
 8. Do NOT ask more than one question at a time.
-9. Keep everything spoken-word friendly — no markdown, no code blocks in speech (described verbally instead).`
+9. Keep everything spoken-word friendly — no markdown, no code blocks in speech (described verbally instead).
+10. You have ${input.durationMinutes} minutes for this interview. Pace your questions accordingly so the interview fits within the time limit. After about ${Math.max(1, input.durationMinutes - 2)} minutes, begin wrapping up.`
   )
 
   return sections.join("\n\n")

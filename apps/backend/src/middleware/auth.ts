@@ -23,6 +23,7 @@ export const authGuard = new Elysia({ name: "auth-guard" })
         id: payload.id as string,
         email: payload.email as string,
         name: payload.name as string | undefined,
+        role: (payload.role as "FREE" | "ADMIN") ?? "FREE",
       },
     }
   })

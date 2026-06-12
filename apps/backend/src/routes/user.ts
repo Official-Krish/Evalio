@@ -13,6 +13,7 @@ export const userRoutes = new Elysia({ prefix: "/user" })
             id: true,
             email: true,
             name: true,
+            role: true,
             createdAt: true,
             candidate: {
               select: {

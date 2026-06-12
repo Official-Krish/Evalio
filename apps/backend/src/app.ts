@@ -5,12 +5,13 @@ import { authRoutes } from "./routes/auth"
 import { userRoutes } from "./routes/user"
 import { interviewRoutes } from "./routes/interview"
 import { turnRoutes } from "./routes/turn"
-import { transcriptRoutes } from "./routes/transcript"
 import { resumeRoutes } from "./routes/resume"
 import { githubRoutes } from "./routes/github"
 import { evaluateRoutes } from "./routes/evaluate"
+import { globalRateLimit } from "./middleware/rateLimit"
 
 export const app = new Elysia()
+  .use(globalRateLimit)
   .use(cors({
     origin: Bun.env.CORS_ORIGIN ?? "http://localhost:5173",
     credentials: true,
@@ -27,7 +28,6 @@ export const app = new Elysia()
     .use(userRoutes)
     .use(interviewRoutes)
     .use(turnRoutes)
-    .use(transcriptRoutes)
     .use(resumeRoutes)
     .use(githubRoutes)
     .use(evaluateRoutes)

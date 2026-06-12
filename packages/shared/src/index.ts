@@ -17,6 +17,7 @@ export const createInterviewSchema = z.object({
   position: z.string().min(1),
   resumeId: z.string().optional(),
   githubUrl: z.string().url().optional().or(z.literal("")),
+  jobDescription: z.string().optional(),
 })
 
 export const interviewStatusSchema = z.enum([
@@ -43,10 +44,13 @@ export type SignupInput = z.infer<typeof signupSchema>
 export type CreateInterviewInput = z.infer<typeof createInterviewSchema>
 export type InterviewStatus = z.infer<typeof interviewStatusSchema>
 
+export type UserRole = "FREE" | "ADMIN"
+
 export interface User {
   id: string
   name: string
   email: string
+  role: UserRole
 }
 
 export interface InterviewSession {
@@ -54,6 +58,7 @@ export interface InterviewSession {
   userId: string
   status: InterviewStatus
   position: string | null
+  jobDescription: string | null
   overallScore: number | null
   communicationScore: number | null
   technicalScore: number | null
@@ -64,7 +69,6 @@ export interface InterviewSession {
   createdAt: Date
   resume?: Resume | null
   turns?: InterviewTurn[]
-  transcriptEvents?: TranscriptEvent[]
   summary?: InterviewSummary | null
 }
 
@@ -79,17 +83,6 @@ export interface InterviewTurn {
   createdAt: Date
 }
 
-export interface TranscriptEvent {
-  id: string
-  interviewId: string
-  turnId: string | null
-  role: "USER" | "ASSISTANT" | "SYSTEM"
-  text: string
-  startMs: number | null
-  endMs: number | null
-  createdAt: Date
-}
-
 export interface InterviewSummary {
   id: string
   interviewId: string
@@ -98,6 +91,8 @@ export interface InterviewSummary {
   weaknesses: string[]
   improvementAreas: string[]
   recommendedTopics: string[]
+  resumeStrengths: string[]
+  resumeWeaknesses: string[]
 }
 
 export interface Resume {

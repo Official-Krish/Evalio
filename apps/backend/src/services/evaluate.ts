@@ -16,6 +16,8 @@ interface EvaluationResult {
   keyStrengths: string[]
   areasForImprovement: string[]
   recommendedTopics: string[]
+  resumeStrengths: string[]
+  resumeWeaknesses: string[]
   turns: TurnEvaluation[]
 }
 
@@ -54,6 +56,16 @@ const EVALUATION_SCHEMA = {
       items: { type: "string" },
       description: "Topics the candidate should study further",
     },
+    resumeStrengths: {
+      type: "array",
+      items: { type: "string" },
+      description: "Top 3 things that work well in the candidate's resume",
+    },
+    resumeWeaknesses: {
+      type: "array",
+      items: { type: "string" },
+      description: "Top 3 gaps or improvements needed in the candidate's resume",
+    },
     turns: {
       type: "array",
       items: {
@@ -82,6 +94,8 @@ const EVALUATION_SCHEMA = {
     "keyStrengths",
     "areasForImprovement",
     "recommendedTopics",
+    "resumeStrengths",
+    "resumeWeaknesses",
     "turns",
   ],
 } as const
@@ -93,7 +107,6 @@ function buildEvaluationPrompt(input: {
   githubSummary: string | null
   githubLanguages: string[]
   turns: { orderNumber: number; questionText: string; answerText: string }[]
-  transcriptEvents: { role: string; text: string; startMs: number | null }[]
 }) {
   const questions = input.turns
     .map(
@@ -101,13 +114,6 @@ function buildEvaluationPrompt(input: {
         `[Question ${t.orderNumber}]: ${t.questionText}\n[Answer ${t.orderNumber}]: ${t.answerText || "(no answer)"}`
     )
     .join("\n\n")
-
-  const rawTranscript = input.transcriptEvents
-    .map(
-      (e) =>
-        `[${e.role}${e.startMs != null ? ` @ ${e.startMs}ms` : ""}]: ${e.text}`
-    )
-    .join("\n")
 
   return `You are an expert technical interviewer. Evaluate the following interview.
 
@@ -119,12 +125,10 @@ GitHub: ${input.githubSummary || "Not linked"} ${input.githubLanguages.length ? 
 --- Structured Q&A ---
 ${questions || "No structured Q&A recorded"}
 
---- Raw Transcript ---
-${rawTranscript || "No raw transcript recorded"}
-
 Score each turn individually (0-100) with specific feedback.
 Provide overall scores for communication, technical knowledge, and problem solving.
-List key strengths, areas for improvement, and recommended topics for further study.`
+List key strengths, areas for improvement, and recommended topics for further study.
+Also analyze the candidate's resume briefly — what are its strongest points (resumeStrengths) and what could be improved (resumeWeaknesses)? Keep each to 2-3 items.`
 }
 
 export async function evaluateInterview(interviewId: string) {
@@ -152,10 +156,6 @@ export async function evaluateInterview(interviewId: string) {
           answerText: true,
         },
       },
-      transcriptEvents: {
-        orderBy: { startMs: "asc" },
-        select: { role: true, text: true, startMs: true },
-      },
     },
   })
 
@@ -177,7 +177,6 @@ export async function evaluateInterview(interviewId: string) {
     githubSummary: github?.summary ?? null,
     githubLanguages: (github?.languages as string[]) ?? [],
     turns: interview.turns,
-    transcriptEvents: interview.transcriptEvents,
   })
 
   const apiKey = process.env.GEMINI_API_KEY
@@ -218,6 +217,8 @@ export async function evaluateInterview(interviewId: string) {
         weaknesses: result.areasForImprovement,
         improvementAreas: result.areasForImprovement,
         recommendedTopics: result.recommendedTopics,
+        resumeStrengths: result.resumeStrengths,
+        resumeWeaknesses: result.resumeWeaknesses,
       },
       update: {
         summary: result.summary,
@@ -225,6 +226,8 @@ export async function evaluateInterview(interviewId: string) {
         weaknesses: result.areasForImprovement,
         improvementAreas: result.areasForImprovement,
         recommendedTopics: result.recommendedTopics,
+        resumeStrengths: result.resumeStrengths,
+        resumeWeaknesses: result.resumeWeaknesses,
       },
     }),
     prisma.interviewSession.update({

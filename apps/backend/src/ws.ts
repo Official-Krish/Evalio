@@ -72,6 +72,9 @@ export function startWsServer() {
     let answerBuf = ""
     let nextOrderNumber = 1
     let finalized = false
+    let closingMode = false
+    let timeWarningTimer: ReturnType<typeof setTimeout> | null = null
+    let timeCapTimer: ReturnType<typeof setTimeout> | null = null
 
     async function createTurn(questionText: string) {
       const turn = await prisma.interviewTurn.create({
@@ -113,24 +116,7 @@ export function startWsServer() {
           where: { id: turnId },
           data: { answerText: answerBuf },
         })
-        await prisma.transcriptEvent.create({
-          data: {
-            interviewId,
-            turnId,
-            role: "USER",
-            text: answerBuf,
-          },
-        })
       }
-
-      await prisma.transcriptEvent.create({
-        data: {
-          interviewId,
-          turnId,
-          role: "ASSISTANT",
-          text: questionBuf,
-        },
-      })
 
       currentTurnId = turnId
       questionBuf = ""
@@ -138,6 +124,8 @@ export function startWsServer() {
     }
 
     async function cleanup() {
+      if (timeWarningTimer) clearTimeout(timeWarningTimer)
+      if (timeCapTimer) clearTimeout(timeCapTimer)
       if (interviewId && !finalized) {
         finalized = true
         // flush remaining buffers
@@ -166,6 +154,67 @@ export function startWsServer() {
         }
       }
       gemini?.close()
+    }
+
+    async function initiateClosing() {
+      if (closingMode || finalized) return
+      closingMode = true
+
+      if (timeWarningTimer) clearTimeout(timeWarningTimer)
+      if (timeCapTimer) clearTimeout(timeCapTimer)
+
+      await safeSend({ type: "closing_started" })
+
+      gemini?.send(
+        JSON.stringify({
+          clientContent: {
+            turns: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: "The interview is now complete. Give a brief closing summary highlighting one key strength and one area for improvement, thank the candidate, and say goodbye.",
+                  },
+                ],
+              },
+            ],
+            turnComplete: true,
+          },
+        })
+      )
+
+      // safety: force cleanup after 20s if Gemini doesn't finish
+      setTimeout(() => {
+        if (!finalized) {
+          console.log("[ws] closing safety timeout — forcing cleanup")
+          cleanup()
+        }
+      }, 20_000)
+    }
+
+    async function handleTurnCompleteDuringClosing() {
+      if (!interviewId || !closingMode || finalized) return
+      console.log("[ws] closing turn complete — finalizing")
+      if (questionBuf) {
+        await flushTurn()
+      } else if (currentTurnId && answerBuf) {
+        const prev = await prisma.interviewTurn.findUnique({
+          where: { id: currentTurnId },
+          select: { answerText: true },
+        })
+        const merged = prev?.answerText
+          ? prev.answerText + " " + answerBuf
+          : answerBuf
+        await prisma.interviewTurn.update({
+          where: { id: currentTurnId },
+          data: { answerText: merged },
+        })
+        answerBuf = ""
+      }
+      await finalizeInterview(interviewId)
+      await safeSend({ type: "feedback_ready" })
+      gemini?.close()
+      client.close()
     }
 
     client.on("message", async (raw) => {
@@ -227,14 +276,19 @@ export function startWsServer() {
             nextOrderNumber = (lastTurn?.orderNumber ?? 0) + 1
 
             const github = interview.user.githubProfile
+            const userRole = interview.user.role ?? "FREE"
+            const timeLimitMs = userRole === "ADMIN" ? 1_800_000 : 900_000
+            const durationMinutes = timeLimitMs / 60_000
             const promptInput = {
               position: interview.position,
               candidateName: interview.user.name,
               resumeText: interview.resume?.extractedText ?? null,
+              jobDescription: (interview as { jobDescription?: string | null }).jobDescription ?? null,
               githubUsername: github?.username ?? null,
               githubSummary: github?.summary ?? null,
               githubLanguages: (github?.languages as string[]) ?? [],
               githubProjects: (github?.projects as { name: string; description: string | null; stars: number; language: string | null }[]) ?? [],
+              durationMinutes,
             }
 
             const systemPrompt = buildInterviewPrompt(promptInput)
@@ -306,6 +360,11 @@ export function startWsServer() {
                 if (inputText && interviewId) {
                   answerBuf = dedupAppend(answerBuf, inputText)
                 }
+
+                // In closing mode, detect turnComplete to finalize
+                if (closingMode && parsed.serverContent?.turnComplete) {
+                  await handleTurnCompleteDuringClosing()
+                }
               } catch {
                 // Not JSON or parse error — just relay
               }
@@ -324,10 +383,22 @@ export function startWsServer() {
 
             console.log("[ws] sending ready signal to client")
             await safeSend({ type: "ready" })
+            await safeSend({ type: "time_limit", limitMs: timeLimitMs })
+
+            timeWarningTimer = setTimeout(() => {
+              safeSend({ type: "time_warning", remainingMs: 60_000 })
+            }, Math.max(0, timeLimitMs - 60_000))
+
+            timeCapTimer = setTimeout(() => {
+              console.log("[ws] time cap reached — initiating closing")
+              safeSend({ type: "time_limit_reached" })
+              initiateClosing()
+            }, timeLimitMs)
             break
           }
 
           case "audio_chunk": {
+            if (closingMode) return
             if (!gemini) {
               await safeSend({
                 error: "Not initialized. Send init first.",
@@ -354,6 +425,7 @@ export function startWsServer() {
           }
 
           case "audio_stream_end": {
+            if (closingMode) return
             if (!gemini) {
               await safeSend({
                 error: "Not initialized. Send init first.",
@@ -399,8 +471,7 @@ export function startWsServer() {
 
           case "end_interview": {
             console.log("[ws] end_interview from client")
-            await cleanup()
-            client.close()
+            await initiateClosing()
             break
           }
 

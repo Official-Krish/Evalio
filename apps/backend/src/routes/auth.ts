@@ -2,10 +2,12 @@ import { Elysia, t } from "elysia"
 import { jwt } from "@elysia/jwt"
 import { prisma } from "../lib/prisma"
 import { authGuard } from "../middleware/auth"
+import { strictRateLimit } from "../middleware/rateLimit"
 
 const SECRET = Bun.env.JWT_SECRET || "dev-secret"
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
+  .use(strictRateLimit)
   .use(jwt({ secret: SECRET, exp: "7d" }))
   .post(
     "/signup",
@@ -28,13 +30,14 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
             create: {},
           },
         },
-        select: { id: true, email: true, name: true },
+        select: { id: true, email: true, name: true, role: true },
       })
 
       const token = await jwt.sign({
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
       })
       cookie.token!.set({
         value: token,
@@ -59,7 +62,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     async ({ body, cookie, jwt, set }) => {
       const user = await prisma.user.findUnique({
         where: { email: body.email },
-        select: { id: true, email: true, name: true, password: true },
+        select: { id: true, email: true, name: true, role: true, password: true },
       })
       if (!user) {
         set.status = 401
@@ -76,6 +79,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
       })
       cookie.token!.set({
         value: token,
@@ -85,7 +89,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         sameSite: "lax",
       })
 
-      return { user: { id: user.id, email: user.email, name: user.name } }
+      return { user: { id: user.id, email: user.email, name: user.name, role: user.role } }
     },
     {
       body: t.Object({

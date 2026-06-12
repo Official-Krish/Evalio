@@ -78,7 +78,6 @@ export const turnRoutes = new Elysia()
 
           const turn = await prisma.interviewTurn.findUnique({
             where: { id: turnId },
-            include: { transcriptEvents: { orderBy: { startMs: "asc" } } },
           })
           if (!turn || turn.interviewId !== id) {
             set.status = 404
@@ -126,50 +125,6 @@ export const turnRoutes = new Elysia()
             score: t.Optional(t.Nullable(t.Number())),
             feedback: t.Optional(t.Nullable(t.String())),
           }),
-        }
-      )
-      .post(
-        "/interview/:id/turns/:turnId/aggregate",
-        async ({ params: { id, turnId }, user, set }) => {
-          if (!(await verifyInterview(id, user.id, set))) return
-
-          const turn = await prisma.interviewTurn.findUnique({
-            where: { id: turnId },
-          })
-          if (!turn || turn.interviewId !== id) {
-            set.status = 404
-            return { error: "Turn not found" }
-          }
-
-          const events = await prisma.transcriptEvent.findMany({
-            where: { turnId, role: "USER" },
-            orderBy: { startMs: "asc" },
-          })
-
-          const deduped: string[] = []
-          for (const event of events) {
-            const text = event.text.trim()
-            if (!text) continue
-            if (deduped.length === 0) {
-              deduped.push(text)
-            } else {
-              const last = deduped[deduped.length - 1]!
-              if (text.startsWith(last)) {
-                deduped[deduped.length - 1] = text
-              } else {
-                deduped.push(text)
-              }
-            }
-          }
-
-          const answerText = deduped.join(" ")
-
-          const updated = await prisma.interviewTurn.update({
-            where: { id: turnId },
-            data: { answerText: answerText || "" },
-          })
-
-          return { turn: updated }
         }
       )
   )
