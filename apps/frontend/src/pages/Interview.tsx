@@ -37,21 +37,28 @@ export function InterviewPage() {
   const endedRef = useRef(false)
 
   const [isConnecting, setIsConnecting] = useState(true)
-  const [isEnding, setIsEnding] = useState(false)
+  const [closing, setClosing] = useState(false)
+  const [feedbackReady, setFeedbackReady] = useState(false)
   const [aiTurnActive, setAiTurnActive] = useState(false)
   const [duration, setDuration] = useState(0)
+  const [timeLimit, setTimeLimit] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [messages, setMessages] = useState<
     Array<{ role: "user" | "assistant"; text: string; id: string }>
   >([])
 
   const phase = useMemo((): Phase => {
-    if (endedRef.current || isEnding) return "ended"
+    if (feedbackReady) return "ended"
     if (isConnecting) return "connecting"
     if (aiPlaying || aiTurnActive) return "ai_speaking"
     if (micActive) return "user_speaking"
     return "ready"
-  }, [isEnding, isConnecting, aiPlaying, aiTurnActive, micActive])
+  }, [feedbackReady, isConnecting, aiPlaying, aiTurnActive, micActive])
+
+  const remainingMs = useMemo(() => {
+    if (!timeLimit) return null
+    return Math.max(0, timeLimit - duration * 1000)
+  }, [timeLimit, duration])
 
   const aiSpeakingRef = useRef(false)
   const phaseRef = useRef(phase)
@@ -75,7 +82,7 @@ export function InterviewPage() {
     setAiTurnActive(false)
     stopMic()
     stopAudio()
-    socketRef.current?.end()
+    socketRef.current?.forceClose()
     socketRef.current = null
   }, [stopMic, stopAudio])
 
@@ -160,6 +167,7 @@ export function InterviewPage() {
       if (endedRef.current) return
       const msg = (err as Record<string, unknown>)?.error as string | undefined
       setError(msg || "Connection failed")
+      toast.error(msg || "Connection failed")
     })
 
     socket.on("close", () => {
@@ -168,12 +176,53 @@ export function InterviewPage() {
       }
     })
 
+    // Graceful end-flow events
+    socket.on("closing_started", () => {
+      setClosing(true)
+      stopMic()
+    })
+
+    socket.on("feedback_ready", () => {
+      setFeedbackReady(true)
+      stopAudio()
+      endedRef.current = true
+      socketRef.current?.forceClose()
+      socketRef.current = null
+      navigate(`/results/${id}`, { replace: true })
+    })
+
+    // Time cap events
+    socket.on("time_limit", (data: unknown) => {
+      const msg = data as Record<string, unknown>
+      if (typeof msg.limitMs === "number") {
+        setTimeLimit(msg.limitMs)
+      }
+    })
+
+    socket.on("time_warning", () => {
+      toast("One minute remaining", {
+        icon: "\u23F0",
+        duration: 5000,
+      })
+    })
+
+    socket.on("time_limit_reached", () => {
+      if (!closing && !endedRef.current) {
+        setClosing(true)
+        stopMic()
+        socketRef.current?.sendEndInterview()
+      }
+    })
+
     await socket.connect(id)
-  }, [user, id, playPcm, teardown])
+  }, [user, id, playPcm, stopAudio, teardown, navigate, closing, stopMic])
 
   useEffect(() => {
     connectSocket().catch((err: Error) => {
-      if (!endedRef.current) setError(err.message)
+      if (!endedRef.current) {
+        setError(err.message)
+        toast.error(err.message)
+      }
     })
   }, [connectSocket])
 
@@ -183,15 +232,29 @@ export function InterviewPage() {
     return () => clearInterval(interval)
   }, [phase])
 
+  // Safety timeout: if closing takes >30s, force-navigate to results
+  useEffect(() => {
+    if (!closing || feedbackReady) return
+    const timer = setTimeout(() => {
+      if (!feedbackReady) {
+        toast.error("Closing timed out — redirecting to results")
+        teardown()
+        navigate(`/results/${id}`, { replace: true })
+      }
+    }, 30_000)
+    return () => clearTimeout(timer)
+  }, [closing, feedbackReady, id, navigate, teardown])
+
   const handleEnd = useCallback(() => {
-    if (endedRef.current || isEnding) return
-    setIsEnding(true)
-    teardown()
-    navigate(`/results/${id}`, { replace: true })
-  }, [id, isEnding, navigate, teardown])
+    if (endedRef.current || closing || feedbackReady) return
+    if (!window.confirm("End this interview? You'll receive a closing summary and feedback.")) return
+    setClosing(true)
+    stopMic()
+    socketRef.current?.sendEndInterview()
+  }, [closing, feedbackReady, stopMic])
 
   const handleMicToggle = async () => {
-    if (endedRef.current || isEnding) return
+    if (endedRef.current || closing || feedbackReady) return
 
     if (micActive) {
       stopMic()
@@ -239,10 +302,22 @@ export function InterviewPage() {
 
       <div className="relative z-10 flex flex-col min-h-[100dvh]">
         <div className="landing-container pt-6">
-          <SessionHeader position={position} duration={duration} phase={phase} />
+          <SessionHeader
+            position={position}
+            duration={duration}
+            phase={phase}
+            timeLimit={timeLimit}
+            remainingMs={remainingMs}
+          />
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0">
+          {closing && !feedbackReady && (
+            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 px-6 py-2 rounded-full bg-[var(--landing-accent)]/10 border border-[var(--landing-accent)]/20 backdrop-blur-sm text-[13px] text-[var(--landing-fg-muted)] animate-pulse">
+              Interview ending...
+            </div>
+          )}
+
           <div className="interview-orb-stage">
             <PresenceOrb analyserRef={activeAnalyser} phase={phase} side={activeSide} />
           </div>
@@ -265,7 +340,7 @@ export function InterviewPage() {
             phase={phase}
             onMicToggle={handleMicToggle}
             onEnd={handleEnd}
-            ending={isEnding}
+            ending={closing}
           />
         </div>
       </div>

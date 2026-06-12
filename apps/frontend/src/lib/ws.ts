@@ -67,13 +67,11 @@ export class InterviewSocket {
     this.send({ type: "audio_stream_end" })
   }
 
-  end() {
-    this.closed = true
+  sendEndInterview() {
     this.send({ type: "end_interview" })
-    this.close()
   }
 
-  close() {
+  forceClose() {
     this.closed = true
     this.handlers.clear()
     this.ws?.close()

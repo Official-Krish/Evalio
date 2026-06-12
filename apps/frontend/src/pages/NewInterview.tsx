@@ -26,6 +26,7 @@ export function NewInterviewPage() {
   const [previewResumeId, setPreviewResumeId] = useState<string | null>(null)
   const [githubUrl, setGithubUrl] = useState("")
   const [githubOpen, setGithubOpen] = useState(false)
+  const [jobDescription, setJobDescription] = useState("")
 
   const { data: resumes, refetch: refetchResumes } = useQuery({
     queryKey: ["resumes"],
@@ -56,7 +57,12 @@ export function NewInterviewPage() {
   const handleCreate = () => {
     if (!selectedPosition) { toast.error("Select a position"); return }
     if (!selectedResumeId) { toast.error("Select a resume"); return }
-    createMutation.mutate({ position: selectedPosition, resumeId: selectedResumeId, githubUrl: githubUrl || undefined })
+    createMutation.mutate({
+      position: selectedPosition,
+      resumeId: selectedResumeId,
+      githubUrl: githubUrl || undefined,
+      jobDescription: jobDescription.trim() || undefined,
+    })
   }
 
   const selectedResume = selectedResumeId
@@ -271,6 +277,49 @@ export function NewInterviewPage() {
                 </div>
               </div>
             )}
+
+            {/* Optional job description */}
+            <details
+              style={{
+                marginBottom: "24px",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.06)",
+                padding: "16px 20px",
+                fontSize: "13px",
+                color: "var(--color-text-secondary)",
+              }}
+            >
+              <summary
+                style={{
+                  cursor: "pointer",
+                  fontWeight: 500,
+                  color: "var(--color-text)",
+                  fontSize: "14px",
+                  userSelect: "none",
+                }}
+              >
+                Add job description (optional)
+              </summary>
+              <textarea
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Paste the job description here so the AI can tailor questions to the specific role requirements..."
+                rows={6}
+                style={{
+                  marginTop: "12px",
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: "transparent",
+                  color: "var(--color-text)",
+                  fontSize: "13px",
+                  lineHeight: 1.5,
+                  resize: "vertical",
+                  fontFamily: "inherit",
+                }}
+              />
+            </details>
 
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "32px" }}>
               <button

@@ -97,7 +97,7 @@ export const api = {
   getUser: async () => {
     const { data, error } = await client.api.user.get()
     if (error) throw new Error(errorMessage(error.value))
-    return data as { user: User & { candidate?: { githubUsername: string | null } } }
+    return data as unknown as { user: User & { candidate?: { githubUsername: string | null } } }
   },
 
   updateUser: async (input: { name?: string }) => {

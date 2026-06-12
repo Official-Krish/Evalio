@@ -25,6 +25,7 @@ import { DocsPage } from "./pages/Docs"
 import { PrivacyPage } from "./pages/Privacy"
 import { TermsPage } from "./pages/Terms"
 import { CookiesPage } from "./pages/Cookies"
+import { NotFoundPage } from "./pages/NotFound"
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { data, isLoading } = useSession()
@@ -100,6 +101,7 @@ const router = createBrowserRouter([
       { index: true, element: <ProfilePage /> },
     ],
   },
+  { path: "*", element: <NotFoundPage /> },
 ])
 
 export function App() {
