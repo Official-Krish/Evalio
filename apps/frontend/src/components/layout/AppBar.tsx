@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from "motion/react"
 import { useSession, useLogout } from "../../lib/auth"
 import { useTheme } from "../../lib/use-theme"
 import { OrbitalMark } from "../landing/svg/OrbitalMark"
+import { ProfileDropdown } from "./ProfileDropdown"
+import { ScrollProgress } from "./ScrollProgress"
 
 const navItems = [
-  { path: "/dashboard", label: "Interviews" },
-  { path: "/dashboard/new", label: "New Interview" },
+  { path: "/dashboard", label: "Interviews", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
+  { path: "/interview/new", label: "New Interview", icon: "M12 4v16m8-8H4" },
 ]
 
 function ThemeToggle() {
@@ -44,14 +46,24 @@ export function AppBar() {
       <header className="fixed top-0 inset-x-0 z-50 pointer-events-none">
         <div className="landing-container flex items-center justify-between h-[72px] pointer-events-auto">
           <div className="flex items-center gap-8">
-            <Link to={user ? "/dashboard" : "/"} className="group flex items-center gap-2.5 text-[var(--landing-fg)]">
+            <Link to="/" className="group flex items-center gap-2.5 text-[var(--landing-fg)]">
               <OrbitalMark size={22} className="text-[var(--landing-fg-muted)] group-hover:text-[var(--landing-fg)] transition-colors duration-500" />
               <span className="text-[12px] font-medium tracking-[0.12em] uppercase text-[var(--landing-fg-muted)] group-hover:text-[var(--landing-fg)] transition-colors duration-500">
                 Interview
               </span>
             </Link>
+          </div>
+
+          <div className="flex items-center gap-5">
+            {!user && (
+              <div className="hidden sm:flex items-center gap-2 text-[11px] tracking-wide text-[var(--landing-fg-faint)]">
+                <span className="landing-pulse-dot" aria-hidden />
+                <span>Observing</span>
+              </div>
+            )}
+
             {user && (
-              <nav className="hidden sm:flex items-center gap-1">
+              <nav className="hidden sm:flex items-right gap-1">
                 {navItems.map((item) => {
                   const active = location.pathname === item.path
                   return (
@@ -68,32 +80,13 @@ export function AppBar() {
                 })}
               </nav>
             )}
-          </div>
 
-          <div className="flex items-center gap-5">
-            {!user && (
-              <div className="hidden sm:flex items-center gap-2 text-[11px] tracking-wide text-[var(--landing-fg-faint)]">
-                <span className="landing-pulse-dot" aria-hidden />
-                <span>Observing</span>
-              </div>
-            )}
             <ThemeToggle />
             {user ? (
-              <div className="hidden sm:flex items-center gap-5">
-                <span className="text-[13px] text-[var(--landing-fg-muted)]">{user.name}</span>
-                <button
-                  onClick={() => logoutMutation.mutate()}
-                  className="text-[13px] text-[var(--landing-fg-faint)] hover:text-[var(--landing-fg)] transition-colors duration-300"
-                >
-                  Logout
-                </button>
-              </div>
+              <ProfileDropdown user={user} />
             ) : (
               <nav className="flex items-center gap-5">
-                <Link
-                  to="/login"
-                  className="text-[13px] text-[var(--landing-fg-muted)] hover:text-[var(--landing-fg)] transition-colors duration-300"
-                >
+                <Link to="/login" className="text-[13px] text-[var(--landing-fg-muted)] hover:text-[var(--landing-fg)] transition-colors duration-300">
                   Sign in
                 </Link>
                 <Link to="/signup" className="landing-cta-ghost text-[13px]">
@@ -119,6 +112,8 @@ export function AppBar() {
         </div>
       </header>
 
+      <ScrollProgress />
+
       {/* mobile menu */}
       <AnimatePresence>
         {menuOpen && (
@@ -132,18 +127,24 @@ export function AppBar() {
             <div className="landing-container py-4 space-y-1">
               {user ? (
                 <>
-                  <p className="text-[13px] text-[var(--landing-fg-muted)] px-3 pb-2">{user.name}</p>
-                  {navItems.map((item) => {
+                  <div className="px-3 pb-3 border-b border-[var(--landing-line)] mb-2">
+                    <p className="text-[13px] font-medium text-[var(--landing-fg)]">{user.name}</p>
+                    <p className="text-[11px] text-[var(--landing-fg-faint)]">{user.email}</p>
+                  </div>
+                  {[...navItems, { path: "/profile", label: "Profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" }, { path: "/pricing", label: "Pricing", icon: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z M12 6v12 M9 9h4a2 2 0 0 1 0 4H9" }].map((item) => {
                     const active = location.pathname === item.path
                     return (
                       <Link
                         key={item.path}
-                        to={item.path}
+                        to={item.path ?? "#"}
                         onClick={() => setMenuOpen(false)}
-                        className={`block px-3 py-2 text-[13px] transition-colors duration-300 ${
+                        className={`flex items-center gap-3 px-3 py-2 text-[13px] transition-colors duration-300 ${
                           active ? "text-[var(--landing-fg)]" : "text-[var(--landing-fg-muted)] hover:text-[var(--landing-fg)]"
                         }`}
                       >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--landing-fg-faint)] shrink-0">
+                          <path d={item.icon} />
+                        </svg>
                         {item.label}
                       </Link>
                     )
@@ -151,8 +152,13 @@ export function AppBar() {
                   <div className="pt-2 mt-2 border-t border-[var(--landing-line)]">
                     <button
                       onClick={() => { logoutMutation.mutate(); setMenuOpen(false) }}
-                      className="block w-full text-left px-3 py-2 text-[13px] text-[var(--landing-fg-faint)] hover:text-[var(--landing-fg)] transition-colors duration-300"
+                      className="flex items-center gap-3 w-full text-left px-3 py-2 text-[13px] text-[var(--landing-fg-faint)] hover:text-danger transition-colors duration-300 cursor-pointer"
                     >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                      </svg>
                       Logout
                     </button>
                   </div>

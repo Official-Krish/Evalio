@@ -34,7 +34,17 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <DashboardPage /> },
-      { path: "new", element: <NewInterviewPage /> },
+    ],
+  },
+  {
+    path: "/interview/new",
+    element: (
+      <AuthGuard>
+        <AppLayout />
+      </AuthGuard>
+    ),
+    children: [
+      { index: true, element: <NewInterviewPage /> },
     ],
   },
   {
