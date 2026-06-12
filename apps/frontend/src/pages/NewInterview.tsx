@@ -1,53 +1,48 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useQuery, useMutation } from "@tanstack/react-query"
-import { motion } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
 import { api } from "../lib/api"
-import { Button } from "../components/ui/Button"
-import { Input } from "../components/ui/Input"
-import { Card } from "../components/ui/Card"
-import type { Resume } from "@ai-interview/shared"
+import { ResumePreview } from "../components/ResumePreview"
+import { ProgressStepper } from "../components/Create-Interview/ProgressStepper"
+import { InterviewerCards } from "../components/Create-Interview/InterviewerCards"
+import { ResumeSection } from "../components/Create-Interview/ResumeSection"
+import { SessionCard } from "../components/Create-Interview/SessionCard"
+import type { Resume, InterviewSession } from "@ai-interview/shared"
 import toast from "react-hot-toast"
 
-const positions = [
-  {
-    title: "Software Engineer",
-    icon: "M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
-  },
-  {
-    title: "Frontend Engineer",
-    icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
-  },
-  {
-    title: "Backend Engineer",
-    icon: "M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01",
-  },
-  {
-    title: "Data Scientist",
-    icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
-  },
-  {
-    title: "Product Manager",
-    icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
-  },
-  {
-    title: "DevOps Engineer",
-    icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z",
-  },
-]
+const stepVariants = {
+  enter: { opacity: 0, x: 20 },
+  center: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
+}
 
 export function NewInterviewPage() {
   const navigate = useNavigate()
+  const [step, setStep] = useState(0)
   const [position, setPosition] = useState("")
   const [customPosition, setCustomPosition] = useState("")
-  const [githubUrl, setGithubUrl] = useState("")
   const [selectedResumeId, setSelectedResumeId] = useState<string | undefined>()
+  const [previewResumeId, setPreviewResumeId] = useState<string | null>(null)
+  const [githubUrl, setGithubUrl] = useState("")
+  const [githubOpen, setGithubOpen] = useState(false)
 
-  const { data: resumes } = useQuery({
+  const { data: resumes, refetch: refetchResumes } = useQuery({
     queryKey: ["resumes"],
     queryFn: () => api.listResumes(),
-    select: (d) => d.resumes,
+    select: (d) => d.resumes as Resume[],
   })
+
+  const { data: interviews } = useQuery({
+    queryKey: ["interviews"],
+    queryFn: () => api.listInterviews(),
+    select: (d) => d.interviews as (InterviewSession & { _count?: { turns: number } })[],
+  })
+
+  const lastCompleted = (interviews ?? [])
+    .filter((i) => i.status === "COMPLETED" && i.overallScore != null)[0] ?? null
+
+  const selectedPosition = position === "custom" ? customPosition : position
 
   const createMutation = useMutation({
     mutationFn: api.createInterview,
@@ -58,151 +53,254 @@ export function NewInterviewPage() {
     onError: (err) => toast.error(err.message),
   })
 
-  const selectedPosition = position === "custom" ? customPosition : position
-
   const handleCreate = () => {
-    if (!selectedPosition) {
-      toast.error("Select or enter a position")
-      return
-    }
-    createMutation.mutate({
-      position: selectedPosition,
-      resumeId: selectedResumeId,
-      githubUrl: githubUrl || undefined,
-    })
+    if (!selectedPosition) { toast.error("Select a position"); return }
+    if (!selectedResumeId) { toast.error("Select a resume"); return }
+    createMutation.mutate({ position: selectedPosition, resumeId: selectedResumeId, githubUrl: githubUrl || undefined })
   }
 
+  const selectedResume = selectedResumeId
+    ? (resumes ?? []).find((r) => r.id === selectedResumeId) ?? null
+    : null
+
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          New Interview
-        </h1>
-        <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-          Configure your practice interview session
-        </p>
-      </div>
+    <div className="max-w-2xl mx-auto" style={{ paddingBottom: step === 2 ? "0" : "160px" }}>
+      <ResumePreview resumeId={previewResumeId} open={!!previewResumeId} onClose={() => setPreviewResumeId(null)} />
 
-      <Card>
-        <h2 className="font-medium mb-4">Position</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
-          {positions.map((p) => {
-            const active = position === p.title
-            return (
-              <motion.button
-                key={p.title}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setPosition(p.title)}
-                className={`
-                  flex flex-col items-center gap-1.5 p-3 rounded-[var(--radius-md)] text-sm font-medium transition-all
-                  ${
-                    active
-                      ? "bg-accent/10 text-accent border border-accent/30"
-                      : "bg-[var(--color-bg)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:border-accent/20 hover:text-[var(--color-text)]"
-                  }
-                `}
+      <ProgressStepper current={step} onStepClick={(s) => s < step && setStep(s)} />
+
+      <AnimatePresence mode="wait">
+        {step === 0 && (
+          <motion.div key="step-0" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15 }}>
+            <div style={{ marginBottom: "28px" }}>
+              <h1
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 600,
+                  letterSpacing: "-0.02em",
+                  color: "#E2E8F0",
+                  lineHeight: 1.2,
+                  margin: 0,
+                }}
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d={p.icon} />
-                </svg>
-                {p.title}
-              </motion.button>
-            )
-          })}
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setPosition("custom")}
-            className={`
-              flex flex-col items-center gap-1.5 p-3 rounded-[var(--radius-md)] text-sm font-medium transition-all
-              ${
-                position === "custom"
-                  ? "bg-accent/10 text-accent border border-accent/30"
-                  : "bg-[var(--color-bg)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:border-accent/20 hover:text-[var(--color-text)]"
-              }
-            `}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Custom
-          </motion.button>
-        </div>
-        {position === "custom" && (
-          <Input
-            value={customPosition}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomPosition(e.target.value)}
-            placeholder="Enter position title"
-          />
-        )}
-      </Card>
-
-      <Card>
-        <h2 className="font-medium mb-4">Resume</h2>
-        {resumes && resumes.length > 0 ? (
-          <div className="space-y-2">
-            {resumes.map((r: Resume) => (
+                Choose your interviewer
+              </h1>
+              {lastCompleted && !position && (
+                <p style={{ fontSize: "13px", color: "#94A3B8", marginTop: "6px", margin: "6px 0 0" }}>
+                  Last session: {lastCompleted.position}
+                  {lastCompleted.overallScore != null ? ` \u00B7 ${Math.round(lastCompleted.overallScore)}%` : ""}
+                </p>
+              )}
+            </div>
+            <InterviewerCards
+              position={position}
+              customPosition={customPosition}
+              onPositionChange={setPosition}
+              onCustomPositionChange={setCustomPosition}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <button
-                key={r.id}
-                onClick={() => setSelectedResumeId(r.id)}
-                className={`
-                  w-full text-left p-3 rounded-[var(--radius-md)] text-sm transition-all border
-                  ${
-                    selectedResumeId === r.id
-                      ? "bg-accent/10 border-accent/30 text-accent"
-                      : "bg-[var(--color-bg)] border-[var(--color-border)] hover:border-accent/20"
-                  }
-                `}
+                onClick={() => position ? setStep(1) : toast.error("Select a role first")}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: position ? "#6366f1" : "rgba(255,255,255,0.06)",
+                  color: position ? "#fff" : "rgba(255,255,255,0.25)",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  cursor: position ? "pointer" : "default",
+                  transition: "all 0.15s",
+                }}
               >
-                <span className="font-medium">v{r.version}</span>
-                <span className="text-[var(--color-text-muted)] ml-2">
-                  {new Date(r.uploadedAt).toLocaleDateString()}
-                </span>
+                Continue to Resume &rarr;
               </button>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-[var(--color-text-muted)]">
-            No resumes uploaded. Upload one from the dashboard first.
-          </p>
+            </div>
+          </motion.div>
         )}
-      </Card>
 
-      <Card>
-        <h2 className="font-medium mb-4">GitHub (optional)</h2>
-        <Input
-          value={githubUrl}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGithubUrl(e.target.value)}
-          placeholder="https://github.com/username"
-        />
-      </Card>
+        {step === 1 && (
+          <motion.div key="step-1" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15 }}>
+            <div style={{ marginBottom: "28px" }}>
+              <h1
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 600,
+                  letterSpacing: "-0.02em",
+                  color: "#E2E8F0",
+                  lineHeight: 1.2,
+                  margin: 0,
+                }}
+              >
+                Upload your resume
+              </h1>
+              <p style={{ fontSize: "13px", color: "#94A3B8", margin: "6px 0 0" }}>
+                We'll tailor questions to your experience
+              </p>
+            </div>
+            <ResumeSection
+              resumes={resumes ?? []}
+              selectedResumeId={selectedResumeId}
+              githubUrl={githubUrl}
+              githubOpen={githubOpen}
+              onResumeSelect={setSelectedResumeId}
+              onPreviewResume={setPreviewResumeId}
+              onResumesRefetch={() => refetchResumes()}
+              onGithubUrlChange={setGithubUrl}
+              onGithubToggle={() => setGithubOpen((p) => !p)}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <button
+                onClick={() => setStep(0)}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "transparent",
+                  color: "rgba(255,255,255,0.45)",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                &larr; Back
+              </button>
+              <button
+                onClick={() => selectedResumeId ? setStep(2) : toast.error("Select a resume")}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: selectedResumeId ? "#6366f1" : "rgba(255,255,255,0.06)",
+                  color: selectedResumeId ? "#fff" : "rgba(255,255,255,0.25)",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  cursor: selectedResumeId ? "pointer" : "default",
+                  transition: "all 0.15s",
+                }}
+              >
+                Review Session &rarr;
+              </button>
+            </div>
+          </motion.div>
+        )}
 
-      <Button
-        size="lg"
-        className="w-full"
-        onClick={handleCreate}
-        loading={createMutation.isPending}
-      >
-        Start Interview
-      </Button>
+        {step === 2 && (
+          <motion.div key="step-2" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15 }}>
+            <div style={{ marginBottom: "28px" }}>
+              <h1
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 600,
+                  letterSpacing: "-0.02em",
+                  color: "#E2E8F0",
+                  lineHeight: 1.2,
+                  margin: 0,
+                }}
+              >
+                Review your session
+              </h1>
+              <p style={{ fontSize: "13px", color: "#94A3B8", margin: "6px 0 0" }}>
+                Everything looks ready to go
+              </p>
+            </div>
+
+            {/* Resume preview card */}
+            {selectedResume && (
+              <div
+                style={{
+                  borderRadius: "12px",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "rgba(255,255,255,0.02)",
+                  overflow: "hidden",
+                  marginBottom: "24px",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "16px 20px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontSize: "16px" }}>{"\u{1F4C4}"}</span>
+                    <div>
+                      <p style={{ fontSize: "14px", fontWeight: 500, color: "#E2E8F0", margin: 0 }}>
+                        {selectedResume.originalUrl ? (() => {
+                          const name = selectedResume.originalUrl.split("/").pop()
+                          return name ? name.replace(/\.[^/.]+$/, "") : `Resume v${selectedResume.version}`
+                        })() : `Resume v${selectedResume.version}`}
+                      </p>
+                      <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)", margin: "2px 0 0" }}>
+                        Uploaded {new Date(selectedResume.uploadedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setPreviewResumeId(selectedResume.id)}
+                    style={{
+                      padding: "6px 14px",
+                      borderRadius: "6px",
+                      border: "1px solid rgba(99,102,241,0.3)",
+                      background: "rgba(99,102,241,0.1)",
+                      color: "#818cf8",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Preview
+                  </button>
+                </div>
+                <div
+                  style={{
+                    height: "200px",
+                    background: "rgba(255,255,255,0.02)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "13px",
+                    color: "rgba(255,255,255,0.2)",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setPreviewResumeId(selectedResume.id)}
+                >
+                  Click to preview full resume
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "32px" }}>
+              <button
+                onClick={() => setStep(1)}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "transparent",
+                  color: "rgba(255,255,255,0.45)",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                &larr; Back
+              </button>
+            </div>
+
+            <SessionCard
+              position={position}
+              customPosition={customPosition}
+              selectedResumeId={selectedResumeId}
+              resumes={resumes ?? []}
+              isPending={createMutation.isPending}
+              onCreate={handleCreate}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

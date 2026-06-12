@@ -49,7 +49,7 @@ export function AppBar() {
             <Link to="/" className="group flex items-center gap-2.5 text-[var(--landing-fg)]">
               <OrbitalMark size={22} className="text-[var(--landing-fg-muted)] group-hover:text-[var(--landing-fg)] transition-colors duration-500" />
               <span className="text-[12px] font-medium tracking-[0.12em] uppercase text-[var(--landing-fg-muted)] group-hover:text-[var(--landing-fg)] transition-colors duration-500">
-                Interview
+                Interview Lab
               </span>
             </Link>
           </div>
@@ -63,37 +63,51 @@ export function AppBar() {
             )}
 
             {user && (
-              <nav className="hidden sm:flex items-right gap-1">
-                {navItems.map((item) => {
-                  const active = location.pathname === item.path
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`px-3 py-1.5 text-[13px] transition-colors duration-300 ${
-                        active ? "text-[var(--landing-fg)]" : "text-[var(--landing-fg-muted)] hover:text-[var(--landing-fg)]"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  )
-                })}
-              </nav>
+              <>
+                <nav className="hidden sm:flex items-center gap-1">
+                  {navItems.map((item) => {
+                    const active = location.pathname === item.path
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`px-3 py-1.5 text-[13px] transition-colors duration-300 relative ${
+                          active ? "text-[var(--landing-fg)]" : "text-[var(--landing-fg-muted)] hover:text-[var(--landing-fg)]"
+                        }`}
+                      >
+                        {item.label}
+                        {active && (
+                          <span
+                            className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
+                            style={{ background: "rgba(255,255,255,0.6)" }}
+                          />
+                        )}
+                      </Link>
+                    )
+                  })}
+                </nav>
+                <div
+                  className="hidden sm:block w-px h-4"
+                  style={{ background: "rgba(255,255,255,0.1)" }}
+                />
+              </>
             )}
 
-            <ThemeToggle />
-            {user ? (
-              <ProfileDropdown user={user} />
-            ) : (
-              <nav className="flex items-center gap-5">
-                <Link to="/login" className="text-[13px] text-[var(--landing-fg-muted)] hover:text-[var(--landing-fg)] transition-colors duration-300">
-                  Sign in
-                </Link>
-                <Link to="/signup" className="landing-cta-ghost text-[13px]">
-                  Start interview
-                </Link>
-              </nav>
-            )}
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              {user ? (
+                <ProfileDropdown user={user} />
+              ) : (
+                <nav className="flex items-center gap-5">
+                  <Link to="/login" className="text-[13px] text-[var(--landing-fg-muted)] hover:text-[var(--landing-fg)] transition-colors duration-300">
+                    Sign in
+                  </Link>
+                  <Link to="/signup" className="landing-cta-ghost text-[13px]">
+                    Start interview
+                  </Link>
+                </nav>
+              )}
+            </div>
             {/* mobile menu toggle */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}

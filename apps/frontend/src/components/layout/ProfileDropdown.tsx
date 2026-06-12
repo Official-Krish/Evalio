@@ -39,7 +39,7 @@ export function ProfileDropdown({ user }: { user: { name: string; email: string 
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[var(--landing-surface)] transition-colors duration-200"
       >
-        <span className="flex size-7 rounded-full bg-[var(--landing-accent)] items-center justify-center text-[11px] font-semibold text-[var(--landing-bg)]">
+        <span className="flex size-7 rounded-full items-center justify-center text-[11px] font-semibold" style={{ background: "rgba(108,99,255,0.3)", border: "1px solid rgba(108,99,255,0.5)", color: "#fff" }}>
           {initials(user.name ?? "")}
         </span>
         <svg
@@ -74,7 +74,7 @@ export function ProfileDropdown({ user }: { user: { name: string; email: string 
           >
             <div className="px-4 pt-4 pb-3">
               <div className="flex items-center gap-3">
-                <span className="flex size-8 rounded-full bg-[var(--landing-accent)] items-center justify-center text-[12px] font-semibold text-[var(--landing-bg)]">
+                <span className="flex size-8 rounded-full items-center justify-center text-[12px] font-semibold" style={{ background: "rgba(108,99,255,0.3)", border: "1px solid rgba(108,99,255,0.5)", color: "#fff" }}>
                   {initials(user.name ?? "")}
                 </span>
                 <div>

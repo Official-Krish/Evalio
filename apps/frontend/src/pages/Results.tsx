@@ -1,55 +1,15 @@
-import { useParams, Link } from "react-router-dom"
+import { useParams, useNavigate, Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { motion } from "motion/react"
 import { api } from "../lib/api"
-import { Card } from "../components/ui/Card"
-import { Button } from "../components/ui/Button"
 import { ResultsSkeleton } from "../components/skeletons/ResultsSkeleton"
-import type { InterviewTurn, TranscriptEvent, EvaluationStatus } from "@ai-interview/shared"
-
-function ScoreCircle({ score, label }: { score: number; label: string }) {
-  const radius = 32
-  const circumference = 2 * Math.PI * radius
-
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="relative size-20">
-        <svg className="size-20 -rotate-90" viewBox="0 0 72 72">
-          <circle
-            cx="36"
-            cy="36"
-            r={radius}
-            fill="none"
-            stroke="var(--color-border)"
-            strokeWidth="4"
-          />
-          <motion.circle
-            cx="36"
-            cy="36"
-            r={radius}
-            fill="none"
-            stroke="var(--color-accent)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
-            animate={{
-              strokeDashoffset: circumference * (1 - score / 100),
-            }}
-            transition={{ duration: 1, ease: "easeOut" }}
-          />
-        </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-lg font-semibold">
-          {Math.round(score)}
-        </span>
-      </div>
-      <span className="text-xs text-[var(--color-text-muted)]">{label}</span>
-    </div>
-  )
-}
+import { ScoreSection } from "../components/Result/ScoreSection"
+import { SummarySection } from "../components/Result/SummarySection"
+import { QASection } from "../components/Result/QASection"
+import type { EvaluationStatus, InterviewSession } from "@ai-interview/shared"
 
 export function ResultsPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
 
   const { data: interview, isLoading } = useQuery({
     queryKey: ["interview", id],
@@ -63,25 +23,22 @@ export function ResultsPage() {
     queryFn: () => api.evaluationStatus(id!),
     enabled: !!id,
     refetchInterval: (query) =>
-      (query.state.data as EvaluationStatus | undefined)?.status === "pending"
-        ? 2000
-        : false,
+      (query.state.data as EvaluationStatus | undefined)?.status === "pending" ? 2000 : false,
   })
 
-  if (isLoading) {
-    return <ResultsSkeleton />
-  }
+  const { data: allInterviews } = useQuery({
+    queryKey: ["interviews"],
+    queryFn: () => api.listInterviews(),
+    select: (d) => d.interviews as (InterviewSession & { _count?: { turns: number } })[],
+  })
+
+  if (isLoading) return <ResultsSkeleton />
 
   if (!interview) {
     return (
       <div className="text-center py-12">
-        <p className="text-[var(--color-text-secondary)]">
-          Interview not found
-        </p>
-        <Link
-          to="/dashboard"
-          className="text-accent text-sm hover:underline mt-2 inline-block"
-        >
+        <p className="text-[var(--color-text-secondary)]">Interview not found</p>
+        <Link to="/dashboard" className="text-accent text-sm hover:underline mt-2 inline-block">
           Back to Dashboard
         </Link>
       </div>
@@ -89,204 +46,75 @@ export function ResultsPage() {
   }
 
   const isScored = evalStatus?.status === "completed" || interview.overallScore != null
+  const overall = interview.overallScore != null ? Math.round(interview.overallScore / 10) : 0
+  const comm = interview.communicationScore != null ? Math.round(interview.communicationScore / 10) : 0
+  const tech = interview.technicalScore != null ? Math.round(interview.technicalScore / 10) : 0
+  const prob = interview.problemSolvingScore != null ? Math.round(interview.problemSolvingScore / 10) : 0
+
+  const prevSession = (allInterviews ?? [])
+    .filter(
+      (i) =>
+        i.id !== id && i.position === interview.position && i.status === "COMPLETED" && i.overallScore != null
+    )
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? null
+
+  const delta =
+    prevSession && interview.overallScore != null && prevSession.overallScore != null
+      ? Math.round(interview.overallScore / 10) - Math.round(prevSession.overallScore / 10)
+      : null
+
+  const turns = interview.turns ?? []
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="max-w-3xl mx-auto">
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "40px" }}>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {interview.position || "Interview"} Results
+          <h1 style={{ fontSize: "22px", fontWeight: 600, letterSpacing: "-0.02em", color: "var(--landing-fg)", lineHeight: 1.2 }}>
+            Session Report
           </h1>
-          <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-            {new Date(interview.createdAt).toLocaleDateString()} &middot;{" "}
-            {interview.turns?.length || 0} turns
-            {interview.durationSeconds
-              ? ` \u00b7 ${Math.round(interview.durationSeconds / 60)} min`
-              : ""}
+          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginTop: "4px" }}>
+            {interview.position} &middot;{" "}
+            {new Date(interview.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })} &middot;{" "}
+            {turns.length} turns
+            {interview.durationSeconds ? ` \u00b7 ${Math.round(interview.durationSeconds / 60)} min` : ""}
           </p>
         </div>
-        <Link to="/dashboard">
-          <Button variant="secondary" size="sm">
-            Dashboard
-          </Button>
-        </Link>
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <Link to="/dashboard" style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>
+            &larr; Back to dashboard
+          </Link>
+          <button
+            onClick={() => navigate("/interview/new")}
+            style={{
+              fontSize: "13px",
+              padding: "6px 14px",
+              borderRadius: "6px",
+              border: "1px solid rgba(255,255,255,0.1)",
+              background: "transparent",
+              color: "rgba(255,255,255,0.6)",
+              cursor: "pointer",
+            }}
+          >
+            Practice this role again
+          </button>
+        </div>
       </div>
 
       {isScored && interview.overallScore != null ? (
-        <Card>
-          <h2 className="font-semibold mb-6">Scores</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            <ScoreCircle score={interview.overallScore} label="Overall" />
-            <ScoreCircle
-              score={interview.communicationScore ?? 0}
-              label="Communication"
-            />
-            <ScoreCircle
-              score={interview.technicalScore ?? 0}
-              label="Technical"
-            />
-            <ScoreCircle
-              score={interview.problemSolvingScore ?? 0}
-              label="Problem Solving"
-            />
-          </div>
-        </Card>
+        <ScoreSection overall={overall} delta={delta} comm={comm} tech={tech} prob={prob} />
       ) : (
-        <Card className="text-center py-8">
-          <div className="size-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
-            <svg className="animate-spin size-6" viewBox="0 0 24 24" fill="none">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="var(--color-accent)"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="var(--color-accent)"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
-          </div>
-          <p className="font-medium">Evaluating your interview...</p>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">
-            This may take a moment
-          </p>
-        </Card>
+        <div style={{ padding: "0 0 48px", display: "flex", alignItems: "center", gap: "12px" }}>
+          <svg className="animate-spin" style={{ width: "20px", height: "20px" }} viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="#6C63FF" strokeWidth="4" />
+            <path className="opacity-75" fill="#6C63FF" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>Evaluating your interview...</span>
+        </div>
       )}
 
-      {interview.summary && (
-        <Card>
-          <h2 className="font-semibold mb-3">Summary</h2>
-          <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-            {interview.summary.summary}
-          </p>
+      {interview.summary && <SummarySection summary={interview.summary} />}
 
-          <div className="grid sm:grid-cols-2 gap-6 mt-6">
-            <div>
-              <h3 className="text-sm font-medium text-success mb-2">
-                Strengths
-              </h3>
-              <ul className="space-y-1.5">
-                {(interview.summary.strengths as string[]).map(
-                  (s: string, i: number) => (
-                    <li
-                      key={i}
-                      className="text-sm text-[var(--color-text-secondary)] flex items-start gap-2"
-                    >
-                      <span className="text-success mt-0.5">&bull;</span>
-                      {s}
-                    </li>
-                  )
-                )}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-warning mb-2">
-                Areas for Improvement
-              </h3>
-              <ul className="space-y-1.5">
-                {(interview.summary.weaknesses as string[]).map(
-                  (w: string, i: number) => (
-                    <li
-                      key={i}
-                      className="text-sm text-[var(--color-text-secondary)] flex items-start gap-2"
-                    >
-                      <span className="text-warning mt-0.5">&bull;</span>
-                      {w}
-                    </li>
-                  )
-                )}
-              </ul>
-            </div>
-          </div>
-
-          {(interview.summary.recommendedTopics as string[]).length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-sm font-medium mb-2">Recommended Topics</h3>
-              <div className="flex flex-wrap gap-2">
-                {(interview.summary.recommendedTopics as string[]).map(
-                  (t: string, i: number) => (
-                    <span
-                      key={i}
-                      className="text-xs px-2.5 py-1 rounded-full bg-accent/10 text-accent border border-accent/20"
-                    >
-                      {t}
-                    </span>
-                  )
-                )}
-              </div>
-            </div>
-          )}
-        </Card>
-      )}
-
-      {interview.turns && interview.turns.length > 0 && (
-        <Card>
-          <h2 className="font-semibold mb-4">Questions & Answers</h2>
-          <div className="space-y-4">
-            {interview.turns.map((turn: InterviewTurn, i: number) => (
-              <motion.div
-                key={turn.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="border border-[var(--color-border)] rounded-[var(--radius-md)] p-4"
-              >
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <p className="text-sm font-medium">{turn.questionText}</p>
-                  {turn.score != null && (
-                    <span className="shrink-0 text-sm font-semibold text-accent">
-                      {Math.round(turn.score)}/100
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-2">
-                  {turn.answerText || "(no answer)"}
-                </p>
-                {turn.feedback && (
-                  <p className="text-xs text-[var(--color-text-muted)] italic border-t border-[var(--color-border)] pt-2 mt-2">
-                    {turn.feedback}
-                  </p>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {interview.transcriptEvents &&
-        interview.transcriptEvents.length > 0 && (
-          <Card>
-            <h2 className="font-semibold mb-4">Full Transcript</h2>
-            <div className="space-y-1 max-h-64 overflow-y-auto">
-              {interview.transcriptEvents.map(
-                (event: TranscriptEvent, i: number) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.01 }}
-                    className="flex gap-2 text-sm py-1"
-                  >
-                    <span
-                      className={`shrink-0 text-xs font-medium w-20 ${
-                        event.role === "USER" ? "text-accent" : "text-success"
-                      }`}
-                    >
-                      {event.role === "USER" ? "You" : "AI"}
-                    </span>
-                    <span className="text-[var(--color-text-secondary)]">
-                      {event.text}
-                    </span>
-                  </motion.div>
-                )
-              )}
-            </div>
-          </Card>
-        )}
+      {turns.length > 0 && <QASection turns={turns} />}
     </div>
   )
 }
