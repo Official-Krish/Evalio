@@ -13,6 +13,19 @@ function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000))
 }
 
+const otpRateMap = new Map<string, number>()
+
+function checkOtpRateLimit(email: string): { allowed: boolean; retryAfter: number } {
+  const now = Date.now()
+  const lastSent = otpRateMap.get(email)
+  if (lastSent && now - lastSent < 30_000) {
+    const retryAfter = Math.ceil((30_000 - (now - lastSent)) / 1000)
+    return { allowed: false, retryAfter }
+  }
+  otpRateMap.set(email, now)
+  return { allowed: true, retryAfter: 0 }
+}
+
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .use(strictRateLimit)
   .use(jwt({ secret: SECRET, exp: "7d" }))
@@ -151,6 +164,12 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   .post(
     "/resend-otp",
     async ({ body, set }) => {
+      const { allowed, retryAfter } = checkOtpRateLimit(body.email)
+      if (!allowed) {
+        set.status = 429
+        return { error: `Please wait ${retryAfter}s before requesting a new code.` }
+      }
+
       const user = await prisma.user.findUnique({
         where: { email: body.email },
         select: { id: true, email: true, name: true, emailVerified: true },
@@ -256,6 +275,12 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   .post(
     "/forgot-password",
     async ({ body, set }) => {
+      const { allowed, retryAfter } = checkOtpRateLimit(body.email)
+      if (!allowed) {
+        set.status = 429
+        return { error: `Please wait ${retryAfter}s before requesting a new code.` }
+      }
+
       const user = await prisma.user.findUnique({
         where: { email: body.email },
         select: { id: true, email: true, name: true },

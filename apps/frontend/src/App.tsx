@@ -9,6 +9,9 @@ import { AppLayout } from "./components/layout/AppLayout"
 import { LandingPage } from "./pages/Landing"
 import { LoginPage } from "./pages/Login"
 import { SignupPage } from "./pages/Signup"
+import { VerifyOtpPage } from "./pages/VerifyOtp"
+import { ForgotPasswordPage } from "./pages/ForgotPassword"
+import { ResetPasswordPage } from "./pages/ResetPassword"
 import { DashboardPage } from "./pages/Dashboard"
 import { NewInterviewPage } from "./pages/NewInterview"
 import { InterviewPage } from "./pages/Interview"
@@ -49,6 +52,9 @@ const router = createBrowserRouter([
   { path: "/cookies", element: <CookiesPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/signup", element: <SignupPage /> },
+  { path: "/verify-otp", element: <VerifyOtpPage /> },
+  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+  { path: "/reset-password", element: <ResetPasswordPage /> },
   {
     path: "/dashboard",
     element: (

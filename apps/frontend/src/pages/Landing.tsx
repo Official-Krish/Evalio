@@ -6,7 +6,6 @@ import { Opening } from "@/components/landing/Opening"
 import { Manifesto } from "@/components/landing/Manifesto"
 import { Presence } from "@/components/landing/Presence"
 import { Method } from "@/components/landing/Method"
-import { Voices } from "@/components/landing/Voices"
 import { Threshold } from "@/components/landing/Threshold"
 import { Footer } from "@/components/Footer"
 
@@ -28,7 +27,6 @@ export function LandingPage() {
         <Manifesto />
         <Presence />
         <Method />
-        <Voices />
         <Threshold />
       </main>
       <Footer />

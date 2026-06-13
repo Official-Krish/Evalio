@@ -35,7 +35,7 @@ export function DashboardPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["interviews"],
-    queryFn: () => api.listInterviews(),
+    queryFn: () => api.listInterviews(0, 100),
     select: (d) => d.interviews,
   })
 

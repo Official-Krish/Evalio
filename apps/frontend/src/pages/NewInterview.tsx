@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { motion, AnimatePresence } from "motion/react"
@@ -36,12 +36,26 @@ export function NewInterviewPage() {
 
   const { data: interviews } = useQuery({
     queryKey: ["interviews"],
-    queryFn: () => api.listInterviews(),
+    queryFn: () => api.listInterviews(0, 100),
     select: (d) => d.interviews as (InterviewSession & { _count?: { turns: number } })[],
   })
 
   const lastCompleted = (interviews ?? [])
     .filter((i) => i.status === "COMPLETED" && i.overallScore != null)[0] ?? null
+
+  const [now] = useState(Date.now)
+
+  const daysUntilSlot = useMemo(() => {
+    if (!interviews) return null
+    const since = new Date(now - 7 * 24 * 60 * 60 * 1000)
+    const recent = interviews
+      .filter((i) => new Date(i.createdAt) >= since)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    if (recent.length < 3) return null
+    const oldest = new Date(recent[0]!.createdAt)
+    const expiresAt = new Date(oldest.getTime() + 7 * 24 * 60 * 60 * 1000)
+    return Math.ceil((expiresAt.getTime() - now) / (24 * 60 * 60 * 1000))
+  }, [interviews, now])
 
   const selectedPosition = position === "custom" ? customPosition : position
 
@@ -51,7 +65,17 @@ export function NewInterviewPage() {
       toast.success("Interview created!")
       navigate(`/interview/${data.interview.id}`)
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err: Error) => {
+      const msg = err.message ?? ""
+      if (msg.toLowerCase().includes("rate limit") || msg.includes("3 interviews")) {
+        const dayMsg = daysUntilSlot != null && daysUntilSlot > 0
+          ? ` Your next slot opens in ${daysUntilSlot} day${daysUntilSlot === 1 ? "" : "s"}.`
+          : ""
+        toast.error(`You've used all 3 free interviews this week.${dayMsg}`, { duration: 6000 })
+      } else {
+        toast.error(msg || "Failed to create interview")
+      }
+    },
   })
 
   const handleCreate = () => {

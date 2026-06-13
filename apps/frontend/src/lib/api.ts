@@ -7,7 +7,11 @@ import type {
   EvaluationStatus,
   LoginInput,
   SignupInput,
+  VerifyOtpInput,
+  ResendOtpInput,
   CreateInterviewInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
 } from "@ai-interview/shared"
 
 function errorMessage(err: unknown): string {
@@ -41,6 +45,30 @@ export const api = {
 
   logout: async () => {
     await client.api.auth.logout.post()
+  },
+
+  forgotPassword: async (input: ForgotPasswordInput) => {
+    const { data, error } = await client.api.auth["forgot-password"].post(input)
+    if (error) throw new Error(errorMessage(error.value))
+    return data as unknown as { message: string }
+  },
+
+  resetPassword: async (input: ResetPasswordInput) => {
+    const { data, error } = await client.api.auth["reset-password"].post(input)
+    if (error) throw new Error(errorMessage(error.value))
+    return data as unknown as { message: string }
+  },
+
+  verifyOtp: async (input: VerifyOtpInput) => {
+    const { data, error } = await client.api.auth["verify-otp"].post(input)
+    if (error) throw new Error(errorMessage(error.value))
+    return data as unknown as { user: User; verified: boolean }
+  },
+
+  resendOtp: async (input: ResendOtpInput) => {
+    const { data, error } = await client.api.auth["resend-otp"].post(input)
+    if (error) throw new Error(errorMessage(error.value))
+    return data as unknown as { message: string }
   },
 
   listResumes: async () => {

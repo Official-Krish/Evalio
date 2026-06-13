@@ -38,6 +38,16 @@ export const resendOtpSchema = z.object({
   email: z.string().email("Invalid email address"),
 })
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+})
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  otp: z.string().length(6, "OTP must be 6 digits"),
+  password: passwordSchema,
+})
+
 // ── Interview ──
 export const createInterviewSchema = z.object({
   position: z.string().min(1),
@@ -69,6 +79,8 @@ export type LoginInput = z.infer<typeof loginSchema>
 export type SignupInput = z.infer<typeof signupSchema>
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>
 export type ResendOtpInput = z.infer<typeof resendOtpSchema>
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
 export type CreateInterviewInput = z.infer<typeof createInterviewSchema>
 export type InterviewStatus = z.infer<typeof interviewStatusSchema>
 

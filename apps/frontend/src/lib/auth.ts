@@ -1,6 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "./api"
-import type { LoginInput, SignupInput } from "@ai-interview/shared"
+import type {
+  LoginInput,
+  SignupInput,
+  VerifyOtpInput,
+  ResendOtpInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+} from "@ai-interview/shared"
 
 export function useSession() {
   return useQuery({
@@ -22,12 +29,36 @@ export function useLogin() {
 }
 
 export function useSignup() {
-  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: SignupInput) => api.signup(input),
+  })
+}
+
+export function useVerifyOtp() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: VerifyOtpInput) => api.verifyOtp(input),
     onSuccess: (data) => {
       queryClient.setQueryData(["session"], data)
     },
+  })
+}
+
+export function useResendOtp() {
+  return useMutation({
+    mutationFn: (input: ResendOtpInput) => api.resendOtp(input),
+  })
+}
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (input: ForgotPasswordInput) => api.forgotPassword(input),
+  })
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: (input: ResetPasswordInput) => api.resetPassword(input),
   })
 }
 
