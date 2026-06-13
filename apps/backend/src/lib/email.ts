@@ -1,4 +1,6 @@
-const RESEND_API_KEY = Bun.env.RESEND_API_KEY
+import { Resend } from "resend"
+
+const resend = new Resend(Bun.env.RESEND_API_KEY!)
 const EMAIL_FROM = Bun.env.EMAIL_FROM ?? "Interview Lab <noreply@krishlabs.tech>"
 
 function buildOtpEmail(otp: string): string {
@@ -128,32 +130,13 @@ function buildWelcomeEmail(name: string): string {
 }
 
 export async function sendOtpEmail(email: string, name: string, otp: string): Promise<boolean> {
-  if (!RESEND_API_KEY) {
-    console.warn("[email] RESEND_API_KEY not set — skipping email send")
-    return false
-  }
-
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: EMAIL_FROM,
-        to: email,
-        subject: "Verify your email — Interview Lab",
-        html: buildOtpEmail(otp),
-      }),
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Verify your email — Interview Lab",
+      html: buildOtpEmail(otp),
     })
-
-    if (!res.ok) {
-      const body = await res.text()
-      console.error("[email] Resend error:", res.status, body)
-      return false
-    }
-
     console.log(`[email] OTP sent to ${email}`)
     return true
   } catch (err) {
@@ -163,32 +146,13 @@ export async function sendOtpEmail(email: string, name: string, otp: string): Pr
 }
 
 export async function sendResetOtpEmail(email: string, name: string, otp: string): Promise<boolean> {
-  if (!RESEND_API_KEY) {
-    console.warn("[email] RESEND_API_KEY not set — skipping email send")
-    return false
-  }
-
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: EMAIL_FROM,
-        to: email,
-        subject: "Reset your password — Interview Lab",
-        html: buildResetOtpEmail(otp),
-      }),
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Reset your password — Interview Lab",
+      html: buildResetOtpEmail(otp),
     })
-
-    if (!res.ok) {
-      const body = await res.text()
-      console.error("[email] Resend error:", res.status, body)
-      return false
-    }
-
     console.log(`[email] Reset OTP sent to ${email}`)
     return true
   } catch (err) {
@@ -198,32 +162,13 @@ export async function sendResetOtpEmail(email: string, name: string, otp: string
 }
 
 export async function sendWelcomeEmail(email: string, name: string): Promise<boolean> {
-  if (!RESEND_API_KEY) {
-    console.warn("[email] RESEND_API_KEY not set — skipping email send")
-    return false
-  }
-
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: EMAIL_FROM,
-        to: email,
-        subject: "Welcome to Interview Lab — email verified",
-        html: buildWelcomeEmail(name),
-      }),
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Welcome to Interview Lab — email verified",
+      html: buildWelcomeEmail(name),
     })
-
-    if (!res.ok) {
-      const body = await res.text()
-      console.error("[email] Resend error:", res.status, body)
-      return false
-    }
-
     console.log(`[email] Welcome email sent to ${email}`)
     return true
   } catch (err) {
