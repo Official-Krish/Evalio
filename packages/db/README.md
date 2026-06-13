@@ -1,15 +1,26 @@
-# db
+# @ai-interview/db
 
-To install dependencies:
+Prisma ORM and PostgreSQL schema for AI Interview Lab.
+
+## Schema
+
+- **User** — Account with roles (FREE, ADMIN), email verification fields
+- **CandidateProfile** — Extended profile (GitHub username)
+- **Resume** — Versioned resume storage with extracted text
+- **GithubProfile** — Cached GitHub profile analysis
+- **InterviewSession** — Interview with scoring (overall, communication, technical, problem-solving)
+- **InterviewTurn** — Individual Q&A pairs with AI scoring
+- **InterviewSummary** — AI-generated post-interview feedback
+
+## Scripts
 
 ```bash
-bun install
+# Run migrations
+bunx prisma migrate dev --name <name>
+
+# Generate Prisma client
+bunx prisma generate
+
+# Open Prisma Studio
+bunx prisma studio
 ```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.3.14. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.

@@ -1,3 +1,3 @@
-# `@turbo/eslint-config`
+# `@repo/eslint-config`
 
-Collection of internal eslint configurations.
+Shared ESLint configuration used across the AI Interview Lab monorepo.

@@ -1,21 +1,51 @@
-# bun-react-tailwind-shadcn-template
+# @ai-interview/frontend
 
-To install dependencies:
+React 19 SPA for AI Interview Lab.
+
+## Stack
+
+- **Runtime:** Bun
+- **Framework:** React 19
+- **Bundler:** Vite
+- **Styling:** Tailwind CSS 4
+- **Routing:** React Router v7
+- **State:** TanStack React Query
+- **UI:** Radix UI + custom components
+- **Forms:** React Hook Form + Zod
+- **Animations:** Motion (motion/react)
+- **API Client:** Elysia Eden Treaty
+
+## Pages
+
+| Route | Page |
+|-------|------|
+| `/` | Landing |
+| `/login` | Sign in |
+| `/signup` | Create account |
+| `/verify-otp` | Email verification |
+| `/forgot-password` | Request password reset |
+| `/reset-password` | Reset password with OTP |
+| `/dashboard` | Interview history |
+| `/interview/new` | Create new interview |
+| `/interview/:id` | Live interview session |
+| `/results/:id` | Interview results & scores |
+| `/profile` | User profile |
+| `/pricing` | Pricing |
+| `/about`, `/faq`, `/contact` | Info pages |
+| `/blog`, `/blog/:slug` | Blog |
+| `/privacy`, `/terms`, `/cookies` | Legal |
+
+## Scripts
 
 ```bash
-bun install
+bun dev       # Development with HMR
+bun start     # Production server
+bun build     # Production build
+bun run lint  # ESLint
 ```
 
-To start a development server:
+## Environment
 
-```bash
-bun dev
+```env
+VITE_BACKEND_URL=http://localhost:3000
 ```
-
-To run for production:
-
-```bash
-bun start
-```
-
-This project was created using `bun init` in bun v1.3.14. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
