@@ -90,9 +90,9 @@ export function StreakHeatmap({ interviews }: StreakHeatmapProps) {
           numberOfMonths={1}
           modifiers={modifiers}
           modifiersClassNames={{
-            level1: "!bg-[#4C1D95] !text-white rounded-sm",
-            level2: "!bg-[#6D28D9] !text-white rounded-sm",
-            level3: "!bg-[#7C3AED] !text-white rounded-sm font-medium",
+            level1: "!bg-[var(--app-accent-bg)] !rounded-sm",
+            level2: "!bg-[color:var(--app-accent-muted)] !text-white rounded-sm",
+            level3: "!bg-[color:var(--app-accent)] !text-white rounded-sm font-medium",
           }}
           onDayMouseEnter={handleMouseEnter}
           onDayMouseLeave={handleMouseLeave}
@@ -145,8 +145,8 @@ export function StreakHeatmap({ interviews }: StreakHeatmapProps) {
             left: tooltipPos.x,
             top: tooltipPos.y,
             transform: "translate(-50%, -100%)",
-            background: "#1E1B4B",
-            border: "1px solid rgba(124,58,237,0.3)",
+            background: "var(--color-bg-card)",
+            border: "1px solid var(--app-accent-border, rgba(184,168,138,0.25))",
             borderRadius: "6px",
             padding: "4px 8px",
             fontSize: "11px",

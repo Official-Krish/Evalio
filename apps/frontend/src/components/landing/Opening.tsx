@@ -20,15 +20,21 @@ export function Opening() {
       <div className="landing-hero-grid">
         {/* Copy — 65% */}
         <div className="relative z-10 landing-hero-copy">
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            className="flex items-center gap-2.5 text-[11px] tracking-[0.18em] uppercase text-[var(--landing-fg-faint)] mb-6 lg:mb-10"
+
+          {/* Early Access Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="mb-6 lg:mb-8"
           >
-            <span className="landing-pulse-dot" />
-            Session initialized
-          </motion.p>
+            <span className="landing-early-access-badge">
+              <span className="landing-early-access-dot" />
+              <span className="landing-early-access-label">Early Access</span>
+              <span className="landing-early-access-divider" />
+              <span className="landing-early-access-slots">Limited spots open</span>
+            </span>
+          </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 28 }}
@@ -66,15 +72,41 @@ export function Opening() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.75, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-10 lg:mt-12 flex items-center gap-6"
+            className="mt-10 lg:mt-12 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6"
           >
             <Link to={user ? "/dashboard" : "/signup"} className="landing-cta-primary landing-cta-sharp">
-              Start interview
+              {user ? "Go to dashboard" : "Request early access"}
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
                 <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
-            <span className="text-[12px] text-[var(--landing-fg-faint)]">No card · 12 min avg</span>
+            <div className="flex flex-col gap-1">
+              <span className="landing-early-access-note">No credit card required</span>
+              <span className="landing-early-access-note">Free during early access · 3 sessions/week</span>
+            </div>
+          </motion.div>
+
+          {/* Social proof */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.1, duration: 0.8 }}
+            className="mt-8 flex items-center gap-3"
+          >
+            <div className="landing-avatars-stack">
+              {["AR", "KL", "MV", "JT", "SP"].map((initials, i) => (
+                <span
+                  key={initials}
+                  className="landing-avatar"
+                  style={{ marginLeft: i === 0 ? 0 : "-8px", zIndex: 5 - i }}
+                >
+                  {initials}
+                </span>
+              ))}
+            </div>
+            <span className="landing-social-proof">
+              <strong style={{ color: "var(--landing-fg)", fontWeight: 500 }}>240+</strong> candidates already practicing
+            </span>
           </motion.div>
         </div>
 

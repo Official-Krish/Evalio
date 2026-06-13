@@ -106,8 +106,8 @@ export function ResultsPage() {
       ) : (
         <div style={{ padding: "0 0 48px", display: "flex", alignItems: "center", gap: "12px" }}>
           <svg className="animate-spin" style={{ width: "20px", height: "20px" }} viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="#6C63FF" strokeWidth="4" />
-            <path className="opacity-75" fill="#6C63FF" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="var(--app-accent, #b8a88a)" strokeWidth="4" />
+            <path className="opacity-75" fill="var(--app-accent, #b8a88a)" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
           <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>Evaluating your interview...</span>
         </div>

@@ -36,11 +36,12 @@ export function EmptyState({ onUpload }: EmptyStateProps) {
             alignItems: "center",
             padding: "8px 20px",
             borderRadius: "6px",
-            background: "var(--color-accent)",
-            color: "#fff",
+            background: "var(--landing-fg, #eceae6)",
+            color: "var(--landing-bg, #080808)",
             fontSize: "13px",
             fontWeight: 500,
             textDecoration: "none",
+            letterSpacing: "-0.01em",
           }}
         >
           Start Interview

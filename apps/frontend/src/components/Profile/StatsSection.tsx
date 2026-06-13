@@ -30,11 +30,11 @@ function ScoreDonut({ value }: { value: number }) {
   const offset = circ - (value / 100) * circ
   return (
     <svg width="60" height="60" viewBox="0 0 60 60">
-      <circle cx="30" cy="30" r={r} fill="none" stroke="rgba(124,58,237,0.15)" strokeWidth="5" />
+      <circle cx="30" cy="30" r={r} fill="none" stroke="var(--app-accent-bg, rgba(184,168,138,0.12))" strokeWidth="5" />
       <motion.circle
         cx="30" cy="30" r={r}
         fill="none"
-        stroke="#7C3AED"
+        stroke="var(--app-accent, #b8a88a)"
         strokeWidth="5"
         strokeLinecap="round"
         strokeDasharray={circ}
@@ -43,7 +43,7 @@ function ScoreDonut({ value }: { value: number }) {
         transition={{ duration: 0.8, ease: "easeOut" }}
         transform="rotate(-90 30 30)"
       />
-      <text x="30" y="30" textAnchor="middle" dominantBaseline="central" fill="#A78BFA" fontSize="14" fontWeight={500}>
+      <text x="30" y="30" textAnchor="middle" dominantBaseline="central" fill="var(--app-accent, #b8a88a)" fontSize="14" fontWeight={500}>
         {value}%
       </text>
     </svg>
@@ -78,7 +78,7 @@ export function StatsSection({ totalSessions, totalMinutes, avgScore }: StatsSec
         <div
           style={{
             padding: "20px",
-            background: "rgba(124,58,237,0.06)",
+            background: "var(--app-accent-bg, rgba(184,168,138,0.06))",
             borderRight: "1px solid var(--color-border)",
             display: "flex",
             flexDirection: "column",
@@ -86,7 +86,7 @@ export function StatsSection({ totalSessions, totalMinutes, avgScore }: StatsSec
             gap: "8px",
           }}
         >
-          <IconChartBar size={20} color="#7C3AED" />
+          <IconChartBar size={20} color="var(--app-accent, #b8a88a)" />
           <span
             style={{
               fontSize: "40px",
@@ -107,7 +107,7 @@ export function StatsSection({ totalSessions, totalMinutes, avgScore }: StatsSec
         <div
           style={{
             padding: "20px",
-            background: "rgba(124,58,237,0.06)",
+            background: "var(--app-accent-bg, rgba(184,168,138,0.06))",
             borderRight: "1px solid var(--color-border)",
             display: "flex",
             flexDirection: "column",
@@ -115,7 +115,7 @@ export function StatsSection({ totalSessions, totalMinutes, avgScore }: StatsSec
             gap: "8px",
           }}
         >
-          <IconClock size={20} color="#7C3AED" />
+          <IconClock size={20} color="var(--app-accent, #b8a88a)" />
           <div style={{ lineHeight: 1 }}>
             <span
               style={{
@@ -148,14 +148,14 @@ export function StatsSection({ totalSessions, totalMinutes, avgScore }: StatsSec
         <div
           style={{
             padding: "20px",
-            background: "rgba(124,58,237,0.06)",
+            background: "var(--app-accent-bg, rgba(184,168,138,0.06))",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             gap: "8px",
           }}
         >
-          <IconTrophy size={20} color="#7C3AED" />
+          <IconTrophy size={20} color="var(--app-accent, #b8a88a)" />
           {avgScore != null ? (
             <ScoreDonut value={avgScore} />
           ) : (

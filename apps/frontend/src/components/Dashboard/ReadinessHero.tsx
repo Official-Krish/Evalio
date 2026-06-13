@@ -38,11 +38,11 @@ function ReadinessArc({ score }: { score: number }) {
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
       <div style={{ position: "relative", width: "100px", height: "100px" }}>
         <svg width="100" height="100" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(124,58,237,0.12)" strokeWidth="6" />
+          <circle cx="50" cy="50" r={r} fill="none" stroke="var(--app-accent-bg, rgba(184,168,138,0.12))" strokeWidth="6" />
           <motion.circle
             cx="50" cy="50" r={r}
             fill="none"
-            stroke="#7C3AED"
+            stroke="var(--app-accent, #b8a88a)"
             strokeWidth="6"
             strokeLinecap="round"
             strokeDasharray={circ}
@@ -61,7 +61,7 @@ function ReadinessArc({ score }: { score: number }) {
             justifyContent: "center",
           }}
         >
-          <span style={{ fontSize: "24px", fontWeight: 600, color: "#A78BFA", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+          <span style={{ fontSize: "24px", fontWeight: 600, color: "var(--app-accent, #b8a88a)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
             {anScore}<span style={{ fontSize: "14px", fontWeight: 400 }}>%</span>
           </span>
           </div>
@@ -112,7 +112,7 @@ export function ReadinessHero({ user, totalSessions, readinessScore, interviews 
                 style={{
                   height: "2px",
                   borderRadius: "999px",
-                  background: "rgba(124,58,237,0.15)",
+                  background: "var(--app-accent-bg, rgba(184,168,138,0.12))",
                   overflow: "hidden",
                   width: "100px",
                   marginTop: "6px",
@@ -122,7 +122,7 @@ export function ReadinessHero({ user, totalSessions, readinessScore, interviews 
                   style={{
                     height: "100%",
                     borderRadius: "999px",
-                    background: "#7C3AED",
+                    background: "var(--app-accent, #b8a88a)",
                     width: `${readinessScore}%`,
                     transition: "width 0.8s ease",
                   }}

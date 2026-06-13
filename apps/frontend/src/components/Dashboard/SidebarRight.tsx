@@ -68,7 +68,7 @@ function StreakCard({ interviews }: { interviews: InterviewSession[] }) {
               width: "14px",
               height: "14px",
               borderRadius: "50%",
-              background: active ? "#7C3AED" : "var(--color-border-light)",
+              background: active ? "var(--app-accent, #b8a88a)" : "var(--color-border-light)",
               transition: "background 0.15s",
             }}
           />
@@ -132,9 +132,9 @@ function HeatmapCard({ interviews }: { interviews: InterviewSession[] }) {
         numberOfMonths={1}
         modifiers={modifiers}
         modifiersClassNames={{
-          level1: "!bg-[#4C1D95] !text-white rounded-sm",
-          level2: "!bg-[#6D28D9] !text-white rounded-sm",
-          level3: "!bg-[#7C3AED] !text-white rounded-sm font-medium",
+          level1: "!bg-[var(--app-accent-bg)] !rounded-sm",
+          level2: "!bg-[color:var(--app-accent-muted)] !text-white rounded-sm",
+          level3: "!bg-[color:var(--app-accent)] !text-white rounded-sm font-medium",
         }}
         onDayMouseEnter={(date, _m, e) => {
           const key = date.toISOString().slice(0, 10)
@@ -177,8 +177,8 @@ function HeatmapCard({ interviews }: { interviews: InterviewSession[] }) {
             left: tooltip.x,
             top: tooltip.y,
             transform: "translate(-50%, -100%)",
-            background: "#1E1B4B",
-            border: "1px solid rgba(124,58,237,0.3)",
+            background: "var(--color-bg-card)",
+            border: "1px solid var(--app-accent-border, rgba(184,168,138,0.25))",
             borderRadius: "4px",
             padding: "2px 6px",
             fontSize: "10px",
@@ -256,7 +256,7 @@ function MilestonesCard({ milestones }: { milestones: SidebarRightProps["milesto
               style={{
                 height: "100%",
                 borderRadius: "999px",
-                background: "#7C3AED",
+                background: "var(--app-accent, #b8a88a)",
                 width: `${milestones.nextMilestone.progress * 100}%`,
                 transition: "width 0.6s ease",
               }}

@@ -16,7 +16,7 @@ export function ScoreSection({
       <div style={{ flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "baseline", lineHeight: 1 }}>
           <span style={{ fontSize: "64px", fontWeight: 700, color: "var(--landing-fg)" }}>{overall}</span>
-          <span style={{ fontSize: "32px", color: "rgba(255,255,255,0.3)", fontWeight: 300 }}>/10</span>
+          <span style={{ fontSize: "32px", color: "var(--landing-fg-faint)", fontWeight: 300 }}>/10</span>
         </div>
         {delta != null && (
           <span
@@ -27,7 +27,7 @@ export function ScoreSection({
               marginTop: "4px",
             }}
           >
-            {delta >= 0 ? "\u25B2 +" : "\u25BC "}{delta} from last session
+            {delta >= 0 ? "▲ +" : "▼ "}{delta} from last session
           </span>
         )}
         <div
@@ -35,7 +35,7 @@ export function ScoreSection({
             width: "200px",
             height: "5px",
             borderRadius: "4px",
-            background: "rgba(255,255,255,0.08)",
+            background: "var(--landing-line)",
             marginTop: "16px",
             overflow: "hidden",
           }}
@@ -45,7 +45,7 @@ export function ScoreSection({
               width: `${(overall / 10) * 100}%`,
               height: "100%",
               borderRadius: "4px",
-              background: "#6C63FF",
+              background: "var(--landing-accent)",
               transition: "width 0.6s ease",
             }}
           />
@@ -62,8 +62,8 @@ export function ScoreSection({
           return (
             <div key={item.label}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)" }}>{item.label}</span>
-                <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", fontWeight: 500 }}>
+                <span style={{ fontSize: "13px", color: "var(--landing-fg-muted)" }}>{item.label}</span>
+                <span style={{ fontSize: "13px", color: "var(--landing-fg)", fontWeight: 500 }}>
                   {item.score}/10
                 </span>
               </div>
@@ -72,7 +72,7 @@ export function ScoreSection({
                   width: "120px",
                   height: "3px",
                   borderRadius: "2px",
-                  background: "rgba(255,255,255,0.08)",
+                  background: "var(--landing-line)",
                   overflow: "hidden",
                 }}
               >
@@ -81,7 +81,7 @@ export function ScoreSection({
                     width: `${pct * 100}%`,
                     height: "100%",
                     borderRadius: "2px",
-                    background: "#6C63FF",
+                    background: "var(--landing-accent)",
                     transition: "width 0.6s ease",
                   }}
                 />

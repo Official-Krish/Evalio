@@ -135,12 +135,13 @@ export function NewInterviewPage() {
                   padding: "10px 24px",
                   borderRadius: "8px",
                   border: "none",
-                  background: position ? "var(--color-accent)" : "var(--color-border-light)",
-                  color: position ? "#fff" : "var(--color-text-muted)",
+                  background: position ? "var(--landing-fg, #eceae6)" : "var(--color-border)",
+                  color: position ? "var(--landing-bg, #080808)" : "var(--color-text-muted)",
                   fontSize: "14px",
                   fontWeight: 500,
                   cursor: position ? "pointer" : "default",
                   transition: "all 0.15s",
+                  letterSpacing: "-0.01em",
                 }}
               >
                 Continue to Resume &rarr;
@@ -201,12 +202,13 @@ export function NewInterviewPage() {
                   padding: "10px 24px",
                   borderRadius: "8px",
                   border: "none",
-                  background: selectedResumeId ? "var(--color-accent)" : "var(--color-border-light)",
-                  color: selectedResumeId ? "#fff" : "var(--color-text-muted)",
+                  background: selectedResumeId ? "var(--landing-fg, #eceae6)" : "var(--color-border)",
+                  color: selectedResumeId ? "var(--landing-bg, #080808)" : "var(--color-text-muted)",
                   fontSize: "14px",
                   fontWeight: 500,
                   cursor: selectedResumeId ? "pointer" : "default",
                   transition: "all 0.15s",
+                  letterSpacing: "-0.01em",
                 }}
               >
                 Review Session &rarr;
@@ -274,9 +276,9 @@ export function NewInterviewPage() {
                     style={{
                       padding: "6px 14px",
                       borderRadius: "6px",
-                      border: "1px solid rgba(99,102,241,0.3)",
-                      background: "rgba(99,102,241,0.1)",
-                      color: "var(--color-accent)",
+                      border: "1px solid var(--app-accent-border, rgba(184,168,138,0.25))",
+                      background: "var(--app-accent-bg, rgba(184,168,138,0.08))",
+                      color: "var(--app-accent, #b8a88a)",
                       fontSize: "12px",
                       cursor: "pointer",
                     }}

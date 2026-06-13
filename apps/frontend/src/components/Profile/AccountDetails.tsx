@@ -44,9 +44,9 @@ export function AccountDetails({ email, githubUsername, memberSince, onEdit }: A
         <button
           onClick={onEdit}
           style={{
-            background: "rgba(124,58,237,0.1)",
-            border: "1px solid rgba(124,58,237,0.2)",
-            color: "#A78BFA",
+            background: "var(--app-accent-bg, rgba(184,168,138,0.08))",
+            border: "1px solid var(--app-accent-border, rgba(184,168,138,0.2))",
+            color: "var(--app-accent, #b8a88a)",
             borderRadius: "6px",
             padding: "4px 12px",
             fontSize: "12px",
@@ -56,8 +56,8 @@ export function AccountDetails({ email, githubUsername, memberSince, onEdit }: A
             gap: "4px",
             transition: "all 0.15s ease",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(124,58,237,0.18)"; e.currentTarget.style.borderColor = "rgba(124,58,237,0.35)" }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(124,58,237,0.1)"; e.currentTarget.style.borderColor = "rgba(124,58,237,0.2)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--app-accent-bg, rgba(184,168,138,0.14))"; e.currentTarget.style.borderColor = "var(--app-accent, #b8a88a)" }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--app-accent-bg, rgba(184,168,138,0.08))"; e.currentTarget.style.borderColor = "var(--app-accent-border, rgba(184,168,138,0.2))" }}
         >
           <IconEdit size={12} />
           Edit
@@ -131,7 +131,7 @@ function AccountRow({
       rel="noopener noreferrer"
       style={{
         fontSize: "14px",
-        color: "#A78BFA",
+        color: "var(--app-accent, #b8a88a)",
         textDecoration: "none",
         display: "inline-flex",
         alignItems: "center",
@@ -169,7 +169,7 @@ function AccountRow({
           border: "none",
           padding: "0",
           cursor: "pointer",
-          color: copied ? "#A78BFA" : hovered ? "var(--color-text-muted)" : "transparent",
+          color: copied ? "var(--app-accent, #b8a88a)" : hovered ? "var(--color-text-muted)" : "transparent",
           transition: "color 0.15s ease, opacity 0.15s ease",
           display: "flex",
           flexShrink: 0,

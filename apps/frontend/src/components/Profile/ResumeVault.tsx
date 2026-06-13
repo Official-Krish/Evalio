@@ -44,13 +44,13 @@ export function ResumeVault({ resumes, onUpload }: ResumeVaultProps) {
               background: "none",
               border: "none",
               cursor: "pointer",
-              color: "#7C3AED",
+              color: "var(--app-accent, #b8a88a)",
               padding: "4px",
               borderRadius: "6px",
               display: "flex",
               transition: "all 0.15s ease",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(124,58,237,0.15)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--app-accent-bg, rgba(184,168,138,0.1))" }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
           >
             <IconPlus size={18} />
@@ -92,7 +92,7 @@ export function ResumeVault({ resumes, onUpload }: ResumeVaultProps) {
                 gap: "4px",
                 transition: "color 0.15s ease",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#A78BFA" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--app-accent, #b8a88a)" }}
               onMouseLeave={(e) => { e.currentTarget.style.color = "var(--color-text-muted)" }}
             >
               {showAll ? "Show less" : `View all (${resumes.length})`}
@@ -125,7 +125,7 @@ function ResumeRow({ resume, isLast }: { resume: Resume; isLast: boolean }) {
         borderBottom: isLast ? "none" : "0.5px solid var(--color-border-light)",
       }}
     >
-      <IconFileTypePdf size={18} color="#7C3AED" style={{ flexShrink: 0 }} />
+      <IconFileTypePdf size={18} color="var(--app-accent, #b8a88a)" style={{ flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontSize: "13px", fontWeight: 500, color: "var(--color-text)", margin: 0, lineHeight: 1.3 }}>
           {label}

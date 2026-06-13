@@ -62,7 +62,7 @@ export function DashboardPage() {
         style={{
           position: "fixed",
           inset: 0,
-          background: "radial-gradient(ellipse at 30% 0%, rgba(124,58,237,0.06) 0%, transparent 60%)",
+          background: "radial-gradient(ellipse at 30% 0%, var(--app-accent-glow, rgba(184,168,138,0.06)) 0%, transparent 60%)",
           pointerEvents: "none",
           zIndex: 0,
         }}

@@ -57,7 +57,7 @@ export function IdentityCard({ user, memberSince }: IdentityCardProps) {
           width: "200px",
           height: "200px",
           borderRadius: "50%",
-          background: "rgba(124,58,237,0.08)",
+          background: "var(--app-accent-glow, rgba(184,168,138,0.08))",
           pointerEvents: "none",
         }}
       />
@@ -65,12 +65,12 @@ export function IdentityCard({ user, memberSince }: IdentityCardProps) {
       {/* Avatar */}
       <div style={{ position: "relative" }}>
         <motion.div
-          initial={{ boxShadow: "0 0 0 0px rgba(124,58,237,0.15)" }}
+          initial={{ boxShadow: "0 0 0 0px var(--app-accent-bg, rgba(184,168,138,0.1))" }}
           animate={{
             boxShadow: [
-              "0 0 0 0px rgba(124,58,237,0.15)",
-              "0 0 0 4px rgba(124,58,237,0.15), 0 0 20px rgba(124,58,237,0.2)",
-              "0 0 0 4px rgba(124,58,237,0.15), 0 0 20px rgba(124,58,237,0.2)",
+              "0 0 0 0px var(--app-accent-bg, rgba(184,168,138,0.1))",
+              "0 0 0 4px var(--app-accent-bg, rgba(184,168,138,0.1)), 0 0 20px var(--app-accent-glow, rgba(184,168,138,0.12))",
+              "0 0 0 4px var(--app-accent-bg, rgba(184,168,138,0.1)), 0 0 20px var(--app-accent-glow, rgba(184,168,138,0.12))",
             ],
           }}
           transition={{ duration: 1.2, ease: "easeOut", times: [0, 0.5, 1] }}
@@ -81,11 +81,11 @@ export function IdentityCard({ user, memberSince }: IdentityCardProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "#1A1040",
-            border: "2px solid #7C3AED",
+            background: "var(--color-bg-card)",
+            border: "2px solid var(--app-accent-border, rgba(184,168,138,0.35))",
             fontSize: "28px",
             fontWeight: 500,
-            color: "#A78BFA",
+            color: "var(--app-accent, #b8a88a)",
           }}
         >
           {user?.name?.charAt(0)?.toUpperCase() ?? user?.email?.charAt(0)?.toUpperCase() ?? "?"}
@@ -136,8 +136,8 @@ export function IdentityCard({ user, memberSince }: IdentityCardProps) {
                   padding: "5px 0",
                   borderRadius: "6px",
                   border: "none",
-                  background: "#7C3AED",
-                  color: "#fff",
+                  background: "var(--landing-fg, #eceae6)",
+                  color: "var(--landing-bg, #080808)",
                   fontSize: "11px",
                   fontWeight: 500,
                   cursor: updateMutation.isPending ? "not-allowed" : "pointer",
@@ -191,7 +191,7 @@ export function IdentityCard({ user, memberSince }: IdentityCardProps) {
             gap: "6px",
             transition: "all 0.15s ease",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#7C3AED"; e.currentTarget.style.color = "#A78BFA" }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--app-accent-border, rgba(184,168,138,0.35))"; e.currentTarget.style.color = "var(--app-accent, #b8a88a)" }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "var(--color-text-muted)" }}
         >
           <IconEdit size={14} />

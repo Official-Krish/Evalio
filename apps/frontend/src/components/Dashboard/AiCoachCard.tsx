@@ -52,8 +52,8 @@ export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
   return (
     <div
       style={{
-        background: "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(15,15,26,0) 60%)",
-        border: "1px solid rgba(124,58,237,0.2)",
+        background: "linear-gradient(135deg, var(--app-accent-bg, rgba(184,168,138,0.06)) 0%, transparent 60%)",
+        border: "1px solid var(--app-accent-border, rgba(184,168,138,0.18))",
         borderRadius: "12px",
         padding: "20px 24px",
         position: "relative",
@@ -64,9 +64,9 @@ export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
         <span
           style={{
-            background: "rgba(124,58,237,0.12)",
-            border: "1px solid rgba(124,58,237,0.2)",
-            color: "#A78BFA",
+            background: "var(--app-accent-bg, rgba(184,168,138,0.08))",
+            border: "1px solid var(--app-accent-border, rgba(184,168,138,0.2))",
+            color: "var(--app-accent, #b8a88a)",
             fontSize: "11px",
             fontWeight: 500,
             borderRadius: "999px",
@@ -82,7 +82,7 @@ export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
             width: "8px",
             height: "8px",
             borderRadius: "50%",
-            background: "#7C3AED",
+            background: "var(--app-accent, #b8a88a)",
           }}
         />
       </div>
@@ -120,17 +120,18 @@ export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
           width: "100%",
           padding: "12px 20px",
           borderRadius: "8px",
-          background: "#7C3AED",
-          color: "#fff",
+          background: "var(--landing-fg, #eceae6)",
+          color: "var(--landing-bg, #080808)",
           fontSize: "14px",
           fontWeight: 500,
           textDecoration: "none",
           textAlign: "center",
           position: "relative",
           overflow: "hidden",
+          letterSpacing: "-0.01em",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "#6D28D9" }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "#7C3AED" }}
+        onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88" }}
+        onMouseLeave={(e) => { e.currentTarget.style.opacity = "1" }}
       >
         {completed[0]?.position
           ? `${completed[0].position} \u00B7 12 min \u2192`
