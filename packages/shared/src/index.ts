@@ -1,15 +1,41 @@
 import { z } from "zod"
 
+// ── Password validation ──
+export const passwordSchema = z
+  .string()
+  .min(8, "At least 8 characters")
+  .regex(/[A-Z]/, "At least one uppercase letter")
+  .regex(/[a-z]/, "At least one lowercase letter")
+  .regex(/[0-9]/, "At least one number")
+  .regex(/[^A-Za-z0-9]/, "At least one special character")
+
+export const passwordRequirements = [
+  { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
+  { label: "One uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
+  { label: "One lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+  { label: "One number", test: (p: string) => /[0-9]/.test(p) },
+  { label: "One special character", test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+]
+
 // ── Auth ──
 export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
 })
 
 export const signupSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(6),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  password: passwordSchema,
+})
+
+export const verifyOtpSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  otp: z.string().length(6, "OTP must be 6 digits"),
+})
+
+export const resendOtpSchema = z.object({
+  email: z.string().email("Invalid email address"),
 })
 
 // ── Interview ──
@@ -41,6 +67,8 @@ export const resumeSchema = z.object({
 // ── Types ──
 export type LoginInput = z.infer<typeof loginSchema>
 export type SignupInput = z.infer<typeof signupSchema>
+export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>
+export type ResendOtpInput = z.infer<typeof resendOtpSchema>
 export type CreateInterviewInput = z.infer<typeof createInterviewSchema>
 export type InterviewStatus = z.infer<typeof interviewStatusSchema>
 

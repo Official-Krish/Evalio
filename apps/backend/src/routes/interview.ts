@@ -105,7 +105,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
           where: { userId: user.id },
           orderBy: { createdAt: "desc" },
           skip: Number(query.skip) || 0,
-          take: Number(query.take) || 20,
+          take: Math.min(Number(query.take) || 20, 100),
           include: {
             _count: { select: { turns: true } },
             resume: { select: { id: true, version: true } },
@@ -185,15 +185,4 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
           }),
         }
       )
-      .delete("/:id", async ({ params: { id }, user, set }) => {
-        const interview = await prisma.interviewSession.findUnique({
-          where: { id },
-        })
-        if (!interview || interview.userId !== user.id) {
-          set.status = 404
-          return { error: "Interview not found" }
-        }
-        await prisma.interviewSession.delete({ where: { id } })
-        return { success: true }
-      })
   )

@@ -14,17 +14,20 @@ datasource db {
 
 
 model User {
-  id            String     @id @default(cuid())
-  email         String     @unique
-  name          String?
-  password      String
-  role          UserRole   @default(FREE)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  candidate     CandidateProfile?
-  resumes       Resume[]
-  githubProfile GithubProfile?
-  interviews    InterviewSession[]
+  id                  String     @id @default(cuid())
+  email               String     @unique
+  name                String?
+  password            String
+  role                UserRole   @default(FREE)
+  emailVerified       Boolean    @default(false)
+  verificationOtp     String?
+  verificationOtpExpiry DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  candidate           CandidateProfile?
+  resumes             Resume[]
+  githubProfile       GithubProfile?
+  interviews          InterviewSession[]
 }
 
 model CandidateProfile {
