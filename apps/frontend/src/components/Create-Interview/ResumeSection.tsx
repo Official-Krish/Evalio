@@ -4,6 +4,7 @@ import { fileNameFromUrl, detectSections } from "./helpers"
 import { FileUpload } from "../ui/file-upload"
 import type { Resume } from "@ai-interview/shared"
 import toast from "react-hot-toast"
+import { SiGithub } from "react-icons/si"
 
 interface ResumeSectionProps {
   resumes: Resume[]
@@ -15,6 +16,21 @@ interface ResumeSectionProps {
   onResumesRefetch: () => void
   onGithubUrlChange: (url: string) => void
   onGithubToggle: () => void
+}
+
+const btnBase: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "8px",
+  padding: "10px 18px",
+  borderRadius: "10px",
+  border: "1px solid var(--color-border-light)",
+  background: "transparent",
+  color: "var(--color-text-secondary)",
+  fontSize: "13px",
+  fontWeight: 500,
+  cursor: "pointer",
+  transition: "all 0.15s",
 }
 
 export function ResumeSection({
@@ -155,18 +171,26 @@ export function ResumeSection({
             lineHeight: 1.5,
           }}
         >
-          Resume loaded &middot;{" "}
-          {detected.projects > 0 && `${detected.projects} projects`}
-          {detected.projects > 0 && detected.skills > 0 && " \u00B7 "}
-          {detected.skills > 0 && `${detected.skills} key skills`}
-          {" "}detected.
+          Resume loaded
         </motion.div>
       )}
 
+      {/* GitHub section — always visible when resume selected */}
       {selectedResume && (
-        <div style={{ marginTop: "16px" }}>
+        <div style={{ marginTop: "20px", padding: "16px", borderRadius: "12px", border: "1px solid var(--color-border-light)" }}>
           {githubOpen ? (
             <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+                <span style={{ fontSize: "18px", lineHeight: 1 }}>{<SiGithub/>}</span>
+                <div>
+                  <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--color-text)", margin: 0 }}>
+                    GitHub Profile
+                  </p>
+                  <p style={{ fontSize: "12px", color: "var(--color-text-muted)", margin: "2px 0 0" }}>
+                    AI will analyze your public repos for code-specific questions
+                  </p>
+                </div>
+              </div>
               <input
                 value={githubUrl}
                 onChange={(e) => onGithubUrlChange(e.target.value)}
@@ -174,30 +198,39 @@ export function ResumeSection({
                 style={{
                   width: "100%",
                   fontSize: "14px",
-                  padding: "10px 14px",
+                  padding: "12px 14px",
                   borderRadius: "8px",
                   border: "1px solid var(--color-border)",
                   background: "var(--color-bg-hover)",
                   color: "var(--color-text)",
                   outline: "none",
+                  boxSizing: "border-box",
                 }}
                 onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
                 onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
               />
+              <p style={{ fontSize: "11px", color: "var(--color-text-muted)", margin: "8px 0 0" }}>
+                Leave empty to skip GitHub analysis
+              </p>
             </div>
           ) : (
             <button
               onClick={onGithubToggle}
-              style={{
-                fontSize: "13px",
-                color: "var(--color-text-muted)",
-                background: "none",
-                border: "none",
-                padding: 0,
-                cursor: "pointer",
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "var(--color-accent)"
+                e.currentTarget.style.color = "var(--color-accent)"
               }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--color-border-light)"
+                e.currentTarget.style.color = "var(--color-text-secondary)"
+              }}
+              style={btnBase}
             >
-              + Add GitHub for code-specific questions &rarr;
+              <span style={{ fontSize: "16px", lineHeight: 1 }}>{<SiGithub/>}</span>
+              <span>
+                Add GitHub for <strong>code-specific questions</strong>
+              </span>
+              <span style={{ fontSize: "11px", opacity: 0.6 }}>{"\u2192"}</span>
             </button>
           )}
         </div>

@@ -79,6 +79,41 @@ export function ResultsPage() {
             {turns.length} turns
             {interview.durationSeconds ? ` \u00b7 ${Math.round(interview.durationSeconds / 60)} min` : ""}
           </p>
+          {interview.companyName && (
+            <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
+              <span style={{
+                fontSize: "11px",
+                padding: "3px 10px",
+                borderRadius: "6px",
+                background: "rgba(99,102,241,0.1)",
+                color: "#818CF8",
+              }}>
+                {interview.companyName}
+              </span>
+              {interview.interviewStyle && (
+                <span style={{
+                  fontSize: "11px",
+                  padding: "3px 10px",
+                  borderRadius: "6px",
+                  background: "rgba(251,191,36,0.1)",
+                  color: "#FCD34D",
+                }}>
+                  {interview.interviewStyle === "SUPPORTIVE" ? "Supportive" : interview.interviewStyle === "PROFESSIONAL" ? "Professional" : interview.interviewStyle === "CHALLENGING" ? "Challenging" : "Bar Raiser"}
+                </span>
+              )}
+              {interview.interviewDepth && (
+                <span style={{
+                  fontSize: "11px",
+                  padding: "3px 10px",
+                  borderRadius: "6px",
+                  background: "rgba(52,211,153,0.1)",
+                  color: "#6EE7B7",
+                }}>
+                  {interview.interviewDepth === "STANDARD" ? "Standard" : interview.interviewDepth === "PROBING" ? "Probing" : interview.interviewDepth === "CHALLENGE" ? "Challenge" : "Bar Raiser"}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           <Link to="/dashboard" style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>

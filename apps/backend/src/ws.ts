@@ -1,8 +1,9 @@
 import { WebSocketServer } from "ws"
 import { createGeminiSession, type GeminiSession } from "./gemini"
 import { prisma } from "./lib/prisma"
-import { buildInterviewPrompt } from "./prompt"
+import { buildInterviewPrompt, type PromptInput } from "./prompt"
 import { evaluateInterview } from "./services/evaluate"
+import { COMPANIES } from "@ai-interview/shared"
 
 const WS_PORT = parseInt(Bun.env.WS_PORT ?? "8080")
 
@@ -75,6 +76,43 @@ export function startWsServer() {
     let closingMode = false
     let timeWarningTimer: ReturnType<typeof setTimeout> | null = null
     let timeCapTimer: ReturnType<typeof setTimeout> | null = null
+    let interviewDepth: string = "STANDARD"
+    let waitingForAiResponse = false
+
+    function isNewQuestion(text: string): boolean {
+      const lower = text.toLowerCase()
+      const newQIndicators = [
+        "let's move on", "let’s move on",
+        "next question", "next, ",
+        "now i'd like to", "now i’d like to",
+        "tell me about",
+        "how do you", "how would you",
+        "what is your", "what's your",
+        "let's talk about", "let’s talk about",
+        "moving on",
+        "another topic",
+        "let me ask you", "now tell me",
+      ]
+      return newQIndicators.some((i) => lower.includes(i))
+    }
+
+    async function flushChallengeTurn() {
+      if (!interviewId || !currentTurnId) return
+      if (answerBuf) {
+        const prev = await prisma.interviewTurn.findUnique({
+          where: { id: currentTurnId },
+          select: { answerText: true },
+        })
+        const merged = prev?.answerText
+          ? prev.answerText + "\n\n" + answerBuf
+          : answerBuf
+        await prisma.interviewTurn.update({
+          where: { id: currentTurnId },
+          data: { answerText: merged },
+        })
+        answerBuf = ""
+      }
+    }
 
     async function createTurn(questionText: string) {
       const turn = await prisma.interviewTurn.create({
@@ -128,11 +166,13 @@ export function startWsServer() {
       if (timeCapTimer) clearTimeout(timeCapTimer)
       if (interviewId && !finalized) {
         finalized = true
-        // flush remaining buffers
-        if (questionBuf) {
+        const isChallengeMode = interviewDepth === "CHALLENGE" || interviewDepth === "BAR_RAISER"
+
+        if (isChallengeMode && currentTurnId) {
+          await flushChallengeTurn()
+        } else if (questionBuf) {
           await flushTurn()
         } else if (currentTurnId && answerBuf) {
-          // user spoke last with no AI follow-up — append to previous answer
           const prev = await prisma.interviewTurn.findUnique({
             where: { id: currentTurnId },
             select: { answerText: true },
@@ -195,7 +235,12 @@ export function startWsServer() {
     async function handleTurnCompleteDuringClosing() {
       if (!interviewId || !closingMode || finalized) return
       console.log("[ws] closing turn complete — finalizing")
-      if (questionBuf) {
+
+      const isChallengeMode = interviewDepth === "CHALLENGE" || interviewDepth === "BAR_RAISER"
+
+      if (isChallengeMode && currentTurnId) {
+        await flushChallengeTurn()
+      } else if (questionBuf) {
         await flushTurn()
       } else if (currentTurnId && answerBuf) {
         const prev = await prisma.interviewTurn.findUnique({
@@ -279,6 +324,14 @@ export function startWsServer() {
             const userRole = interview.user.role ?? "FREE"
             const timeLimitMs = userRole === "ADMIN" ? 1_800_000 : 900_000
             const durationMinutes = timeLimitMs / 60_000
+            const companyConfig = interview.companyId
+              ? COMPANIES.find((c) => c.id === interview.companyId)
+              : null
+
+            interviewDepth = interview.interviewDepth ?? "STANDARD"
+
+            const selectedRole = companyConfig?.roles.find((r) => r.title === interview.roleTitle) ?? null
+
             const promptInput = {
               position: interview.position,
               candidateName: interview.user.name,
@@ -289,6 +342,16 @@ export function startWsServer() {
               githubLanguages: (github?.languages as string[]) ?? [],
               githubProjects: (github?.projects as { name: string; description: string | null; stars: number; language: string | null }[]) ?? [],
               durationMinutes,
+              interviewStyle: (interview.interviewStyle ?? "PROFESSIONAL") as PromptInput["interviewStyle"],
+              interviewDepth: interviewDepth as PromptInput["interviewDepth"],
+              companyName: interview.companyName ?? null,
+              companyCulture: companyConfig?.culture ?? null,
+              companyInterviewerBehavior: companyConfig?.interviewerBehavior ?? null,
+              companyEvaluationBiases: companyConfig?.evaluationBiases ?? null,
+              roleTopics: selectedRole?.topics ?? null,
+              roleEvaluationCriteria: selectedRole?.evaluationCriteria ?? null,
+              roleMustProbe: selectedRole?.mustProbe ?? null,
+              candidateHistory: null,
             }
 
             const systemPrompt = buildInterviewPrompt(promptInput)
@@ -361,8 +424,28 @@ export function startWsServer() {
                   answerBuf = dedupAppend(answerBuf, inputText)
                 }
 
+                // In challenge mode, detect new question vs challenge on AI turnComplete
+                const turnComplete = parsed.serverContent?.turnComplete === true
+                const isChallengeMode = interviewDepth === "CHALLENGE" || interviewDepth === "BAR_RAISER"
+
+                if (turnComplete && outputText && isChallengeMode && waitingForAiResponse && !closingMode) {
+                  waitingForAiResponse = false
+                  if (isNewQuestion(questionBuf)) {
+                    // AI moved to a new question — finalize the challenge turn
+                    await flushChallengeTurn()
+                    currentTurnId = null
+                  } else {
+                    // AI is still challenging — keep the turn open, questionBuf stays
+                    questionBuf = outputText
+                  }
+                }
+
+                if (turnComplete && outputText && !isChallengeMode && waitingForAiResponse) {
+                  waitingForAiResponse = false
+                }
+
                 // In closing mode, detect turnComplete to finalize
-                if (closingMode && parsed.serverContent?.turnComplete) {
+                if (closingMode && turnComplete) {
                   await handleTurnCompleteDuringClosing()
                 }
               } catch {
@@ -434,26 +517,50 @@ export function startWsServer() {
             }
             console.log("[ws] audio_stream_end from client → Gemini")
 
-            // --- TURN BOUNDARY ---
-            // User stopped recording — save the question accumulated from
-            // the AI's previous speaking turn + the answer the user just gave.
-            if (interviewId && questionBuf) {
-              await flushTurn()
-            } else if (interviewId && currentTurnId && answerBuf) {
-              // No new question but user spoke — append to previous answer
-              const prev = await prisma.interviewTurn.findUnique({
-                where: { id: currentTurnId },
-                select: { answerText: true },
-              })
-              const merged = prev?.answerText
-                ? prev.answerText + " " + answerBuf
-                : answerBuf
-              await prisma.interviewTurn.update({
-                where: { id: currentTurnId },
-                data: { answerText: merged },
-              })
-              answerBuf = ""
+            const isChallengeMode = interviewDepth === "CHALLENGE" || interviewDepth === "BAR_RAISER"
+
+            if (isChallengeMode) {
+              // Challenge mode: don't flush turn — accumulate answer into current turn
+              if (interviewId) {
+                if (!currentTurnId && questionBuf) {
+                  currentTurnId = await createTurn(questionBuf)
+                }
+                if (currentTurnId && answerBuf) {
+                  const prev = await prisma.interviewTurn.findUnique({
+                    where: { id: currentTurnId },
+                    select: { answerText: true },
+                  })
+                  const merged = prev?.answerText
+                    ? prev.answerText + "\n\n" + answerBuf
+                    : answerBuf
+                  await prisma.interviewTurn.update({
+                    where: { id: currentTurnId },
+                    data: { answerText: merged },
+                  })
+                  answerBuf = ""
+                }
+              }
+            } else {
+              // Standard/Probing: normal turn boundary
+              if (interviewId && questionBuf) {
+                await flushTurn()
+              } else if (interviewId && currentTurnId && answerBuf) {
+                const prev = await prisma.interviewTurn.findUnique({
+                  where: { id: currentTurnId },
+                  select: { answerText: true },
+                })
+                const merged = prev?.answerText
+                  ? prev.answerText + " " + answerBuf
+                  : answerBuf
+                await prisma.interviewTurn.update({
+                  where: { id: currentTurnId },
+                  data: { answerText: merged },
+                })
+                answerBuf = ""
+              }
             }
+
+            waitingForAiResponse = true
 
             try {
               gemini.send(

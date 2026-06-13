@@ -19,12 +19,48 @@ export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
     >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="min-w-0">
-          <p style={{ fontSize: "16px", fontWeight: 500, color: "var(--color-text)", marginBottom: "10px" }}>
+          <p style={{ fontSize: "16px", fontWeight: 500, color: "var(--color-text)", marginBottom: "6px" }}>
             {mostRecent.position || "General"}
             <span style={{ fontSize: "13px", color: "var(--color-text-muted)", fontWeight: 400 }}>
               {" "}&middot; {formatDuration(mostRecent.durationSeconds)}
             </span>
           </p>
+          {mostRecent.companyName && (
+            <div style={{ display: "flex", gap: "6px", marginBottom: "8px", flexWrap: "wrap" }}>
+              <span style={{
+                fontSize: "10px",
+                padding: "2px 8px",
+                borderRadius: "4px",
+                background: "rgba(99,102,241,0.1)",
+                color: "#818CF8",
+                fontFamily: "monospace",
+              }}>
+                {mostRecent.companyName}
+              </span>
+              {mostRecent.interviewStyle && (
+                <span style={{
+                  fontSize: "10px",
+                  padding: "2px 8px",
+                  borderRadius: "4px",
+                  background: "rgba(251,191,36,0.1)",
+                  color: "#FCD34D",
+                }}>
+                  {mostRecent.interviewStyle === "SUPPORTIVE" ? "Supportive" : mostRecent.interviewStyle === "PROFESSIONAL" ? "Professional" : mostRecent.interviewStyle === "CHALLENGING" ? "Challenging" : "Bar Raiser"}
+                </span>
+              )}
+              {mostRecent.interviewDepth && (
+                <span style={{
+                  fontSize: "10px",
+                  padding: "2px 8px",
+                  borderRadius: "4px",
+                  background: "rgba(52,211,153,0.1)",
+                  color: "#6EE7B7",
+                }}>
+                  {mostRecent.interviewDepth === "STANDARD" ? "Standard" : mostRecent.interviewDepth === "PROBING" ? "Probing" : mostRecent.interviewDepth === "CHALLENGE" ? "Challenge" : "Bar Raiser"}
+                </span>
+              )}
+            </div>
+          )}
           <div
             style={{
               width: "160px",

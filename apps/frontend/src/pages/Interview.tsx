@@ -27,7 +27,11 @@ export function InterviewPage() {
     queryFn: () => api.getInterview(id!),
     enabled: !!id,
   })
-  const position = interviewData?.interview?.position ?? null
+  const interviewMeta = interviewData?.interview
+  const position = interviewMeta?.position ?? null
+  const companyName = interviewMeta?.companyName ?? null
+  const interviewStyle = interviewMeta?.interviewStyle ?? null
+  const interviewDepth = interviewMeta?.interviewDepth ?? null
 
   const { start: startMic, stop: stopMic, isRecording: micActive, analyserRef: userAnalyserRef } =
     useMicrophone()
@@ -62,6 +66,8 @@ export function InterviewPage() {
 
   const aiSpeakingRef = useRef(false)
   const phaseRef = useRef(phase)
+  const autoMicPendingRef = useRef(false)
+  const isUserSpeakingRef = useRef(false)
   useEffect(() => {
     phaseRef.current = phase
   }, [phase])
@@ -138,6 +144,13 @@ export function InterviewPage() {
         }
       }
 
+      // AI interrupting — stop mic immediately if user is speaking
+      if (audioBase64 && isUserSpeakingRef.current && !endedRef.current) {
+        isUserSpeakingRef.current = false
+        stopMic()
+        socketRef.current?.sendAudioStreamEnd()
+      }
+
       if (audioBase64 && !endedRef.current) {
         aiSpeakingRef.current = true
         playPcm(audioBase64)
@@ -151,6 +164,23 @@ export function InterviewPage() {
         ])
         if (!audioBase64 && !aiSpeakingRef.current) {
           setAiTurnActive(false)
+          // Auto-start mic when AI finishes speaking
+          if (!micActive && !endedRef.current && !closing && !autoMicPendingRef.current) {
+            autoMicPendingRef.current = true
+            setTimeout(() => {
+              autoMicPendingRef.current = false
+              if (!endedRef.current && !closing && !micActive && !aiSpeakingRef.current) {
+                isUserSpeakingRef.current = true
+                startMic((base64) => {
+                  if (!endedRef.current) {
+                    socketRef.current?.sendAudio(base64)
+                  }
+                }).catch(() => {
+                  isUserSpeakingRef.current = false
+                })
+              }
+            }, 300)
+          }
         }
       }
 
@@ -257,6 +287,7 @@ export function InterviewPage() {
     if (endedRef.current || closing || feedbackReady) return
 
     if (micActive) {
+      isUserSpeakingRef.current = false
       stopMic()
       socketRef.current?.sendAudioStreamEnd()
       return
@@ -268,12 +299,14 @@ export function InterviewPage() {
     }
 
     try {
+      isUserSpeakingRef.current = true
       await startMic((base64) => {
         if (!endedRef.current) {
           socketRef.current?.sendAudio(base64)
         }
       })
     } catch {
+      isUserSpeakingRef.current = false
       toast.error("Microphone access denied")
     }
   }
@@ -308,6 +341,9 @@ export function InterviewPage() {
             phase={phase}
             timeLimit={timeLimit}
             remainingMs={remainingMs}
+            companyName={companyName}
+            interviewStyle={interviewStyle}
+            interviewDepth={interviewDepth}
           />
         </div>
 

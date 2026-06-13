@@ -25,6 +25,7 @@ model User {
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
   candidate           CandidateProfile?
+  skillProfile        CandidateSkillProfile?
   resumes             Resume[]
   githubProfile       GithubProfile?
   interviews          InterviewSession[]
@@ -65,10 +66,30 @@ model GithubProfile {
   user              User     @relation(fields: [userId], references: [id])
 }
 
+model CandidateSkillProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  communication     Json     @default("[]")
+  technicalDepth    Json     @default("[]")
+  problemSolving    Json     @default("[]")
+  leadership        Json     @default("[]")
+  commonPatterns    Json     @default("[]")
+  mostImprovedSkill String?
+  weakestSkill      String?
+  generatedAt       DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id])
+}
+
 model InterviewSession {
-  id                  String   @id @default(cuid())
+  id                  String         @id @default(cuid())
   userId              String
   status              InterviewStatus
+  interviewStyle      InterviewStyle @default(PROFESSIONAL)
+  interviewDepth      InterviewDepth @default(STANDARD)
+  companyId           String?
+  companyName         String?
+  roleTitle           String?
   startedAt           DateTime?
   endedAt             DateTime?
   overallScore        Float?
@@ -77,13 +98,13 @@ model InterviewSession {
   problemSolvingScore Float?
   durationSeconds     Int?
   position            String?
-  jobDescription      String?  @db.Text
+  jobDescription      String?        @db.Text
   resumeId            String?
-  resume              Resume?  @relation(fields: [resumeId], references: [id])
+  resume              Resume?        @relation(fields: [resumeId], references: [id])
   summary             InterviewSummary?
   turns               InterviewTurn[]
-  createdAt           DateTime @default(now())
-  user                User     @relation(fields: [userId], references: [id])
+  createdAt           DateTime       @default(now())
+  user                User           @relation(fields: [userId], references: [id])
 }
 
 model InterviewTurn {
@@ -126,4 +147,18 @@ enum InterviewStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+enum InterviewStyle {
+  SUPPORTIVE
+  PROFESSIONAL
+  CHALLENGING
+  BAR_RAISER
+}
+
+enum InterviewDepth {
+  STANDARD
+  PROBING
+  CHALLENGE
+  BAR_RAISER
 }

@@ -1,14 +1,17 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { motion, AnimatePresence } from "motion/react"
 import { api } from "../lib/api"
 import { ResumePreview } from "../components/ResumePreview"
 import { ProgressStepper } from "../components/Create-Interview/ProgressStepper"
-import { InterviewerCards } from "../components/Create-Interview/InterviewerCards"
+import { CompanyGrid } from "../components/Create-Interview/CompanyGrid"
+import { RolePicker } from "../components/Create-Interview/RolePicker"
+import { StyleDepthPicker } from "../components/Create-Interview/StyleDepthPicker"
 import { ResumeSection } from "../components/Create-Interview/ResumeSection"
 import { SessionCard } from "../components/Create-Interview/SessionCard"
-import type { Resume, InterviewSession } from "@ai-interview/shared"
+import { COMPANIES, getDefaultStyleDepth } from "@ai-interview/shared"
+import type { Resume, InterviewSession, InterviewStyle, InterviewDepth } from "@ai-interview/shared"
 import toast from "react-hot-toast"
 
 const stepVariants = {
@@ -20,8 +23,23 @@ const stepVariants = {
 export function NewInterviewPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
-  const [position, setPosition] = useState("")
-  const [customPosition, setCustomPosition] = useState("")
+
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null)
+  const [selectedRoleTitle, setSelectedRoleTitle] = useState<string | null>(null)
+  const [customRole, setCustomRole] = useState("")
+  const [interviewStyle, setInterviewStyle] = useState<InterviewStyle>("PROFESSIONAL")
+  const [interviewDepth, setInterviewDepth] = useState<InterviewDepth>("STANDARD")
+
+  // Auto-set style/depth to company defaults when switching to a custom role
+  const prevRoleTitle = useRef(selectedRoleTitle)
+  useEffect(() => {
+    if (selectedCompanyId && selectedRoleTitle === null && prevRoleTitle.current !== null) {
+      const defaults = getDefaultStyleDepth(selectedCompanyId)
+      setInterviewStyle(defaults.style)
+      setInterviewDepth(defaults.depth)
+    }
+    prevRoleTitle.current = selectedRoleTitle
+  }, [selectedRoleTitle, selectedCompanyId])
   const [selectedResumeId, setSelectedResumeId] = useState<string | undefined>()
   const [previewResumeId, setPreviewResumeId] = useState<string | null>(null)
   const [githubUrl, setGithubUrl] = useState("")
@@ -57,7 +75,17 @@ export function NewInterviewPage() {
     return Math.ceil((expiresAt.getTime() - now) / (24 * 60 * 60 * 1000))
   }, [interviews, now])
 
-  const selectedPosition = position === "custom" ? customPosition : position
+  const selectedCompany = selectedCompanyId && selectedCompanyId !== "__custom__"
+    ? COMPANIES.find((c) => c.id === selectedCompanyId) ?? null
+    : null
+
+  const selectedRole = selectedCompany && selectedRoleTitle
+    ? selectedCompany.roles.find((r) => r.title === selectedRoleTitle) ?? null
+    : null
+
+  const effectivePosition = selectedRole?.title ?? customRole
+  const effectiveCompanyName = selectedCompany?.name ?? null
+  const effectiveCompanyId = selectedCompanyId && selectedCompanyId !== "__custom__" ? selectedCompanyId : null
 
   const createMutation = useMutation({
     mutationFn: api.createInterview,
@@ -79,13 +107,18 @@ export function NewInterviewPage() {
   })
 
   const handleCreate = () => {
-    if (!selectedPosition) { toast.error("Select a position"); return }
+    if (!effectivePosition) { toast.error("Select a position"); return }
     if (!selectedResumeId) { toast.error("Select a resume"); return }
     createMutation.mutate({
-      position: selectedPosition,
+      position: effectivePosition,
       resumeId: selectedResumeId,
       githubUrl: githubUrl || undefined,
       jobDescription: jobDescription.trim() || undefined,
+      companyId: effectiveCompanyId ?? undefined,
+      companyName: effectiveCompanyName ?? undefined,
+      roleTitle: selectedRoleTitle ?? undefined,
+      interviewStyle,
+      interviewDepth,
     })
   }
 
@@ -94,7 +127,7 @@ export function NewInterviewPage() {
     : null
 
   return (
-    <div className="max-w-2xl mx-auto" style={{ paddingBottom: step === 2 ? "0" : "160px" }}>
+    <div className="max-w-2xl mx-auto" style={{ paddingBottom: step === 3 ? "0" : "160px" }}>
       <ResumePreview resumeId={previewResumeId} open={!!previewResumeId} onClose={() => setPreviewResumeId(null)} />
 
       <ProgressStepper current={step} onStepClick={(s) => s < step && setStep(s)} />
@@ -103,43 +136,140 @@ export function NewInterviewPage() {
         {step === 0 && (
           <motion.div key="step-0" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15 }}>
             <div style={{ marginBottom: "28px" }}>
-              <h1
-                style={{
-                  fontSize: "24px",
-                  fontWeight: 600,
-                  letterSpacing: "-0.02em",
-                  color: "var(--color-text)",
-                  lineHeight: 1.2,
-                  margin: 0,
-                }}
-              >
-                Choose your interviewer
+              <h1 style={{ fontSize: "24px", fontWeight: 600, letterSpacing: "-0.02em", color: "var(--color-text)", lineHeight: 1.2, margin: 0 }}>
+                Select a company
               </h1>
-              {lastCompleted && !position && (
+              {lastCompleted && !selectedCompanyId && (
                 <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "6px", margin: "6px 0 0" }}>
                   Last session: {lastCompleted.position}
-                  {lastCompleted.overallScore != null ? ` \u00B7 ${Math.round(lastCompleted.overallScore)}%` : ""}
+                  {lastCompleted.overallScore != null ? ` · ${Math.round(lastCompleted.overallScore)}%` : ""}
                 </p>
               )}
             </div>
-            <InterviewerCards
-              position={position}
-              customPosition={customPosition}
-              onPositionChange={setPosition}
-              onCustomPositionChange={setCustomPosition}
-            />
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <CompanyGrid selectedCompanyId={selectedCompanyId} onSelect={(id) => { setSelectedCompanyId(id); if (id) setStep(1) }} />
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "24px" }}>
               <button
-                onClick={() => position ? setStep(1) : toast.error("Select a role first")}
+                onClick={() => setStep(selectedCompanyId ? 1 : 3)}
                 style={{
                   padding: "10px 24px",
                   borderRadius: "8px",
                   border: "none",
-                  background: position ? "var(--landing-fg, #eceae6)" : "var(--color-border)",
-                  color: position ? "var(--landing-bg, #080808)" : "var(--color-text-muted)",
+                  background: "var(--landing-fg, #eceae6)",
+                  color: "var(--landing-bg, #080808)",
                   fontSize: "14px",
                   fontWeight: 500,
-                  cursor: position ? "pointer" : "default",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {selectedCompanyId ? "Continue" : "Skip"} &rarr;
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 1 && (
+          <motion.div key="step-1" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15 }}>
+            <div style={{ marginBottom: "28px" }}>
+              <h1 style={{ fontSize: "24px", fontWeight: 600, letterSpacing: "-0.02em", color: "var(--color-text)", lineHeight: 1.2, margin: 0 }}>
+                {selectedCompany ? `Role at ${selectedCompany.name}` : "Enter your role"}
+              </h1>
+              <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", margin: "6px 0 0" }}>
+                {selectedCompany ? "Select the position you're applying for" : "Type the role you're targeting"}
+              </p>
+            </div>
+            <RolePicker
+              companyId={selectedCompanyId}
+              selectedRoleTitle={selectedRoleTitle}
+              customRole={customRole}
+              onSelectRole={setSelectedRoleTitle}
+              onCustomRoleChange={setCustomRole}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "24px" }}>
+              <button
+                onClick={() => setStep(0)}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "transparent",
+                  color: "var(--color-text-secondary)",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                &larr; Back
+              </button>
+              <button
+                onClick={() => {
+                  const hasRole = selectedCompany ? !!selectedRoleTitle : !!customRole
+                  if (hasRole) setStep(2)
+                  else toast.error("Select a role first")
+                }}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: effectivePosition ? "var(--landing-fg, #eceae6)" : "var(--color-border)",
+                  color: effectivePosition ? "var(--landing-bg, #080808)" : "var(--color-text-muted)",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  cursor: effectivePosition ? "pointer" : "default",
+                  transition: "all 0.15s",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Continue to Style &rarr;
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 2 && (
+          <motion.div key="step-2" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15 }}>
+            <div style={{ marginBottom: "28px" }}>
+              <h1 style={{ fontSize: "24px", fontWeight: 600, letterSpacing: "-0.02em", color: "var(--color-text)", lineHeight: 1.2, margin: 0 }}>
+                Style & Depth
+              </h1>
+              <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", margin: "6px 0 0" }}>
+                Choose how the AI interviews you
+              </p>
+            </div>
+            <StyleDepthPicker
+              style={interviewStyle}
+              depth={interviewDepth}
+              onStyleChange={setInterviewStyle}
+              onDepthChange={setInterviewDepth}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "24px" }}>
+              <button
+                onClick={() => setStep(1)}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "transparent",
+                  color: "var(--color-text-secondary)",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                &larr; Back
+              </button>
+              <button
+                onClick={() => setStep(3)}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "var(--landing-fg, #eceae6)",
+                  color: "var(--landing-bg, #080808)",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  cursor: "pointer",
                   transition: "all 0.15s",
                   letterSpacing: "-0.01em",
                 }}
@@ -150,19 +280,10 @@ export function NewInterviewPage() {
           </motion.div>
         )}
 
-        {step === 1 && (
-          <motion.div key="step-1" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15 }}>
+        {step === 3 && (
+          <motion.div key="step-3" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15 }}>
             <div style={{ marginBottom: "28px" }}>
-              <h1
-                style={{
-                  fontSize: "24px",
-                  fontWeight: 600,
-                  letterSpacing: "-0.02em",
-                  color: "var(--color-text)",
-                  lineHeight: 1.2,
-                  margin: 0,
-                }}
-              >
+              <h1 style={{ fontSize: "24px", fontWeight: 600, letterSpacing: "-0.02em", color: "var(--color-text)", lineHeight: 1.2, margin: 0 }}>
                 Upload your resume
               </h1>
               <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", margin: "6px 0 0" }}>
@@ -180,156 +301,30 @@ export function NewInterviewPage() {
               onGithubUrlChange={setGithubUrl}
               onGithubToggle={() => setGithubOpen((p) => !p)}
             />
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <button
-                onClick={() => setStep(0)}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  background: "transparent",
-                  color: "var(--color-text-secondary)",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}
-              >
-                &larr; Back
-              </button>
-              <button
-                onClick={() => selectedResumeId ? setStep(2) : toast.error("Select a resume")}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: selectedResumeId ? "var(--landing-fg, #eceae6)" : "var(--color-border)",
-                  color: selectedResumeId ? "var(--landing-bg, #080808)" : "var(--color-text-muted)",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: selectedResumeId ? "pointer" : "default",
-                  transition: "all 0.15s",
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                Review Session &rarr;
-              </button>
-            </div>
-          </motion.div>
-        )}
 
-        {step === 2 && (
-          <motion.div key="step-2" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15 }}>
-            <div style={{ marginBottom: "28px" }}>
-              <h1
-                style={{
-                  fontSize: "24px",
-                  fontWeight: 600,
-                  letterSpacing: "-0.02em",
-                  color: "var(--color-text)",
-                  lineHeight: 1.2,
-                  margin: 0,
-                }}
-              >
-                Review your session
-              </h1>
-              <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", margin: "6px 0 0" }}>
-                Everything looks ready to go
-              </p>
-            </div>
-
-            {/* Resume preview card */}
-            {selectedResume && (
-              <div
-                style={{
-                  borderRadius: "12px",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  background: "transparent",
-                  overflow: "hidden",
-                  marginBottom: "24px",
-                }}
-              >
-                <div
-                  style={{
-                    padding: "16px 20px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    borderBottom: "1px solid rgba(255,255,255,0.06)",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={{ fontSize: "16px" }}>{"\u{1F4C4}"}</span>
-                    <div>
-                      <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--color-text)", margin: 0 }}>
-                        {selectedResume.originalUrl ? (() => {
-                          const name = selectedResume.originalUrl.split("/").pop()
-                          return name ? name.replace(/\.[^/.]+$/, "") : `Resume v${selectedResume.version}`
-                        })() : `Resume v${selectedResume.version}`}
-                      </p>
-                      <p style={{ fontSize: "12px", color: "var(--color-text-muted)", margin: "2px 0 0" }}>
-                        Uploaded {new Date(selectedResume.uploadedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setPreviewResumeId(selectedResume.id)}
-                    style={{
-                      padding: "6px 14px",
-                      borderRadius: "6px",
-                      border: "1px solid var(--app-accent-border, rgba(184,168,138,0.25))",
-                      background: "var(--app-accent-bg, rgba(184,168,138,0.08))",
-                      color: "var(--app-accent, #b8a88a)",
-                      fontSize: "12px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Preview
-                  </button>
-                </div>
-                <div
-                  style={{
-                    height: "200px",
-                    background: "transparent",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "13px",
-                    color: "var(--color-text-muted)",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => setPreviewResumeId(selectedResume.id)}
-                >
-                  Click to preview full resume
-                </div>
-              </div>
-            )}
-
-            {/* Optional job description */}
-            <details
-              style={{
-                marginBottom: "24px",
-                borderRadius: "12px",
-                border: "1px solid rgba(255,255,255,0.06)",
-                padding: "16px 20px",
-                fontSize: "13px",
-                color: "var(--color-text-secondary)",
-              }}
-            >
-              <summary
-                style={{
-                  cursor: "pointer",
-                  fontWeight: 500,
-                  color: "var(--color-text)",
-                  fontSize: "14px",
-                  userSelect: "none",
-                }}
-              >
+            {/* Job description */}
+            <details style={{
+              marginTop: "24px",
+              marginBottom: "24px",
+              borderRadius: "12px",
+              border: "1px solid rgba(255,255,255,0.06)",
+              padding: "16px 20px",
+              fontSize: "13px",
+              color: "var(--color-text-secondary)",
+            }}>
+              <summary style={{
+                cursor: "pointer",
+                fontWeight: 500,
+                color: "var(--color-text)",
+                fontSize: "14px",
+                userSelect: "none",
+              }}>
                 Add job description (optional)
               </summary>
               <textarea
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Paste the job description here so the AI can tailor questions to the specific role requirements..."
+                placeholder="Paste the job description here so the AI can tailor questions..."
                 rows={6}
                 style={{
                   marginTop: "12px",
@@ -349,7 +344,7 @@ export function NewInterviewPage() {
 
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "32px" }}>
               <button
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 style={{
                   padding: "10px 24px",
                   borderRadius: "8px",
@@ -365,9 +360,25 @@ export function NewInterviewPage() {
               </button>
             </div>
 
+            {selectedCompany && selectedRole && (
+              <div style={{
+                marginBottom: "20px",
+                padding: "16px 20px",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text)", margin: 0 }}>
+                  {selectedCompany.name} — {selectedRole.title}
+                </p>
+                <p style={{ fontSize: "12px", color: "var(--color-text-muted)", margin: "4px 0 0" }}>
+                  {interviewStyle === "SUPPORTIVE" ? "Supportive" : interviewStyle === "PROFESSIONAL" ? "Professional" : interviewStyle === "CHALLENGING" ? "Challenging" : "Bar Raiser"} · {interviewDepth === "STANDARD" ? "Standard" : interviewDepth === "PROBING" ? "Probing" : interviewDepth === "CHALLENGE" ? "Challenge" : "Bar Raiser"} · ~{selectedRole.duration}min
+                </p>
+              </div>
+            )}
+
             <SessionCard
-              position={position}
-              customPosition={customPosition}
+              position={effectivePosition ?? ""}
+              customPosition={customRole}
               selectedResumeId={selectedResumeId}
               resumes={resumes ?? []}
               isPending={createMutation.isPending}

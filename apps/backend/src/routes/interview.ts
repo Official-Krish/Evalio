@@ -86,6 +86,11 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
               position: body.position,
               jobDescription: body.jobDescription,
               resumeId: resume.id,
+              ...(body.companyId && { companyId: body.companyId }),
+              ...(body.companyName && { companyName: body.companyName }),
+              ...(body.roleTitle && { roleTitle: body.roleTitle }),
+              ...(body.interviewStyle && { interviewStyle: body.interviewStyle as any }),
+              ...(body.interviewDepth && { interviewDepth: body.interviewDepth as any }),
             },
           })
 
@@ -97,6 +102,21 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
             resumeId: t.Optional(t.String()),
             githubUrl: t.Optional(t.String()),
             jobDescription: t.Optional(t.String()),
+            companyId: t.Optional(t.String()),
+            companyName: t.Optional(t.String()),
+            roleTitle: t.Optional(t.String()),
+            interviewStyle: t.Optional(t.Enum({
+              SUPPORTIVE: "SUPPORTIVE",
+              PROFESSIONAL: "PROFESSIONAL",
+              CHALLENGING: "CHALLENGING",
+              BAR_RAISER: "BAR_RAISER",
+            })),
+            interviewDepth: t.Optional(t.Enum({
+              STANDARD: "STANDARD",
+              PROBING: "PROBING",
+              CHALLENGE: "CHALLENGE",
+              BAR_RAISER: "BAR_RAISER",
+            })),
           }),
         }
       )

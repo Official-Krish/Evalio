@@ -1,5 +1,8 @@
 import { z } from "zod"
 
+export { companies as COMPANIES, getCompany, getDefaultStyleDepth } from "./companies"
+export type { CompanyConfig, CompanyRole } from "./companies"
+
 // ── Password validation ──
 export const passwordSchema = z
   .string()
@@ -48,12 +51,32 @@ export const resetPasswordSchema = z.object({
   password: passwordSchema,
 })
 
+// ── Interview Style & Depth ──
+export const interviewStyleSchema = z.enum([
+  "SUPPORTIVE",
+  "PROFESSIONAL",
+  "CHALLENGING",
+  "BAR_RAISER",
+])
+
+export const interviewDepthSchema = z.enum([
+  "STANDARD",
+  "PROBING",
+  "CHALLENGE",
+  "BAR_RAISER",
+])
+
 // ── Interview ──
 export const createInterviewSchema = z.object({
   position: z.string().min(1),
   resumeId: z.string().optional(),
   githubUrl: z.string().url().optional().or(z.literal("")),
   jobDescription: z.string().optional(),
+  companyId: z.string().optional(),
+  companyName: z.string().optional(),
+  roleTitle: z.string().optional(),
+  interviewStyle: interviewStyleSchema.optional(),
+  interviewDepth: interviewDepthSchema.optional(),
 })
 
 export const interviewStatusSchema = z.enum([
@@ -83,6 +106,8 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
 export type CreateInterviewInput = z.infer<typeof createInterviewSchema>
 export type InterviewStatus = z.infer<typeof interviewStatusSchema>
+export type InterviewStyle = z.infer<typeof interviewStyleSchema>
+export type InterviewDepth = z.infer<typeof interviewDepthSchema>
 
 export type UserRole = "FREE" | "ADMIN"
 
@@ -110,6 +135,11 @@ export interface InterviewSession {
   resume?: Resume | null
   turns?: InterviewTurn[]
   summary?: InterviewSummary | null
+  interviewStyle?: InterviewStyle | null
+  interviewDepth?: InterviewDepth | null
+  companyId?: string | null
+  companyName?: string | null
+  roleTitle?: string | null
 }
 
 export interface InterviewTurn {

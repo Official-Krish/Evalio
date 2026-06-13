@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai"
 import { prisma } from "../lib/prisma"
+import { updateCandidateProfile } from "./profile"
 
 interface TurnEvaluation {
   orderNumber: number
@@ -249,6 +250,11 @@ export async function evaluateInterview(interviewId: string) {
       })
     }),
   ])
+
+  // Trigger candidate profile update asynchronously
+  updateCandidateProfile(interviewId).catch((err) =>
+    console.error("[evaluate] profile update failed:", err)
+  )
 
   return { evaluation: result, summary }
 }

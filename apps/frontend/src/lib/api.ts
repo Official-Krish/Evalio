@@ -133,4 +133,16 @@ export const api = {
     if (error) throw new Error(errorMessage(error.value))
     return data as { user: User }
   },
+
+  getSkillProfile: async () => {
+    const { data, error } = await client.api.profile.skills.get()
+    if (error) throw new Error(errorMessage(error.value))
+    return data as { profile: Record<string, unknown> | null }
+  },
+
+  generateCompany: async (companyName: string, industry?: string) => {
+    const { data, error } = await client.api.companies.generate.post({ companyName, industry })
+    if (error) throw new Error(errorMessage(error.value))
+    return data as { company: { name: string; industry: string; personality: string; roles: { title: string; description: string; defaultStyle: string; defaultDepth: string }[] } }
+  },
 }

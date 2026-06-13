@@ -8,6 +8,8 @@ import { turnRoutes } from "./routes/turn"
 import { resumeRoutes } from "./routes/resume"
 import { githubRoutes } from "./routes/github"
 import { evaluateRoutes } from "./routes/evaluate"
+import { companyRoutes } from "./routes/company"
+import { profileRoutes } from "./routes/profile"
 import { globalRateLimit } from "./middleware/rateLimit"
 
 export const app = new Elysia()
@@ -31,5 +33,7 @@ export const app = new Elysia()
     .use(resumeRoutes)
     .use(githubRoutes)
     .use(evaluateRoutes)
+    .use(companyRoutes)
+    .use(profileRoutes)
   )
   .get("/health", () => ({ status: "ok", timestamp: new Date().toISOString() }))

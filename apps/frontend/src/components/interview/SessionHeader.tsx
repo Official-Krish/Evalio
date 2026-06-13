@@ -6,6 +6,9 @@ interface SessionHeaderProps {
   phase: SessionPhase
   timeLimit: number | null
   remainingMs: number | null
+  companyName?: string | null
+  interviewStyle?: string | null
+  interviewDepth?: string | null
 }
 
 function formatDuration(seconds: number) {
@@ -29,7 +32,10 @@ const PHASE_LABEL: Record<SessionPhase, string> = {
   ended: "Ended",
 }
 
-export function SessionHeader({ position, duration, phase, timeLimit, remainingMs }: SessionHeaderProps) {
+export function SessionHeader({ position, duration, phase, timeLimit, remainingMs, companyName, interviewStyle, interviewDepth }: SessionHeaderProps) {
+  const styleLabel = interviewStyle === "SUPPORTIVE" ? "Supportive" : interviewStyle === "PROFESSIONAL" ? "Professional" : interviewStyle === "CHALLENGING" ? "Challenging" : interviewStyle === "BAR_RAISER" ? "Bar Raiser" : null
+  const depthLabel = interviewDepth === "STANDARD" ? "Standard" : interviewDepth === "PROBING" ? "Probing" : interviewDepth === "CHALLENGE" ? "Challenge" : interviewDepth === "BAR_RAISER" ? "Bar Raiser" : null
+
   return (
     <header className="interview-session-header">
       <div className="flex items-center gap-2">
@@ -42,7 +48,24 @@ export function SessionHeader({ position, duration, phase, timeLimit, remainingM
         </span>
       </div>
 
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {companyName && (
+            <span className="text-[10px] tracking-[0.06em] text-[#818CF8] border border-[rgba(99,102,241,0.3)] px-2 py-0.5 rounded">
+              {companyName}
+            </span>
+          )}
+          {styleLabel && (
+            <span className="text-[10px] tracking-[0.06em] text-[#FCD34D] border border-[rgba(251,191,36,0.3)] px-2 py-0.5 rounded">
+              {styleLabel}
+            </span>
+          )}
+          {depthLabel && (
+            <span className="text-[10px] tracking-[0.06em] text-[#6EE7B7] border border-[rgba(52,211,153,0.3)] px-2 py-0.5 rounded">
+              {depthLabel}
+            </span>
+          )}
+        </div>
         <span
           className={`text-[12px] tabular-nums font-mono ${remainingMs !== null && remainingMs < 120_000 ? "text-[var(--landing-accent)]" : "text-[var(--landing-fg-muted)]"}`}
         >

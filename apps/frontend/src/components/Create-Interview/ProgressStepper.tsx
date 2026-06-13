@@ -6,9 +6,10 @@ interface ProgressStepperProps {
 }
 
 const steps = [
-  { label: "Interviewer", sub: "Choose role" },
-  { label: "Resume", sub: "Upload or select" },
-  { label: "Session", sub: "Review & start" },
+  { label: "Company", sub: "Select company" },
+  { label: "Role", sub: "Choose position" },
+  { label: "Interviewer", sub: "Personality & questioning depth" },
+  { label: "Review", sub: "Resume & start" },
 ]
 
 export function ProgressStepper({ current, onStepClick }: ProgressStepperProps) {

@@ -205,7 +205,7 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "2fr 1fr 1fr 1fr 0.5fr",
+          gridTemplateColumns: "1.5fr 1fr auto 0.8fr 0.5fr",
           gap: "8px",
           padding: "8px 0",
           fontSize: "11px",
@@ -216,7 +216,7 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
         }}
       >
         <span>Role</span>
-        <span>Date</span>
+        <span>Company</span>
         <span>Duration</span>
         <span>Score</span>
         <span></span>
@@ -229,13 +229,16 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
           const prevScore = globalIndex < completed.length - 1 ? completed[globalIndex + 1]?.overallScore ?? null : null
           const change = computeChange(interview.overallScore, prevScore)
           const incomplete = isIncomplete(interview)
+          const companyLabel = interview.companyName
+          const styleLabel = interview.interviewStyle
+          const depthLabel = interview.interviewDepth
           return (
             <Link
               key={interview.id}
               to={`/results/${interview.id}`}
               style={{
                 display: "grid",
-                gridTemplateColumns: "2fr 1fr 1fr 1fr 0.5fr",
+                gridTemplateColumns: "1.5fr 1fr auto 0.8fr 0.5fr",
                 gap: "8px",
                 alignItems: "center",
                 padding: "10px 0",
@@ -250,10 +253,10 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
               <span style={{ fontSize: "13px", color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {interview.position || "Interview"}
               </span>
-              <span style={{ fontSize: "13px", color: "var(--color-text-muted)" }}>
-                {new Date(interview.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              <span style={{ fontSize: "12px", color: "var(--color-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {companyLabel || "\u2014"}
               </span>
-              <span style={{ fontSize: "13px", color: "var(--color-text-muted)" }}>
+              <span style={{ fontSize: "12px", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
                 {incomplete ? <IncompletePill /> : formatDuration(interview.durationSeconds)}
               </span>
               <span>

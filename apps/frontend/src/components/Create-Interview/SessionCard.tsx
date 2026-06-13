@@ -1,4 +1,3 @@
-import { interviewers } from "./interviewers"
 import { fileNameFromUrl } from "./helpers"
 import type { Resume } from "@ai-interview/shared"
 
@@ -12,12 +11,9 @@ interface SessionCardProps {
 }
 
 export function SessionCard({ position, customPosition, selectedResumeId, resumes, isPending, onCreate }: SessionCardProps) {
-  const selectedRole = interviewers.find((r) => r.title === position) ?? null
-  const roleTitle = position === "custom" ? customPosition || "Custom role" : selectedRole?.title ?? "Custom role"
-  const duration = selectedRole?.duration ?? "45 min"
-  const icon = selectedRole?.icon ?? "</>"
   const selectedResume = selectedResumeId ? resumes.find((r) => r.id === selectedResumeId) ?? null : null
   const resumeLabel = selectedResume ? (fileNameFromUrl(selectedResume.originalUrl) ?? "Resume") : null
+  const roleLabel = position || customPosition || "Position"
   const ready = !!position && !!selectedResumeId
 
   if (!ready) return null
@@ -36,28 +32,12 @@ export function SessionCard({ position, customPosition, selectedResumeId, resume
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "16px" }}>
-        <div
-          style={{
-            width: "36px",
-            height: "36px",
-            borderRadius: "8px",
-            background: "rgba(99,102,241,0.12)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "16px",
-            color: "var(--color-accent)",
-            flexShrink: 0,
-          }}
-        >
-          {icon}
-        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: "14px", fontWeight: 500, color: "var(--color-text)", lineHeight: 1.2 }}>
-            {roleTitle}
+            {roleLabel}
           </span>
           <span style={{ fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.2 }}>
-            {resumeLabel} &middot; ~{duration}
+            {resumeLabel}
           </span>
         </div>
       </div>
@@ -71,15 +51,14 @@ export function SessionCard({ position, customPosition, selectedResumeId, resume
           borderRadius: "10px",
           border: "none",
           background: "var(--color-accent)",
-          color: "#fff",
-          fontSize: "14px",
-          fontWeight: 600,
+          fontSize: "16px",
+          fontWeight: 800,
           cursor: isPending ? "not-allowed" : "pointer",
           opacity: isPending ? 0.5 : 1,
           position: "relative",
           overflow: "hidden",
         }}
-        className="hover:brightness-110 transition-all"
+        className="hover:brightness-110 transition-all text-white"
       >
         {isPending ? "Starting..." : `Start Interview \u2192`}
       </button>
