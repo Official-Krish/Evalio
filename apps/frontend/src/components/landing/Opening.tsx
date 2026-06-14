@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom"
 import { motion } from "motion/react"
-import { SonarRings } from "./svg/SonarRings"
 import { InterviewSystem } from "./InterviewSystem"
 import { useSession } from "@/lib/auth"
 
@@ -14,10 +13,8 @@ export function Opening() {
   const { data: session } = useSession();
   const user = session?.user ?? null;
   return (
-    <section className="landing-hero relative flex flex-col justify-center overflow-hidden pb-[12vh] border-b">
-      <SonarRings className="absolute top-[12%] left-[58%] -translate-x-1/2 opacity-60" />
-
-      <div className="landing-hero-grid">
+    <section className="landing-hero relative flex flex-col justify-center overflow-hidden border-b">
+      <div className="landing-hero-grid py-8 lg:mt-18">
         {/* Copy — 65% */}
         <div className="relative z-10 landing-hero-copy">
 
@@ -40,7 +37,7 @@ export function Opening() {
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-            className="landing-hero-headline"
+            className="landing-hero-headline pb-4"
           >
             <span className="landing-hero-lead block">You're already</span>
             <span className="landing-hero-drama landing-serif italic block">
@@ -54,7 +51,7 @@ export function Opening() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="landing-punch-lines mt-8 lg:mt-10"
+            className="landing-punch-lines mt-10 lg:mt-12"
           >
             {PUNCH_LINES.map((line, i) => (
               <motion.li

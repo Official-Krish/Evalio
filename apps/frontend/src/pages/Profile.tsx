@@ -9,7 +9,7 @@ import { ResumeVault } from "../components/Profile/ResumeVault"
 import { StreakHeatmap } from "../components/Profile/StreakHeatmap"
 import { api } from "../lib/api"
 import { useTheme } from "../lib/use-theme"
-import type { InterviewSession, Resume } from "@ai-interview/shared"
+import type { InterviewSession, Resume } from "@evalio/shared"
 
 export function ProfilePage() {
   const { data: session } = useSession()

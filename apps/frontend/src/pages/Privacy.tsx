@@ -16,7 +16,7 @@ const sections = [
   {
     title: "3. Third-party services",
     content:
-      "Interviews and evaluations use Google's Gemini API. Files may be stored using our cloud storage provider. These processors handle data only to operate Interview Lab.",
+      "Interviews and evaluations use Google's Gemini API. Files may be stored using our cloud storage provider. These processors handle data only to operate Evalio.",
   },
   {
     title: "4. Retention & deletion",
@@ -41,7 +41,7 @@ export function PrivacyPage() {
       <StaticPageHero
         badge="Legal"
         title="Privacy Policy"
-        subtitle="Last updated: June 2026. This reflects what Interview Lab does today — not aspirational marketing copy."
+        subtitle="Last updated: June 2026. This reflects what Evalio does today — not aspirational marketing copy."
       />
       <StaticProse sections={sections} />
     </StaticPageLayout>

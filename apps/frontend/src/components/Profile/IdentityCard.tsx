@@ -2,7 +2,7 @@ import { useState } from "react"
 import { motion } from "motion/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "../../lib/api"
-import type { User } from "@ai-interview/shared"
+import type { User } from "@evalio/shared"
 import toast from "react-hot-toast"
 import { IconCalendar, IconEdit } from "@tabler/icons-react"
 

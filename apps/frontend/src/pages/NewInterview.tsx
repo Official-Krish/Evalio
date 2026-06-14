@@ -10,8 +10,8 @@ import { RolePicker } from "../components/Create-Interview/RolePicker"
 import { StyleDepthPicker } from "../components/Create-Interview/StyleDepthPicker"
 import { ResumeSection } from "../components/Create-Interview/ResumeSection"
 import { SessionCard } from "../components/Create-Interview/SessionCard"
-import { COMPANIES, getDefaultStyleDepth } from "@ai-interview/shared"
-import type { Resume, InterviewSession, InterviewStyle, InterviewDepth } from "@ai-interview/shared"
+import { COMPANIES, getDefaultStyleDepth } from "@evalio/shared"
+import type { Resume, InterviewSession, InterviewStyle, InterviewDepth } from "@evalio/shared"
 import toast from "react-hot-toast"
 
 const stepVariants = {

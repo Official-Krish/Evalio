@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { motion } from "motion/react"
-import { COMPANIES } from "@ai-interview/shared"
+import { COMPANIES } from "@evalio/shared"
 
 interface RolePickerProps {
   companyId: string | null

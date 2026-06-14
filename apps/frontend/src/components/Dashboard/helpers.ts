@@ -1,4 +1,4 @@
-import type { InterviewSession } from "@ai-interview/shared"
+import type { InterviewSession } from "@evalio/shared"
 
 export function timeAgo(date: Date): string {
   const diff = Date.now() - date.getTime()

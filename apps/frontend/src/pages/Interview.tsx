@@ -148,7 +148,7 @@ export function InterviewPage() {
       if (audioBase64 && isUserSpeakingRef.current && !endedRef.current) {
         isUserSpeakingRef.current = false
         stopMic()
-        socketRef.current?.sendAudioStreamEnd()
+        socketRef.current?.sendInterruptedStreamEnd()
       }
 
       if (audioBase64 && !endedRef.current) {

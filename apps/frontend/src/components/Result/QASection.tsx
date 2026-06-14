@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { motion } from "motion/react"
-import type { InterviewTurn } from "@ai-interview/shared"
+import type { InterviewTurn } from "@evalio/shared"
 
 function ScoreBadge({ score }: { score: number }) {
   const color =

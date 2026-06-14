@@ -1,5 +1,5 @@
 import { fileNameFromUrl } from "./helpers"
-import type { Resume } from "@ai-interview/shared"
+import type { Resume } from "@evalio/shared"
 
 interface SessionCardProps {
   position: string

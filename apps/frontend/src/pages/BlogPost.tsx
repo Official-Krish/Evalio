@@ -107,7 +107,7 @@ export function BlogPostPage() {
               </div>
               <div>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", margin: 0 }}>
-                  Interview Lab Team
+                  Evalio Team
                 </p>
                 <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", margin: 0 }}>
                   {post.date} · {post.readMins} min read

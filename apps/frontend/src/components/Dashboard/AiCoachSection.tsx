@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { Link } from "react-router-dom"
-import type { InterviewSession } from "@ai-interview/shared"
+import type { InterviewSession } from "@evalio/shared"
 
 interface AiCoachSectionProps {
   completed: InterviewSession[]

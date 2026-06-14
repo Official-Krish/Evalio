@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import type { InterviewSession, } from "@ai-interview/shared"
+import type { InterviewSession, } from "@evalio/shared"
 import { computeDimensionTrend } from "./helpers"
 import { IconArrowUp, IconArrowDown, IconMinus } from "@tabler/icons-react"
 

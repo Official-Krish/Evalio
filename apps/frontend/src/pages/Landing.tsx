@@ -6,6 +6,9 @@ import { Opening } from "@/components/landing/Opening"
 import { Manifesto } from "@/components/landing/Manifesto"
 import { Presence } from "@/components/landing/Presence"
 import { Method } from "@/components/landing/Method"
+import { LandingCompanies } from "@/components/landing/LandingCompanies"
+import { LandingStyles } from "@/components/landing/LandingStyles"
+import { LandingEvaluation } from "@/components/landing/LandingEvaluation"
 import { Threshold } from "@/components/landing/Threshold"
 import { Footer } from "@/components/Footer"
 
@@ -27,6 +30,9 @@ export function LandingPage() {
         <Manifesto />
         <Presence />
         <Method />
+        <LandingCompanies />
+        <LandingStyles />
+        <LandingEvaluation />
         <Threshold />
       </main>
       <Footer />

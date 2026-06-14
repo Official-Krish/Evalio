@@ -5,7 +5,7 @@ import { StaticProse } from "@/components/static/StaticProse"
 const sections = [
   {
     title: "1. Acceptance",
-    content: "By using Interview Lab you agree to these terms. If you disagree, don't use the service.",
+    content: "By using Evalio you agree to these terms. If you disagree, don't use the service.",
   },
   {
     title: "2. Your account",
@@ -19,7 +19,7 @@ const sections = [
   {
     title: "4. Your content",
     content:
-      "You own your interview sessions and evaluations. Interview Lab owns the platform software, design, and branding.",
+      "You own your interview sessions and evaluations. Evalio owns the platform software, design, and branding.",
   },
   {
     title: "5. Availability",
@@ -29,7 +29,7 @@ const sections = [
   {
     title: "6. Disclaimer",
     content:
-      "Interview Lab is provided as-is. Practice results don't guarantee hiring outcomes. We're not liable for decisions you make based on AI feedback.",
+      "Evalio is provided as-is. Practice results don't guarantee hiring outcomes. We're not liable for decisions you make based on AI feedback.",
   },
   {
     title: "7. Contact",

@@ -1,23 +1,72 @@
-import { useState, type FormEvent } from "react"
+import { useState, useMemo, type FormEvent } from "react"
 import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
 import { StaticPageHero } from "@/components/static/StaticPageHero"
-import { ComingSoonModal } from "@/components/static/ComingSoonModal"
 import { RevealSection } from "@/components/motion/RevealSection"
+import { client } from "@/lib/eden"
+
+const SUBJECTS = [
+  { value: "General inquiry", label: "General inquiry" },
+  { value: "Bug report", label: "Bug report" },
+  { value: "Feature request", label: "Feature request" },
+  { value: "Pro upgrade", label: "Pro upgrade inquiry" },
+  { value: "Account help", label: "Account help" },
+  { value: "Other", label: "Other" },
+] as const
 
 export function ContactPage() {
-  const [modalOpen, setModalOpen] = useState(false)
+  const presetSubject = useMemo(() => {
+    const q = new URLSearchParams(window.location.search)
+    return q.get("subject")
+  }, [])
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  const isProUpgrade = presetSubject === "Pro upgrade"
+
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [subject, setSubject] = useState(presetSubject ?? "General inquiry")
+  const [message, setMessage] = useState("")
+  const [sending, setSending] = useState(false)
+  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null)
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setModalOpen(true)
+    setSending(true)
+    setResult(null)
+
+    const query = new URLSearchParams(window.location.search)
+    const preset = query.get("subject")
+    const finalSubject = preset ?? subject
+
+    const { data, error } = await client.api.contact.send.post({
+      name,
+      email,
+      subject: finalSubject,
+      message,
+    })
+
+    setSending(false)
+
+    if (error) {
+      const errVal = typeof error.value === "string" ? error.value : (error.value as { error?: string })?.error ?? "Failed to send"
+      setResult({ ok: false, text: errVal })
+      return
+    }
+
+    setResult({ ok: true, text: (data as { message: string })?.message ?? "Message sent!" })
+    setName("")
+    setEmail("")
+    setMessage("")
   }
 
   return (
     <StaticPageLayout>
       <StaticPageHero
-        badge="Contact"
-        title="Let's talk."
-        subtitle="The fastest way to reach us today is GitHub. A proper inbox and message form are on the way."
+        badge={isProUpgrade ? "Pro Upgrade" : "Contact"}
+        title={isProUpgrade ? "Go Pro." : "Let's talk."}
+        subtitle={isProUpgrade
+          ? "Pro tier is rolling out — tell us what you need and we'll open up a slot for you."
+          : "Questions, feedback, or need help? Drop us a message and we'll get back to you."
+        }
       />
 
       <RevealSection>
@@ -27,29 +76,73 @@ export function ContactPage() {
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
                   <label htmlFor="name" className="static-label">Name</label>
-                  <input id="name" name="name" type="text" className="static-input" placeholder="Your name" />
+                  <input
+                    id="name"
+                    type="text"
+                    className="static-input"
+                    placeholder="Your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
                 </div>
                 <div>
                   <label htmlFor="email" className="static-label">Email</label>
-                  <input id="email" name="email" type="email" className="static-input" placeholder="you@example.com" />
+                  <input
+                    id="email"
+                    type="email"
+                    className="static-input"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
                 </div>
+              </div>
+              <div>
+                <label htmlFor="subject" className="static-label">Subject</label>
+                <select
+                  id="subject"
+                  className={`static-input ${isProUpgrade ? "text-[var(--landing-accent)] font-medium" : ""}`}
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  disabled={isProUpgrade}
+                >
+                  {SUBJECTS.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+                {isProUpgrade && (
+                  <p className="text-[11px] text-[var(--landing-fg-faint)] mt-1">
+                    Pro upgrade subject is pre-selected from the nav link.
+                  </p>
+                )}
               </div>
               <div>
                 <label htmlFor="message" className="static-label">Message</label>
                 <textarea
                   id="message"
-                  name="message"
                   rows={5}
                   className="static-input resize-none"
                   placeholder="What's on your mind?"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  required
                 />
               </div>
-              <button type="submit" className="landing-cta-primary landing-cta-sharp text-[13px]">
-                Send message
+              <button
+                type="submit"
+                disabled={sending}
+                className="landing-cta-primary landing-cta-sharp text-[13px] disabled:opacity-50"
+              >
+                {sending ? "Sending..." : "Send message"}
               </button>
-              <p className="text-[12px] text-[var(--landing-fg-faint)]">
-                Messaging isn't wired up yet — you'll see a confirmation when it is.
-              </p>
+
+              {result && (
+                <p className={`text-[13px] ${result.ok ? "text-green-500" : "text-red-400"}`}>
+                  {result.text}
+                </p>
+              )}
             </form>
 
             <div className="md:col-span-2 space-y-4">
@@ -72,13 +165,6 @@ export function ContactPage() {
           </div>
         </section>
       </RevealSection>
-
-      <ComingSoonModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Messaging coming soon"
-        description="We haven't connected the contact form yet. For now, open an issue or message on GitHub — we read everything there."
-      />
     </StaticPageLayout>
   )
 }

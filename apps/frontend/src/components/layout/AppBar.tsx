@@ -11,6 +11,7 @@ const navItems = [
   { path: "/dashboard", label: "Interviews", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
   { path: "/interview/new", label: "New Interview", icon: "M12 4v16m8-8H4" },
   { path: "/profile", label: "Profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" },
+  { path: "/contact?subject=Pro+upgrade", label: "Pro", icon: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
 ]
 
 function ThemeToggle() {
@@ -50,7 +51,7 @@ export function AppBar() {
             <Link to="/" className="group flex items-center gap-2.5 text-[var(--landing-fg)]">
               <OrbitalMark size={22} className="text-[var(--landing-fg-muted)] group-hover:text-[var(--landing-fg)] transition-colors duration-500" />
               <span className="text-[12px] font-medium tracking-[0.12em] uppercase text-[var(--landing-fg-muted)] group-hover:text-[var(--landing-fg)] transition-colors duration-500">
-                Interview Lab
+                Evalio
               </span>
             </Link>
           </div>
@@ -66,8 +67,8 @@ export function AppBar() {
             {user && (
               <>
                 <nav className="hidden sm:flex items-center gap-1">
-                  {navItems.map((item) => {
-                    const active = location.pathname === item.path
+                    {navItems.map((item) => {
+                      const active = location.pathname === item.path.split("?")[0]
                     return (
                       <Link
                         key={item.path}
@@ -146,8 +147,8 @@ export function AppBar() {
                     <p className="text-[13px] font-medium text-[var(--landing-fg)]">{user.name}</p>
                     <p className="text-[11px] text-[var(--landing-fg-faint)]">{user.email}</p>
                   </div>
-                  {[...navItems, { path: "/profile", label: "Profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" }, { path: "/pricing", label: "Pricing", icon: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z M12 6v12 M9 9h4a2 2 0 0 1 0 4H9" }].map((item) => {
-                    const active = location.pathname === item.path
+                  {[...navItems, { path: "/pricing", label: "Pricing", icon: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z M12 6v12 M9 9h4a2 2 0 0 1 0 4H9" }].map((item) => {
+                    const active = location.pathname === item.path.split("?")[0]
                     return (
                       <Link
                         key={item.path}

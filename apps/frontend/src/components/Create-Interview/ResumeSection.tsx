@@ -2,7 +2,7 @@ import { motion } from "motion/react"
 import { api } from "../../lib/api"
 import { fileNameFromUrl, detectSections } from "./helpers"
 import { FileUpload } from "../ui/file-upload"
-import type { Resume } from "@ai-interview/shared"
+import type { Resume } from "@evalio/shared"
 import toast from "react-hot-toast"
 import { SiGithub } from "react-icons/si"
 

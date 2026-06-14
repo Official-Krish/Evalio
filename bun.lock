@@ -14,10 +14,10 @@
       },
     },
     "apps/backend": {
-      "name": "@ai-interview/backend",
+      "name": "@evalio/backend",
       "dependencies": {
-        "@ai-interview/db": "workspace:*",
-        "@ai-interview/shared": "workspace:*",
+        "@evalio/db": "workspace:*",
+        "@evalio/shared": "workspace:*",
         "@aws-sdk/client-s3": "^3.1066.0",
         "@aws-sdk/lib-storage": "^3.1066.0",
         "@aws-sdk/s3-request-presigner": "^3.1066.0",
@@ -42,10 +42,10 @@
       },
     },
     "apps/frontend": {
-      "name": "@ai-interview/frontend",
+      "name": "@evalio/frontend",
       "version": "0.1.0",
       "dependencies": {
-        "@ai-interview/shared": "workspace:*",
+        "@evalio/shared": "workspace:*",
         "@elysiajs/eden": "^1.4.9",
         "@hookform/resolvers": "^5.4.0",
         "@radix-ui/react-label": "^2.1.7",
@@ -73,7 +73,7 @@
         "zod": "^4.4.0",
       },
       "devDependencies": {
-        "@ai-interview/backend": "workspace:*",
+        "@evalio/backend": "workspace:*",
         "@eslint/js": "^10.0.1",
         "@tailwindcss/vite": "^4.0.0",
         "@types/bun": "latest",
@@ -91,7 +91,7 @@
       },
     },
     "packages/db": {
-      "name": "@ai-interview/db",
+      "name": "@evalio/db",
       "dependencies": {
         "@prisma/adapter-pg": "^7.8.0",
         "@prisma/client": "^7.8.0",
@@ -124,7 +124,7 @@
       },
     },
     "packages/shared": {
-      "name": "@ai-interview/shared",
+      "name": "@evalio/shared",
       "dependencies": {
         "zod": "^4.4.3",
       },
@@ -155,13 +155,13 @@
     },
   },
   "packages": {
-    "@ai-interview/backend": ["@ai-interview/backend@workspace:apps/backend"],
+    "@evalio/backend": ["@evalio/backend@workspace:apps/backend"],
 
-    "@ai-interview/db": ["@ai-interview/db@workspace:packages/db"],
+    "@evalio/db": ["@evalio/db@workspace:packages/db"],
 
-    "@ai-interview/frontend": ["@ai-interview/frontend@workspace:apps/frontend"],
+    "@evalio/frontend": ["@evalio/frontend@workspace:apps/frontend"],
 
-    "@ai-interview/shared": ["@ai-interview/shared@workspace:packages/shared"],
+    "@evalio/shared": ["@evalio/shared@workspace:packages/shared"],
 
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 

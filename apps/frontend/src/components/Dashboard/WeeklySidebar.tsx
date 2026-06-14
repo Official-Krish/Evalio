@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import type { InterviewSession } from "@ai-interview/shared"
+import type { InterviewSession } from "@evalio/shared"
 
 interface WeeklySidebarProps {
   sessions: number

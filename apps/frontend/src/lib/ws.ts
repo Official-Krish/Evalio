@@ -67,6 +67,10 @@ export class InterviewSocket {
     this.send({ type: "audio_stream_end" })
   }
 
+  sendInterruptedStreamEnd() {
+    this.send({ type: "audio_stream_end", interrupted: true })
+  }
+
   sendEndInterview() {
     this.send({ type: "end_interview" })
   }

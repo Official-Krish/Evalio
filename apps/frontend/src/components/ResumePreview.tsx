@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { motion } from "motion/react"
 import { api } from "../lib/api"
-import type { Resume } from "@ai-interview/shared"
+import type { Resume } from "@evalio/shared"
 
 interface ResumePreviewProps {
   resumeId: string | null | undefined

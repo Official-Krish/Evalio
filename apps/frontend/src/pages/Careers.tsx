@@ -13,7 +13,7 @@ export function CareersPage() {
             <span className="landing-serif italic text-[var(--landing-fg-muted)]">Big craft.</span>
           </>
         }
-        subtitle="Interview Lab is early. We're not hiring on a job board yet — but we're always open to exceptional people."
+        subtitle="Evalio is early. We're not hiring on a job board yet — but we're always open to exceptional people."
       />
       <ComingSoonBlock
         title="Open roles coming soon"

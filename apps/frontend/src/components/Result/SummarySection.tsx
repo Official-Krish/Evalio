@@ -1,4 +1,4 @@
-import type { InterviewSummary } from "@ai-interview/shared"
+import type { InterviewSummary } from "@evalio/shared"
 
 export function SummarySection({ summary }: { summary: InterviewSummary }) {
   return (

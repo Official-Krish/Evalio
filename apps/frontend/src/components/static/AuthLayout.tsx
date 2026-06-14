@@ -22,7 +22,7 @@ export function AuthLayout({ children, variant }: AuthLayoutProps) {
       <header className="landing-container flex items-center justify-between h-[72px] shrink-0">
         <Link to="/" className="flex items-center gap-2.5 text-[var(--landing-fg-muted)] hover:text-[var(--landing-fg)] transition-colors">
           <OrbitalMark size={22} />
-          <span className="text-[11px] tracking-[0.14em] uppercase">Interview Lab</span>
+          <span className="text-[11px] tracking-[0.14em] uppercase">Evalio</span>
         </Link>
         <Link to="/" className="text-[13px] text-[var(--landing-fg-faint)] hover:text-[var(--landing-fg-muted)] transition-colors">
           Home

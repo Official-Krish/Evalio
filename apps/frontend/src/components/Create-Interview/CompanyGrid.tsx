@@ -1,5 +1,5 @@
 import { motion } from "motion/react"
-import { COMPANIES } from "@ai-interview/shared"
+import { COMPANIES } from "@evalio/shared"
 import type { IconType } from "react-icons"
 import {
   FaStripe, FaAmazon, FaGoogle, FaMicrosoft, FaApple, FaUber, FaAirbnb,

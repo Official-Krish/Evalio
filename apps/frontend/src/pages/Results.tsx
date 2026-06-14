@@ -6,7 +6,7 @@ import { ScoreSection } from "../components/Result/ScoreSection"
 import { ResumeAnalysis } from "../components/Result/ResumeAnalysis"
 import { SummarySection } from "../components/Result/SummarySection"
 import { QASection } from "../components/Result/QASection"
-import type { EvaluationStatus, InterviewSession } from "@ai-interview/shared"
+import type { EvaluationStatus, InterviewSession } from "@evalio/shared"
 
 export function ResultsPage() {
   const { id } = useParams<{ id: string }>()

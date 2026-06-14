@@ -43,7 +43,7 @@ export function DocsPage() {
     <StaticPageLayout>
       <StaticPageHero
         badge="Docs"
-        title="How Interview Lab works."
+        title="How Evalio works."
         subtitle="A practical guide to what's shipped today — not a roadmap wishlist."
       />
 

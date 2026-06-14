@@ -47,7 +47,7 @@ export function FAQPage() {
         title="Questions, answered."
         subtitle={
           <>
-            Straight answers about what Interview Lab does today. Still stuck?{" "}
+            Straight answers about what Evalio does today. Still stuck?{" "}
             <Link to="/contact">Get in touch</Link>.
           </>
         }

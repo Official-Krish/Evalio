@@ -1,4 +1,4 @@
-import type { InterviewStyle, InterviewDepth } from "@ai-interview/shared"
+import type { InterviewStyle, InterviewDepth } from "@evalio/shared"
 
 const styleOptions: { value: InterviewStyle; label: string; description: string }[] = [
   { value: "SUPPORTIVE", label: "Supportive", description: "Friendly coach — patient, encouraging, offers hints" },

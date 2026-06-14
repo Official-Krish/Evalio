@@ -27,21 +27,21 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         heading: "Transcription reveals what you can't see",
-        body: "When Interview Lab transcribes your spoken answer, candidates are frequently surprised. They said \"basically\" eleven times. They never answered the actual question. They trailed off mid-sentence three times. You can't feel those things while speaking — you need to hear them back. That feedback loop, repeated, is what builds fluency.",
+        body: "When Evalio transcribes your spoken answer, candidates are frequently surprised. They said \"basically\" eleven times. They never answered the actual question. They trailed off mid-sentence three times. You can't feel those things while speaking — you need to hear them back. That feedback loop, repeated, is what builds fluency.",
       },
       {
         heading: "Repetition in the right modality",
-        body: "Deliberate practice in sports psychology means practicing in conditions that match performance. A basketball player doesn't practice free throws while sitting. An interview candidate shouldn't practice answers while typing. Interview Lab closes that gap — you speak, the AI listens, questions follow-up in real time, and you get scored on the actual output.",
+        body: "Deliberate practice in sports psychology means practicing in conditions that match performance. A basketball player doesn't practice free throws while sitting. An interview candidate shouldn't practice answers while typing. Evalio closes that gap — you speak, the AI listens, questions follow-up in real time, and you get scored on the actual output.",
       },
       {
         heading: "What this means for your prep",
-        body: "Don't cut text prep entirely. Reading job descriptions, preparing STAR stories, and researching companies is necessary groundwork. But the final 20% — the translation of knowledge into composed, articulate speech — only comes from voice practice. That's the layer Interview Lab is built to train.",
+        body: "Don't cut text prep entirely. Reading job descriptions, preparing STAR stories, and researching companies is necessary groundwork. But the final 20% — the translation of knowledge into composed, articulate speech — only comes from voice practice. That's the layer Evalio is built to train.",
       },
     ],
   },
   {
     slug: "how-ai-scores-your-interview",
-    title: "How Interview Lab scores your performance",
+    title: "How Evalio scores your performance",
     subtitle:
       "Behind the numbers: what the AI is actually measuring, how scores are calculated, and what a 73 vs a 91 really means.",
     date: "June 5, 2026",
@@ -49,7 +49,7 @@ export const BLOG_POSTS: BlogPost[] = [
     tag: "Product",
     sections: [
       {
-        body: "After every session, Interview Lab generates four scores: Overall, Communication, Technical, and Problem Solving. People ask us what these actually measure. This post explains the methodology honestly — including the limitations.",
+        body: "After every session, Evalio generates four scores: Overall, Communication, Technical, and Problem Solving. People ask us what these actually measure. This post explains the methodology honestly — including the limitations.",
       },
       {
         heading: "The evaluation input",
@@ -77,7 +77,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "building-real-time-voice-on-the-web",
     title: "Building real-time AI voice interviews in the browser",
     subtitle:
-      "The technical decisions behind Interview Lab's live voice session — WebSockets, Gemini Live, and why we ditched the obvious architecture.",
+      "The technical decisions behind Evalio's live voice session — WebSockets, Gemini Live, and why we ditched the obvious architecture.",
     date: "May 28, 2026",
     readMins: 8,
     tag: "Engineering",

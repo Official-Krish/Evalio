@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react"
-import type { InterviewSession } from "@ai-interview/shared"
+import type { InterviewSession } from "@evalio/shared"
 import { IconFlame } from "@tabler/icons-react"
 import { Calendar } from "@/components/ui/calendar"
 

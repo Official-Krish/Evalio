@@ -1,5 +1,5 @@
 {
-  "name": "@ai-interview/frontend",
+  "name": "@evalio/frontend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@ai-interview/shared": "workspace:*",
+    "@evalio/shared": "workspace:*",
     "@elysiajs/eden": "^1.4.9",
     "@hookform/resolvers": "^5.4.0",
     "@radix-ui/react-label": "^2.1.7",
@@ -39,7 +39,7 @@
     "zod": "^4.4.0"
   },
   "devDependencies": {
-    "@ai-interview/backend": "workspace:*",
+    "@evalio/backend": "workspace:*",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.0.0",
     "@types/bun": "latest",

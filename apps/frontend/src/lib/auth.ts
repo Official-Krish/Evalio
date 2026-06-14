@@ -7,7 +7,7 @@ import type {
   ResendOtpInput,
   ForgotPasswordInput,
   ResetPasswordInput,
-} from "@ai-interview/shared"
+} from "@evalio/shared"
 
 export function useSession() {
   return useQuery({

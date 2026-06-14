@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { fileNameFromUrl } from "../Create-Interview/helpers"
-import type { Resume } from "@ai-interview/shared"
+import type { Resume } from "@evalio/shared"
 import { IconFileTypePdf, IconPlus, IconChevronRight } from "@tabler/icons-react"
 
 interface ResumeVaultProps {

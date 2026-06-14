@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import { Link } from "react-router-dom"
 import { motion } from "motion/react"
-import type { InterviewSession } from "@ai-interview/shared"
+import type { InterviewSession } from "@evalio/shared"
 import { IconTrendingUp, IconAlertTriangle, IconChartBar } from "@tabler/icons-react"
 
 interface AiCoachCardProps {

@@ -1,6 +1,6 @@
 import { motion } from "motion/react"
 import { isToday, formatDuration } from "./helpers"
-import type { InterviewSession } from "@ai-interview/shared"
+import type { InterviewSession } from "@evalio/shared"
 
 interface SessionStripProps {
   mostRecent: InterviewSession & { resume?: { id: string; version: number } | null }

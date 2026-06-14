@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react"
 import { Link } from "react-router-dom"
 import { formatDuration, computeChange, isIncomplete } from "./helpers"
-import type { InterviewSession } from "@ai-interview/shared"
+import type { InterviewSession } from "@evalio/shared"
 import { IconSearch, IconCalendarMonth } from "@tabler/icons-react"
 import { Calendar } from "@/components/ui/calendar"
 

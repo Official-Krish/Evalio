@@ -17,7 +17,7 @@ const sections = [
   },
   {
     title: "4. Analytics",
-    content: "We don't run third-party advertising trackers on Interview Lab today. If analytics are added later, this page will be updated.",
+    content: "We don't run third-party advertising trackers on Evalio today. If analytics are added later, this page will be updated.",
   },
   {
     title: "5. Managing cookies",

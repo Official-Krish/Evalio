@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { motion } from "motion/react"
 import { greeting, computeStreak } from "./helpers"
-import type { InterviewSession } from "@ai-interview/shared"
+import type { InterviewSession } from "@evalio/shared"
 
 interface ReadinessHeroProps {
   user: { name?: string | null } | null | undefined

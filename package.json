@@ -1,5 +1,5 @@
 {
-  "name": "ai-interview",
+  "name": "evalio",
   "private": true,
   "scripts": {
     "build": "turbo run build",

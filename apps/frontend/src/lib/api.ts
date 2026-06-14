@@ -12,7 +12,7 @@ import type {
   CreateInterviewInput,
   ForgotPasswordInput,
   ResetPasswordInput,
-} from "@ai-interview/shared"
+} from "@evalio/shared"
 
 function errorMessage(err: unknown): string {
   if (typeof err === "string") return err

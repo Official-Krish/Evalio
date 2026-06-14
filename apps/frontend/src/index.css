@@ -359,6 +359,7 @@ html.landing-active {
   width: 200px;
   height: 200px;
   pointer-events: none;
+  z-index: -1;
 }
 
 .landing-sonar-core {
@@ -438,7 +439,7 @@ html.landing-active {
 }
 
 .landing-hero-drama {
-  font-size: clamp(4.5rem, 11vw, 140px);
+  font-size: clamp(5rem, 12vw, 150px);
   line-height: 0.88;
   color: var(--landing-fg);
   letter-spacing: -0.04em;
@@ -760,6 +761,46 @@ html.landing-active {
 /* Sharp CTA */
 .landing-cta-sharp {
   border-radius: 6px;
+}
+
+/* Company river marquee (mobile) */
+.landing-company-river {
+  animation: landing-river 40s linear infinite;
+}
+
+@keyframes landing-river {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-company-river {
+    animation: none;
+  }
+}
+
+/* Blob float for companies section */
+@keyframes landing-blob-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Orb pulse for evaluation dimensions */
+@keyframes landing-orb-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .landing-orb-pulse,
+  [style*="animation: landing-orb-pulse"] {
+    animation: none !important;
+  }
+  [style*="animation: landing-blob-float"],
+  [style*="animation: float"] {
+    animation: none !important;
+  }
 }
 
 /* ─── Static pages ───────────────────────────────────────────── */

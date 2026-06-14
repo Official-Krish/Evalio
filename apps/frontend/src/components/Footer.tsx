@@ -13,7 +13,7 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-1">
             <div className="flex items-center gap-2 mb-4 text-[var(--landing-fg-faint)]">
               <OrbitalMark size={28} />
-              <span className="text-xs tracking-[0.14em] uppercase font-normal">Interview Lab</span>
+              <span className="text-xs tracking-[0.14em] uppercase font-normal">Evalio</span>
             </div>
             <p className="landing-serif text-2xl leading-[1.4] text-[var(--landing-fg-muted)] mb-4">
               Practice until the real one feels familiar.
@@ -56,7 +56,7 @@ export function Footer() {
         {/* bottom bar */}
         <div className="mt-14 pt-8 border-t border-[var(--landing-line)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <p className="text-sm text-[var(--landing-fg-faint)]/50 font-medium">
-            &copy; {new Date().getFullYear()} Interview Lab. All rights reserved.
+            &copy; {new Date().getFullYear()} Evalio. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-[var(--landing-fg-faint)]/50 font-medium">
             <Link to="/privacy" className="hover:text-[var(--landing-fg-muted)] transition-colors">Privacy</Link>

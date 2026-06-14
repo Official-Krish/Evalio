@@ -35,7 +35,7 @@ export function AboutPage() {
             <span className="landing-serif italic text-[var(--landing-fg-muted)]">you've already done.</span>
           </>
         }
-        subtitle="Interview Lab is a voice practice environment that reads your résumé, runs a real conversation, and scores how you performed — so the actual interview feels familiar."
+        subtitle="Evalio is a voice practice environment that reads your résumé, runs a real conversation, and scores how you performed — so the actual interview feels familiar."
       />
 
       <RevealSection>
@@ -73,7 +73,7 @@ export function AboutPage() {
             <p className="text-[10px] tracking-[0.14em] uppercase text-[var(--landing-fg-faint)] mb-3">Built by</p>
             <p className="landing-serif text-[22px] text-[var(--landing-fg)]">Krish Anand</p>
             <p className="mt-3 text-[14px] leading-[1.75] text-[var(--landing-fg-muted)]">
-              Interview Lab started as a prototype to fix a simple gap: most prep tools don't feel like being interviewed.
+              Evalio started as a prototype to fix a simple gap: most prep tools don't feel like being interviewed.
               It's still early — features ship weekly, and feedback from real sessions shapes the roadmap.
             </p>
             <a

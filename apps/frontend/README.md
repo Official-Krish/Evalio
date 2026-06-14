@@ -1,6 +1,6 @@
-# @ai-interview/frontend
+# @evalio/frontend
 
-React 19 SPA for AI Interview Lab.
+React 19 SPA for AI Evalio.
 
 ## Stack
 

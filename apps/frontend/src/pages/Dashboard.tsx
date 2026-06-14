@@ -25,7 +25,7 @@ import {
   computeMilestones,
   computeRoleRecommendations,
 } from "../components/Dashboard/helpers"
-import type { InterviewSession } from "@ai-interview/shared"
+import type { InterviewSession } from "@evalio/shared"
 
 export function DashboardPage() {
   const { data: session } = useSession()

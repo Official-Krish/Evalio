@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import type { InterviewSession } from "@ai-interview/shared"
+import type { InterviewSession } from "@evalio/shared"
 import { computeStreak } from "./helpers"
 import { Calendar } from "@/components/ui/calendar"
 import {
