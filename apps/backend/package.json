@@ -4,9 +4,20 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "dev": "bun --hot src/index.ts",
+    "start": "NODE_ENV=production bun src/index.ts",
+    "build": "bun build ./index.ts --outdir ./dist --target bun",
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit"
+  },
   "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
     "@types/bun": "latest",
-    "@types/ws": "^8.18.1"
+    "@types/ws": "^8.18.1",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.50.0"
   },
   "peerDependencies": {
     "typescript": "^5"
