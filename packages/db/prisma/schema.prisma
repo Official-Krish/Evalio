@@ -90,6 +90,7 @@ model InterviewSession {
   companyId           String?
   companyName         String?
   roleTitle           String?
+  interviewRound      String?
   startedAt           DateTime?
   endedAt             DateTime?
   overallScore        Float?

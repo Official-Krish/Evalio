@@ -12,3 +12,5 @@ export const client = treaty<App>(base, {
     credentials: "include",
   },
 });
+
+export const BASE_URL = base;

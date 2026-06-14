@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react"
-import { motion, AnimatePresence } from "motion/react"
-import { useInViewOnce } from "./hooks"
-import { CompanyOrbit, type CompanyDef } from "./svg/CompanyOrbit"
+import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { useInViewOnce } from "./hooks";
+import { CompanyOrbit, type CompanyDef } from "./svg/CompanyOrbit";
 
 // 12 companies evenly distributed at 30° intervals.
 //
@@ -10,26 +10,26 @@ import { CompanyOrbit, type CompanyDef } from "./svg/CompanyOrbit"
 // would be rendered at exactly the same position. The missing slot was 270°
 // (the 9-o'clock / left position). Anthropic is now correctly placed at 270°.
 const companies: CompanyDef[] = [
-  { name: "Stripe",    listen: "Pushes on tradeoffs",   angle: -60  }, // upper-left (300°)
-  { name: "Google",    listen: "Hunts for clean thinking", angle: -30 }, // upper-left-ish (330°)
-  { name: "Amazon",    listen: "Listens for ownership",  angle: 0    }, // top (0°)
-  { name: "Meta",      listen: "Questions everything",   angle: 30   }, // upper-right-ish (30°)
-  { name: "Apple",     listen: "Obsesses over craft",    angle: 60   }, // upper-right (60°)
-  { name: "Netflix",   listen: "Values context",         angle: 90   }, // right (90°)
-  { name: "Microsoft", listen: "Growth mindset",         angle: 120  }, // lower-right (120°)
-  { name: "Notion",    listen: "Cares about taste",      angle: 150  }, // lower-right-ish (150°)
-  { name: "Linear",    listen: "Demands clarity",        angle: 180  }, // bottom (180°)
-  { name: "Figma",     listen: "Thinks in systems",      angle: 210  }, // lower-left-ish (210°)
-  { name: "Vercel",    listen: "Ships, then refines",    angle: 240  }, // lower-left (240°)
-  { name: "Anthropic", listen: "First principles",       angle: 270  }, // left (270°) ← was 300, collided with Stripe
-]
+  { name: "Stripe", listen: "Pushes on tradeoffs", angle: -60 }, // upper-left (300°)
+  { name: "Google", listen: "Hunts for clean thinking", angle: -30 }, // upper-left-ish (330°)
+  { name: "Amazon", listen: "Listens for ownership", angle: 0 }, // top (0°)
+  { name: "Meta", listen: "Questions everything", angle: 30 }, // upper-right-ish (30°)
+  { name: "Apple", listen: "Obsesses over craft", angle: 60 }, // upper-right (60°)
+  { name: "Netflix", listen: "Values context", angle: 90 }, // right (90°)
+  { name: "Microsoft", listen: "Growth mindset", angle: 120 }, // lower-right (120°)
+  { name: "Notion", listen: "Cares about taste", angle: 150 }, // lower-right-ish (150°)
+  { name: "Linear", listen: "Demands clarity", angle: 180 }, // bottom (180°)
+  { name: "Figma", listen: "Thinks in systems", angle: 210 }, // lower-left-ish (210°)
+  { name: "Vercel", listen: "Ships, then refines", angle: 240 }, // lower-left (240°)
+  { name: "Anthropic", listen: "First principles", angle: 270 }, // left (270°) ← was 300, collided with Stripe
+];
 
 export function LandingCompanies() {
-  const { ref: sectionRef, visible } = useInViewOnce<HTMLElement>(0.08)
-  const [activeIndex, setActiveIndex] = useState<number | null>(null)
-  const active = activeIndex !== null ? companies[activeIndex]! : null
+  const { ref: sectionRef, visible } = useInViewOnce<HTMLElement>(0.08);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const active = activeIndex !== null ? companies[activeIndex]! : null;
 
-  const handleHover = useCallback((i: number | null) => setActiveIndex(i), [])
+  const handleHover = useCallback((i: number | null) => setActiveIndex(i), []);
 
   return (
     <section
@@ -55,7 +55,10 @@ export function LandingCompanies() {
             className="landing-display text-[clamp(1.85rem,3.8vw,2.85rem)] leading-[1.08] tracking-[-0.03em] text-[var(--landing-fg)]"
           >
             Walk into the wrong room and you&apos;re practicing the{" "}
-            <span className="landing-serif italic text-[var(--landing-fg-muted)]">wrong conversation</span>.
+            <span className="landing-serif italic text-[var(--landing-fg-muted)]">
+              wrong conversation
+            </span>
+            .
           </motion.h2>
 
           <motion.p
@@ -64,8 +67,9 @@ export function LandingCompanies() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="mt-5 text-[14px] leading-[1.8] text-[var(--landing-fg-muted)]"
           >
-            Every company listens for something different. Stripe probes tradeoffs.
-            Google watches how you think. Amazon hunts for ownership signals.
+            Every company listens for something different. Stripe probes
+            tradeoffs. Google watches how you think. Amazon hunts for ownership
+            signals.
           </motion.p>
 
           <AnimatePresence mode="wait">
@@ -101,16 +105,11 @@ export function LandingCompanies() {
         </div>
 
         <motion.div
-          className="relative mx-auto min-w-[600px] aspect-square"
+          className="relative mx-auto min-w-[600px] aspect-square max-lg:hidden"
           initial={{ opacity: 0, scale: 0.92 }}
           animate={visible ? { opacity: 1, scale: 1 } : {}}
           transition={{ duration: 1.1, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
         >
-          {/*
-            CompanyOrbit now renders ALL labels inside SVG.
-            No DOM overlay needed — eliminates the % positioning mismatch
-            that caused overlapping and incorrect spacing.
-          */}
           <CompanyOrbit
             activeIndex={activeIndex}
             companies={companies}
@@ -120,21 +119,50 @@ export function LandingCompanies() {
         </motion.div>
       </div>
 
-      {/* Mobile ticker */}
-      <div className="mt-14 lg:hidden overflow-hidden">
-        <div className="landing-company-river flex gap-8 whitespace-nowrap">
-          {[...companies, ...companies].map((c, i) => (
-            <span
-              key={`${c.name}-${i}`}
-              className="text-[13px] text-[var(--landing-fg-muted)] shrink-0"
-            >
-              {c.name}
-              <span className="mx-3 text-[var(--landing-fg-faint)]">·</span>
-              <span className="landing-serif italic text-[var(--landing-accent)]">{c.listen}</span>
-            </span>
-          ))}
+      {/* Mobile company list */}
+      <div className="mt-14 lg:hidden">
+        <div className="flex flex-col gap-3">
+          {companies.map((c, i) => {
+            const isActive = activeIndex === i;
+            return (
+              <button
+                key={c.name}
+                onClick={() => setActiveIndex(isActive ? null : i)}
+                className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-lg transition-all duration-200"
+                style={{
+                  background: isActive
+                    ? "var(--landing-surface-hover)"
+                    : "transparent",
+                }}
+              >
+                <span
+                  className="text-[13px] font-medium shrink-0"
+                  style={{
+                    color: isActive
+                      ? "var(--landing-accent)"
+                      : "var(--landing-fg-muted)",
+                    transition: "color 0.2s",
+                  }}
+                >
+                  {c.name}
+                </span>
+                <span className="h-px flex-1 bg-[var(--landing-line)]" />
+                <span
+                  className="landing-serif italic text-[12px] truncate max-w-[180px]"
+                  style={{
+                    color: isActive
+                      ? "var(--landing-fg)"
+                      : "var(--landing-fg-faint)",
+                    transition: "color 0.2s",
+                  }}
+                >
+                  {c.listen}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </section>
-  )
+  );
 }

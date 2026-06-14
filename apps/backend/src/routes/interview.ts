@@ -1,8 +1,8 @@
-import { Elysia, t } from "elysia"
-import { prisma } from "../lib/prisma"
-import { authGuard } from "../middleware/auth"
-import { extractUsername, parseGithubProfile } from "../utils/githubParser"
-import { strictRateLimit } from "../middleware/rateLimit"
+import { Elysia, t } from "elysia";
+import { prisma } from "../lib/prisma";
+import { authGuard } from "../middleware/auth";
+import { extractUsername, parseGithubProfile } from "../utils/githubParser";
+import { strictRateLimit } from "../middleware/rateLimit";
 
 export const interviewRoutes = new Elysia({ prefix: "/interview" })
   .use(strictRateLimit)
@@ -14,48 +14,48 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
         async ({ user, body, set }) => {
           // Rate limit: FREE users get 3 interviews / 7 days, PRO gets 6 / 7 days
           if (user.role !== "ADMIN") {
-            const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
             const recentCount = await prisma.interviewSession.count({
               where: {
                 userId: user.id,
                 createdAt: { gte: since },
               },
-            })
-            const role: string = user.role
-            const limit = role === "PRO" ? 6 : 3
+            });
+            const role: string = user.role;
+            const limit = role === "PRO" ? 6 : 3;
             if (recentCount >= limit) {
-              set.status = 429
+              set.status = 429;
               return {
                 error: `Rate limit reached. ${
                   role === "PRO" ? "Pro" : "Free"
                 } users can only create ${limit} interviews per 7 days.`,
-              }
+              };
             }
           }
 
           const latestResume = await prisma.resume.findFirst({
             where: { userId: user.id },
             orderBy: { version: "desc" },
-          })
+          });
           if (!latestResume) {
-            set.status = 400
-            return { error: "Upload a resume before creating an interview" }
+            set.status = 400;
+            return { error: "Upload a resume before creating an interview" };
           }
 
-          const resumeId = body.resumeId ?? latestResume.id
+          const resumeId = body.resumeId ?? latestResume.id;
           const resume = await prisma.resume.findFirst({
             where: { id: resumeId, userId: user.id },
-          })
+          });
           if (!resume) {
-            set.status = 400
-            return { error: "Invalid resume selected" }
+            set.status = 400;
+            return { error: "Invalid resume selected" };
           }
 
           if (body.githubUrl) {
-            const username = extractUsername(body.githubUrl)
+            const username = extractUsername(body.githubUrl);
             if (username) {
               try {
-                const parsed = await parseGithubProfile(username)
+                const parsed = await parseGithubProfile(username);
                 await prisma.githubProfile.upsert({
                   where: { userId: user.id },
                   create: {
@@ -72,11 +72,11 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
                     projects: parsed.projects,
                     analyzedAt: new Date(),
                   },
-                })
+                });
                 await prisma.candidateProfile.update({
                   where: { userId: user.id },
                   data: { githubUsername: parsed.username },
-                })
+                });
               } catch {
                 // GitHub fetch failed, continue without profile
               }
@@ -93,12 +93,19 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
               ...(body.companyId && { companyId: body.companyId }),
               ...(body.companyName && { companyName: body.companyName }),
               ...(body.roleTitle && { roleTitle: body.roleTitle }),
-              ...(body.interviewStyle && { interviewStyle: body.interviewStyle as any }),
-              ...(body.interviewDepth && { interviewDepth: body.interviewDepth as any }),
+              ...(body.interviewRound && {
+                interviewRound: body.interviewRound,
+              }),
+              ...(body.interviewStyle && {
+                interviewStyle: body.interviewStyle as any,
+              }),
+              ...(body.interviewDepth && {
+                interviewDepth: body.interviewDepth as any,
+              }),
             },
-          })
+          });
 
-          return { interview }
+          return { interview };
         },
         {
           body: t.Object({
@@ -109,20 +116,25 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
             companyId: t.Optional(t.String()),
             companyName: t.Optional(t.String()),
             roleTitle: t.Optional(t.String()),
-            interviewStyle: t.Optional(t.Enum({
-              SUPPORTIVE: "SUPPORTIVE",
-              PROFESSIONAL: "PROFESSIONAL",
-              CHALLENGING: "CHALLENGING",
-              BAR_RAISER: "BAR_RAISER",
-            })),
-            interviewDepth: t.Optional(t.Enum({
-              STANDARD: "STANDARD",
-              PROBING: "PROBING",
-              CHALLENGE: "CHALLENGE",
-              BAR_RAISER: "BAR_RAISER",
-            })),
+            interviewRound: t.Optional(t.String()),
+            interviewStyle: t.Optional(
+              t.Enum({
+                SUPPORTIVE: "SUPPORTIVE",
+                PROFESSIONAL: "PROFESSIONAL",
+                CHALLENGING: "CHALLENGING",
+                BAR_RAISER: "BAR_RAISER",
+              }),
+            ),
+            interviewDepth: t.Optional(
+              t.Enum({
+                STANDARD: "STANDARD",
+                PROBING: "PROBING",
+                CHALLENGE: "CHALLENGE",
+                BAR_RAISER: "BAR_RAISER",
+              }),
+            ),
           }),
-        }
+        },
       )
       .get("/", async ({ user, query }) => {
         const interviews = await prisma.interviewSession.findMany({
@@ -134,8 +146,8 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
             _count: { select: { turns: true } },
             resume: { select: { id: true, version: true } },
           },
-        })
-        return { interviews }
+        });
+        return { interviews };
       })
       .get("/:id", async ({ params: { id }, user, set }) => {
         const interview = await prisma.interviewSession.findUnique({
@@ -145,29 +157,31 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
             summary: true,
             resume: { select: { id: true, version: true, originalUrl: true } },
           },
-        })
+        });
         if (!interview || interview.userId !== user.id) {
-          set.status = 404
-          return { error: "Interview not found" }
+          set.status = 404;
+          return { error: "Interview not found" };
         }
-        return { interview }
+        return { interview };
       })
       .patch(
         "/:id",
         async ({ params: { id }, user, body, set }) => {
           const interview = await prisma.interviewSession.findUnique({
             where: { id },
-          })
+          });
           if (!interview || interview.userId !== user.id) {
-            set.status = 404
-            return { error: "Interview not found" }
+            set.status = 404;
+            return { error: "Interview not found" };
           }
 
           const updated = await prisma.interviewSession.update({
             where: { id },
             data: {
               ...(body.status && { status: body.status }),
-              ...(body.startedAt !== undefined && { startedAt: body.startedAt }),
+              ...(body.startedAt !== undefined && {
+                startedAt: body.startedAt,
+              }),
               ...(body.endedAt !== undefined && { endedAt: body.endedAt }),
               ...(body.overallScore !== undefined && {
                 overallScore: body.overallScore,
@@ -185,8 +199,8 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
                 durationSeconds: body.durationSeconds,
               }),
             },
-          })
-          return { interview: updated }
+          });
+          return { interview: updated };
         },
         {
           body: t.Object({
@@ -197,7 +211,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
                 COMPLETED: "COMPLETED",
                 FAILED: "FAILED",
                 CANCELLED: "CANCELLED",
-              })
+              }),
             ),
             startedAt: t.Optional(t.Nullable(t.Date())),
             endedAt: t.Optional(t.Nullable(t.Date())),
@@ -207,6 +221,6 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
             problemSolvingScore: t.Optional(t.Nullable(t.Number())),
             durationSeconds: t.Optional(t.Nullable(t.Number())),
           }),
-        }
-      )
-  )
+        },
+      ),
+  );
