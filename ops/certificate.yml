@@ -1,0 +1,41 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: evalio-frontend-cert
+  namespace: evalio
+spec:
+  secretName: evalio-frontend-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: evalio.krishlabs.tech
+  dnsNames:
+  - evalio.krishlabs.tech
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: evalio-backend-cert
+  namespace: evalio
+spec:
+  secretName: evalio-backend-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: api.evalio.krishlabs.tech
+  dnsNames:
+  - api.evalio.krishlabs.tech
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: evalio-backend-ws-cert
+  namespace: evalio
+spec:
+  secretName: evalio-backend-ws-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: ws.evalio.krishlabs.tech
+  dnsNames:
+  - ws.evalio.krishlabs.tech
