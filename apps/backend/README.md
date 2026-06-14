@@ -1,4 +1,4 @@
-# @ai-interview/backend
+# @evalio/backend
 
 Elysia.js HTTP server + WebSocket server for real-time AI-powered interviews.
 

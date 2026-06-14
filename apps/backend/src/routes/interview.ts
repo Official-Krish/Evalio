@@ -12,7 +12,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
       .post(
         "/create",
         async ({ user, body, set }) => {
-          // Rate limit: FREE users can only create 3 interviews per 7 days
+          // Rate limit: FREE users get 3 interviews / 7 days, PRO gets 6 / 7 days
           if (user.role !== "ADMIN") {
             const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
             const recentCount = await prisma.interviewSession.count({
@@ -21,10 +21,14 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
                 createdAt: { gte: since },
               },
             })
-            if (recentCount >= 3) {
+            const role: string = user.role
+            const limit = role === "PRO" ? 6 : 3
+            if (recentCount >= limit) {
               set.status = 429
               return {
-                error: "Rate limit reached. Free users can only create 3 interviews per 7 days.",
+                error: `Rate limit reached. ${
+                  role === "PRO" ? "Pro" : "Free"
+                } users can only create ${limit} interviews per 7 days.`,
               }
             }
           }

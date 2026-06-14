@@ -10,6 +10,7 @@ import { githubRoutes } from "./routes/github"
 import { evaluateRoutes } from "./routes/evaluate"
 import { companyRoutes } from "./routes/company"
 import { profileRoutes } from "./routes/profile"
+import { contactRoutes } from "./routes/contact"
 import { globalRateLimit } from "./middleware/rateLimit"
 
 export const app = new Elysia()
@@ -35,5 +36,6 @@ export const app = new Elysia()
     .use(evaluateRoutes)
     .use(companyRoutes)
     .use(profileRoutes)
+    .use(contactRoutes)
   )
   .get("/health", () => ({ status: "ok", timestamp: new Date().toISOString() }))

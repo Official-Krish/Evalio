@@ -3,7 +3,7 @@ import { createGeminiSession, type GeminiSession } from "./gemini"
 import { prisma } from "./lib/prisma"
 import { buildInterviewPrompt, type PromptInput } from "./prompt"
 import { evaluateInterview } from "./services/evaluate"
-import { COMPANIES } from "@ai-interview/shared"
+import { COMPANIES } from "@evalio/shared"
 
 const WS_PORT = parseInt(Bun.env.WS_PORT ?? "8080")
 
@@ -322,7 +322,7 @@ export function startWsServer() {
 
             const github = interview.user.githubProfile
             const userRole = interview.user.role ?? "FREE"
-            const timeLimitMs = userRole === "ADMIN" ? 1_800_000 : 900_000
+            const timeLimitMs = userRole === "ADMIN" || userRole === "PRO" ? 1_800_000 : 900_000
             const durationMinutes = timeLimitMs / 60_000
             const companyConfig = interview.companyId
               ? COMPANIES.find((c) => c.id === interview.companyId)
@@ -518,9 +518,31 @@ export function startWsServer() {
             console.log("[ws] audio_stream_end from client → Gemini")
 
             const isChallengeMode = interviewDepth === "CHALLENGE" || interviewDepth === "BAR_RAISER"
+            const isInterrupted = msg.interrupted === true
 
-            if (isChallengeMode) {
-              // Challenge mode: don't flush turn — accumulate answer into current turn
+            if (isInterrupted) {
+              // AI interrupted — finalize the current answer as a completed turn
+              // then reset so the interruption starts a new turn
+              if (interviewId && currentTurnId && answerBuf) {
+                const prev = await prisma.interviewTurn.findUnique({
+                  where: { id: currentTurnId },
+                  select: { answerText: true },
+                })
+                const merged = prev?.answerText
+                  ? prev.answerText + "\n\n" + answerBuf
+                  : answerBuf
+                await prisma.interviewTurn.update({
+                  where: { id: currentTurnId },
+                  data: { answerText: merged },
+                })
+                answerBuf = ""
+              } else if (interviewId && questionBuf) {
+                await flushTurn()
+              }
+              currentTurnId = null
+              questionBuf = ""
+            } else if (isChallengeMode) {
+              // Challenge mode: accumulate answer into current turn
               if (interviewId) {
                 if (!currentTurnId && questionBuf) {
                   currentTurnId = await createTurn(questionBuf)

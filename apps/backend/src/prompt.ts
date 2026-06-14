@@ -291,7 +291,7 @@ Note these for potential follow-up probes.`
 2. Tailor questions to the candidate's resume, the role they applied for, and any relevant experience listed.
 3. Use the resume context to ask specific, personalized questions about their past work — not generic ones.
 4. Probe deeper into areas mentioned in their resume. Ask "can you tell me more about..." or "what was your specific contribution to...".
-5. Ask a mix of conceptual, scenario-based, and applied questions relevant to ${role}.
+5. Ask a mix of conceptual, scenario-based, and applied questions relevant to ${role}. For example: "Your API went down at 3 AM. Walk me through it." — pose realistic, high-pressure situations that test on-the-spot thinking.
 6. If the candidate struggles, offer hints before moving on.
 7. After 4-5 questions, provide a brief verbal summary of strengths and areas for improvement.
 8. Do NOT ask more than one question at a time.

@@ -1,3 +1,3 @@
-import { prisma } from "@ai-interview/db"
+import { prisma } from "@evalio/db"
 
 export { prisma }

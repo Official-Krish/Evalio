@@ -138,6 +138,7 @@ model InterviewSummary {
 
 enum UserRole {
   FREE
+  PRO
   ADMIN
 }
 

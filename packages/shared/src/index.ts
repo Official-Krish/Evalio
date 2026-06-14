@@ -109,7 +109,7 @@ export type InterviewStatus = z.infer<typeof interviewStatusSchema>
 export type InterviewStyle = z.infer<typeof interviewStyleSchema>
 export type InterviewDepth = z.infer<typeof interviewDepthSchema>
 
-export type UserRole = "FREE" | "ADMIN"
+export type UserRole = "FREE" | "PRO" | "ADMIN"
 
 export interface User {
   id: string

@@ -1,7 +1,7 @@
 import { Resend } from "resend"
 
 const resend = new Resend(Bun.env.RESEND_API_KEY!)
-const EMAIL_FROM = Bun.env.EMAIL_FROM ?? "Interview Lab <noreply@krishlabs.tech>"
+const EMAIL_FROM = Bun.env.EMAIL_FROM ?? "Evalio <noreply@krishlabs.tech>"
 
 function buildOtpEmail(otp: string): string {
   return `<!DOCTYPE html>
@@ -21,7 +21,7 @@ function buildOtpEmail(otp: string): string {
                 <span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">IL</span>
               </div>
               <h1 style="color:#f1f5f9;font-size:22px;font-weight:600;margin:0 0 8px;letter-spacing:-0.3px">Verify your email</h1>
-              <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin:0 0 28px">Use the code below to complete your signup for <strong style="color:#e2e8f0">Interview Lab</strong>. This code expires in 10 minutes.</p>
+              <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin:0 0 28px">Use the code below to complete your signup for <strong style="color:#e2e8f0">Evalio</strong>. This code expires in 10 minutes.</p>
             </td>
           </tr>
           <tr>
@@ -33,7 +33,7 @@ function buildOtpEmail(otp: string): string {
             <td style="padding:0 36px 32px">
               <p style="color:#64748b;font-size:12px;line-height:1.6;margin:0;text-align:center">
                 If you didn't request this code, you can safely ignore this email.<br>
-                &copy; ${new Date().getFullYear()} Interview Lab. All rights reserved.
+                &copy; ${new Date().getFullYear()} Evalio. All rights reserved.
               </p>
             </td>
           </tr>
@@ -63,7 +63,7 @@ function buildResetOtpEmail(otp: string): string {
                 <span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">IL</span>
               </div>
               <h1 style="color:#f1f5f9;font-size:22px;font-weight:600;margin:0 0 8px;letter-spacing:-0.3px">Reset your password</h1>
-              <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin:0 0 28px">Use the code below to reset your password for <strong style="color:#e2e8f0">Interview Lab</strong>. This code expires in 10 minutes. If you didn't request this, ignore this email.</p>
+              <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin:0 0 28px">Use the code below to reset your password for <strong style="color:#e2e8f0">Evalio</strong>. This code expires in 10 minutes. If you didn't request this, ignore this email.</p>
             </td>
           </tr>
           <tr>
@@ -75,7 +75,7 @@ function buildResetOtpEmail(otp: string): string {
             <td style="padding:0 36px 32px">
               <p style="color:#64748b;font-size:12px;line-height:1.6;margin:0;text-align:center">
                 If you didn't request a password reset, you can safely ignore this email.<br>
-                &copy; ${new Date().getFullYear()} Interview Lab. All rights reserved.
+                &copy; ${new Date().getFullYear()} Evalio. All rights reserved.
               </p>
             </td>
           </tr>
@@ -117,7 +117,7 @@ function buildWelcomeEmail(name: string): string {
           <tr>
             <td style="padding:24px 36px 32px">
               <p style="color:#64748b;font-size:12px;line-height:1.6;margin:0;text-align:center">
-                &copy; ${new Date().getFullYear()} Interview Lab. All rights reserved.
+                &copy; ${new Date().getFullYear()} Evalio. All rights reserved.
               </p>
             </td>
           </tr>
@@ -129,12 +129,67 @@ function buildWelcomeEmail(name: string): string {
 </html>`
 }
 
+function buildContactEmail(name: string, senderEmail: string, subject: string, message: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0">
+    <tr>
+      <td align="center">
+        <table width="480" cellpadding="0" cellspacing="0" style="background:#141414;border:1px solid #2a2a2a;border-radius:12px;overflow:hidden">
+          <tr>
+            <td style="padding:40px 36px 20px">
+              <div style="width:44px;height:44px;background:linear-gradient(135deg,#a78bfa,#6366f1);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:24px">
+                <span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">IL</span>
+              </div>
+              <h1 style="color:#f1f5f9;font-size:22px;font-weight:600;margin:0 0 4px;letter-spacing:-0.3px">${subject}</h1>
+              <p style="color:#94a3b8;font-size:13px;margin:0 0 24px">From: <strong style="color:#e2e8f0">${name}</strong> &lt;${senderEmail}&gt;</p>
+              <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:20px">
+                <p style="color:#f1f5f9;font-size:14px;line-height:1.7;margin:0;white-space:pre-wrap">${message}</p>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 36px 32px">
+              <p style="color:#64748b;font-size:12px;line-height:1.6;margin:0;text-align:center">
+                Sent via the Evalio contact form.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
+export async function sendContactEmail(name: string, senderEmail: string, subject: string, message: string): Promise<boolean> {
+  try {
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: "krishanand@krishlabs.tech",
+      replyTo: senderEmail,
+      subject: `[Contact] ${subject}`,
+      html: buildContactEmail(name, senderEmail, subject, message),
+    })
+    return true
+  } catch (err) {
+    console.error("[email] contact send failed:", err)
+    return false
+  }
+}
+
 export async function sendOtpEmail(email: string, name: string, otp: string): Promise<boolean> {
   try {
     await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
-      subject: "Verify your email — Interview Lab",
+      subject: "Verify your email — Evalio",
       html: buildOtpEmail(otp),
     })
     console.log(`[email] OTP sent to ${email}`)
@@ -150,7 +205,7 @@ export async function sendResetOtpEmail(email: string, name: string, otp: string
     await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
-      subject: "Reset your password — Interview Lab",
+      subject: "Reset your password — Evalio",
       html: buildResetOtpEmail(otp),
     })
     console.log(`[email] Reset OTP sent to ${email}`)
@@ -166,7 +221,7 @@ export async function sendWelcomeEmail(email: string, name: string): Promise<boo
     await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
-      subject: "Welcome to Interview Lab — email verified",
+      subject: "Welcome to Evalio — email verified",
       html: buildWelcomeEmail(name),
     })
     console.log(`[email] Welcome email sent to ${email}`)

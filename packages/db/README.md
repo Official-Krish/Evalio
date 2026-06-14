@@ -1,6 +1,6 @@
-# @ai-interview/db
+# @evalio/db
 
-Prisma ORM and PostgreSQL schema for AI Interview Lab.
+Prisma ORM and PostgreSQL schema for AI Evalio.
 
 ## Schema
 
