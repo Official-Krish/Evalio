@@ -1,7 +1,7 @@
 import { serve } from "bun";
 import index from "./index.html";
 
-const BACKEND_URL = process.env.VITE_BACKEND_URL || "http://localhost:3001";
+const BACKEND_URL = process.env.VITE_BACKEND_URL || "http://localhost:3000";
 
 const server = serve({
   port: 5173,
