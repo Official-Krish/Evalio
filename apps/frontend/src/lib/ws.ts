@@ -36,6 +36,21 @@ export class InterviewSocket {
             reject(new Error(data.error));
             return;
           }
+
+          const controlTypes = [
+            "closing_started",
+            "feedback_ready",
+            "time_limit",
+            "time_warning",
+            "time_limit_reached",
+          ];
+          if (
+            typeof data.type === "string" &&
+            controlTypes.includes(data.type)
+          ) {
+            this.emit(data.type, data);
+          }
+
           this.emit("message", data);
           if (data.serverContent?.inputTranscription) {
             this.emit("transcript:user", data.serverContent.inputTranscription);

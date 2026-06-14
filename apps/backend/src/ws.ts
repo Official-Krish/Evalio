@@ -25,6 +25,21 @@ function dedupAppend(buf: string, incoming: string): string {
   if (!buf) return t;
   if (t.startsWith(buf)) return t;
   if (buf.endsWith(t) || buf.startsWith(t)) return buf;
+
+  // Character-level streaming: single letters concatenate without space
+  // "I" + "a" + "m" → "Iam" not "I a m"
+  const lastChar = buf[buf.length - 1];
+  const firstChar = t[0];
+  if (
+    t.length <= 2 &&
+    lastChar !== undefined &&
+    firstChar !== undefined &&
+    /[a-zA-Z]/.test(lastChar) &&
+    /[a-zA-Z]/.test(firstChar)
+  ) {
+    return buf + t;
+  }
+
   return buf + " " + t;
 }
 
@@ -586,26 +601,38 @@ export function startWsServer() {
             const isInterrupted = msg.interrupted === true;
 
             if (isInterrupted) {
-              // AI interrupted — finalize the current answer as a completed turn
-              // then reset so the interruption starts a new turn
-              if (interviewId && currentTurnId && answerBuf) {
+              // AI interrupted — save accumulated content, then reset
+              if (currentTurnId && answerBuf) {
                 const prev = await prisma.interviewTurn.findUnique({
                   where: { id: currentTurnId },
                   select: { answerText: true },
                 });
-                const merged = prev?.answerText
-                  ? prev.answerText + "\n\n" + answerBuf
-                  : answerBuf;
                 await prisma.interviewTurn.update({
                   where: { id: currentTurnId },
-                  data: { answerText: merged },
+                  data: {
+                    answerText: prev?.answerText
+                      ? prev.answerText + "\n\n" + answerBuf
+                      : answerBuf,
+                  },
                 });
-                answerBuf = "";
-              } else if (interviewId && questionBuf) {
+              } else if (questionBuf) {
                 await flushTurn();
               }
+              answerBuf = "";
               currentTurnId = null;
               questionBuf = "";
+
+              // Forward audioStreamEnd to Gemini but skip waitingForAiResponse
+              try {
+                gemini.send(
+                  JSON.stringify({
+                    realtimeInput: { audioStreamEnd: true },
+                  }),
+                );
+              } catch {
+                await safeSend({ error: "Failed to end audio stream" });
+              }
+              break;
             } else if (isChallengeMode) {
               // Challenge mode: accumulate answer into current turn
               if (interviewId) {

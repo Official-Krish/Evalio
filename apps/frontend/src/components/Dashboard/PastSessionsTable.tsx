@@ -295,9 +295,12 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
                 gridTemplateColumns: "1.5fr 1fr auto 0.8fr 0.5fr",
                 gap: "8px",
                 alignItems: "center",
-                padding: "10px 0",
+                padding: "10px 12px",
+                margin: "0 -12px",
+                borderRadius: "8px",
                 borderBottom: "0.5px solid var(--color-border-light)",
                 textDecoration: "none",
+                cursor: "pointer",
                 transition: "background 0.15s",
                 opacity: incomplete ? 0.45 : 1,
               }}
@@ -361,14 +364,21 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
                       : change?.type === "down"
                         ? "#EF4444"
                         : "var(--color-text-muted)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
-                {change?.type === "up" && "\u2191"}
-                {change?.type === "down" && "\u2193"}
-                {(change &&
-                  change.type !== "same" &&
-                  Math.abs(parseInt(change.text.replace(/\D/g, "")))) ||
-                  ""}
+                {change && (change.type === "up" || change.type === "down") && (
+                  <span style={{ transition: "opacity 0.15s" }}>
+                    {change.type === "up" && "\u2191"}
+                    {change.type === "down" && "\u2193"}
+                    {Math.abs(parseInt(change.text.replace(/\D/g, "")))}
+                  </span>
+                )}
+                {(change?.type === "same" || !change) && (
+                  <span style={{ opacity: 0.3 }}>{"\u2192"}</span>
+                )}
               </span>
             </Link>
           );

@@ -82,6 +82,16 @@ export function NewInterviewPage() {
     select: (d) => d.resumes as Resume[],
   });
 
+  // Auto-default to the most recently uploaded resume (user can override)
+  const sortedResumes = useMemo(() => {
+    if (!resumes) return [];
+    return [...resumes].sort(
+      (a, b) =>
+        new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime(),
+    );
+  }, [resumes]);
+  const effectiveResumeId = selectedResumeId ?? sortedResumes[0]?.id;
+
   const { data: interviews } = useQuery({
     queryKey: ["interviews"],
     queryFn: () => api.listInterviews(0, 100),
@@ -160,13 +170,13 @@ export function NewInterviewPage() {
       toast.error("Select a position");
       return;
     }
-    if (!selectedResumeId) {
+    if (!effectiveResumeId) {
       toast.error("Select a resume");
       return;
     }
     createMutation.mutate({
       position: effectivePosition,
-      resumeId: selectedResumeId,
+      resumeId: effectiveResumeId,
       githubUrl: githubUrl || undefined,
       jobDescription: jobDescription.trim() || undefined,
       companyId: effectiveCompanyId ?? undefined,
@@ -177,10 +187,6 @@ export function NewInterviewPage() {
       interviewDepth,
     });
   };
-
-  const selectedResume = selectedResumeId
-    ? ((resumes ?? []).find((r) => r.id === selectedResumeId) ?? null)
-    : null;
 
   return (
     <div
@@ -546,7 +552,7 @@ export function NewInterviewPage() {
           >
             <ResumeSection
               resumes={resumes ?? []}
-              selectedResumeId={selectedResumeId}
+              selectedResumeId={effectiveResumeId}
               githubUrl={githubUrl}
               githubOpen={githubOpen}
               onResumeSelect={setSelectedResumeId}
@@ -673,7 +679,7 @@ export function NewInterviewPage() {
             <SessionCard
               position={effectivePosition ?? ""}
               customPosition={customRole}
-              selectedResumeId={selectedResumeId}
+              selectedResumeId={effectiveResumeId}
               resumes={resumes ?? []}
               isPending={createMutation.isPending}
               onCreate={handleCreate}
