@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
 import { StaticPageHero } from "@/components/static/StaticPageHero"
 import { RevealSection } from "@/components/motion/RevealSection"
 import { BLOG_POSTS } from "@/lib/blogData"
 
 export function BlogPage() {
+  usePageTitle("Blog")
   return (
     <StaticPageLayout>
       <StaticPageHero

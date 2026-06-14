@@ -1,6 +1,7 @@
 import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
 import { StaticPageHero } from "@/components/static/StaticPageHero"
 import { StaticProse } from "@/components/static/StaticProse"
+import { usePageTitle } from "@/lib/usePageTitle"
 
 const sections = [
   {
@@ -26,6 +27,7 @@ const sections = [
 ]
 
 export function CookiesPage() {
+  usePageTitle("Cookie Policy")
   return (
     <StaticPageLayout>
       <StaticPageHero badge="Legal" title="Cookie Policy" subtitle="Last updated: June 2026." />

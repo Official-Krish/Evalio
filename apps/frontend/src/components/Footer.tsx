@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { OrbitalMark } from "./landing/svg/OrbitalMark"
+import { EvalioMark } from "./landing/svg/EvalioMark"
 
 const linkClass = "text-sm text-[var(--landing-fg-faint)] hover:text-[var(--landing-fg-muted)] transition-colors duration-300"
 
@@ -12,7 +12,7 @@ export function Footer() {
           {/* brand */}
           <div className="col-span-2 sm:col-span-1">
             <div className="flex items-center gap-2 mb-4 text-[var(--landing-fg-faint)]">
-              <OrbitalMark size={28} />
+              <EvalioMark size={28} />
               <span className="text-xs tracking-[0.14em] uppercase font-normal">Evalio</span>
             </div>
             <p className="landing-serif text-2xl leading-[1.4] text-[var(--landing-fg-muted)] mb-4">

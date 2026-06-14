@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom"
 import { motion, AnimatePresence } from "motion/react"
 import { useSession, useLogout } from "../../lib/auth"
 import { useTheme } from "../../lib/use-theme"
-import { OrbitalMark } from "../landing/svg/OrbitalMark"
+import { EvalioMark } from "../landing/svg/EvalioMark"
 import { ProfileDropdown } from "./ProfileDropdown"
 import { ScrollProgress } from "./ScrollProgress"
 
@@ -49,8 +49,8 @@ export function AppBar() {
         <div className="landing-container flex items-center justify-between h-[72px] pointer-events-auto">
           <div className="flex items-center gap-8">
             <Link to="/" className="group flex items-center gap-2.5 text-[var(--landing-fg)]">
-              <OrbitalMark size={22} className="text-[var(--landing-fg-muted)] group-hover:text-[var(--landing-fg)] transition-colors duration-500" />
-              <span className="text-[12px] font-medium tracking-[0.12em] uppercase text-[var(--landing-fg-muted)] group-hover:text-[var(--landing-fg)] transition-colors duration-500">
+              <EvalioMark size={28} className="text-[var(--landing-fg-muted)] group-hover:text-[var(--landing-fg)] transition-colors duration-500" />
+              <span className="text-[14px] font-medium tracking-[0.12em] text-[var(--landing-fg-muted)] group-hover:text-[var(--landing-fg)] transition-colors duration-500">
                 Evalio
               </span>
             </Link>

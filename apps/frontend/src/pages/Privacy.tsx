@@ -1,6 +1,7 @@
 import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
 import { StaticPageHero } from "@/components/static/StaticPageHero"
 import { StaticProse } from "@/components/static/StaticProse"
+import { usePageTitle } from "@/lib/usePageTitle"
 
 const sections = [
   {
@@ -36,6 +37,7 @@ const sections = [
 ]
 
 export function PrivacyPage() {
+  usePageTitle("Privacy Policy")
   return (
     <StaticPageLayout>
       <StaticPageHero

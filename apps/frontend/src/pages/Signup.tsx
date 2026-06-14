@@ -6,9 +6,11 @@ import { motion } from "motion/react"
 import { signupSchema, passwordRequirements, type SignupInput } from "@evalio/shared"
 import { useSignup } from "../lib/auth"
 import { AuthLayout } from "@/components/static/AuthLayout"
+import { usePageTitle } from "@/lib/usePageTitle"
 import toast from "react-hot-toast"
 
 export function SignupPage() {
+  usePageTitle("Create Account")
   const navigate = useNavigate()
   const signupMutation = useSignup()
   const [showPassword, setShowPassword] = useState(false)

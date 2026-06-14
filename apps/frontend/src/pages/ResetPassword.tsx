@@ -6,10 +6,12 @@ import { motion } from "motion/react"
 import { resetPasswordSchema, passwordRequirements, type ResetPasswordInput } from "@evalio/shared"
 import { useResetPassword, useForgotPassword } from "../lib/auth"
 import { useResendTimer } from "../lib/useResendTimer"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { AuthLayout } from "@/components/static/AuthLayout"
 import toast from "react-hot-toast"
 
 export function ResetPasswordPage() {
+  usePageTitle("Set New Password")
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const emailParam = searchParams.get("email") ?? ""

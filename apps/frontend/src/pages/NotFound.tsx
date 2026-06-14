@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom"
 import { useEffect } from "react"
 import { IconArrowRight } from "@tabler/icons-react"
+import { usePageTitle } from "@/lib/usePageTitle"
 
 export function NotFoundPage() {
+  usePageTitle("Page Not Found")
   useEffect(() => {
     document.documentElement.classList.add("landing-active")
     return () => document.documentElement.classList.remove("landing-active")

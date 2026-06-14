@@ -1,8 +1,10 @@
 import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
 import { StaticPageHero } from "@/components/static/StaticPageHero"
 import { ComingSoonBlock } from "@/components/static/ComingSoonBlock"
+import { usePageTitle } from "@/lib/usePageTitle"
 
 export function PricingPage() {
+  usePageTitle("Pricing")
   return (
     <StaticPageLayout>
       <StaticPageHero

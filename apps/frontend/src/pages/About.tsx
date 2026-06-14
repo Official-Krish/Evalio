@@ -1,6 +1,7 @@
 import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
 import { StaticPageHero } from "@/components/static/StaticPageHero"
 import { RevealSection } from "@/components/motion/RevealSection"
+import { usePageTitle } from "@/lib/usePageTitle"
 
 const values = [
   {
@@ -25,6 +26,7 @@ const facts = [
 ]
 
 export function AboutPage() {
+  usePageTitle("About")
   return (
     <StaticPageLayout>
       <StaticPageHero

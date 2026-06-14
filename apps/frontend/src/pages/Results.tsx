@@ -6,9 +6,11 @@ import { ScoreSection } from "../components/Result/ScoreSection"
 import { ResumeAnalysis } from "../components/Result/ResumeAnalysis"
 import { SummarySection } from "../components/Result/SummarySection"
 import { QASection } from "../components/Result/QASection"
+import { usePageTitle } from "@/lib/usePageTitle"
 import type { EvaluationStatus, InterviewSession } from "@evalio/shared"
 
 export function ResultsPage() {
+  usePageTitle("Results")
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 

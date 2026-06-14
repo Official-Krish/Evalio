@@ -3,6 +3,7 @@ import { StaticPageHero } from "@/components/static/StaticPageHero"
 import { FAQ } from "@/components/landing/FAQ"
 import { RevealSection } from "@/components/motion/RevealSection"
 import { Link } from "react-router-dom"
+import { usePageTitle } from "@/lib/usePageTitle"
 
 const items = [
   {
@@ -40,6 +41,7 @@ const items = [
 ]
 
 export function FAQPage() {
+  usePageTitle("FAQ")
   return (
     <StaticPageLayout>
       <StaticPageHero

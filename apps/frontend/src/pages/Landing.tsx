@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { Ambient } from "@/components/landing/Ambient"
 import { CursorPresence } from "@/components/landing/CursorPresence"
 import { AppBar } from "@/components/layout/AppBar"
@@ -13,6 +14,7 @@ import { Threshold } from "@/components/landing/Threshold"
 import { Footer } from "@/components/Footer"
 
 export function LandingPage() {
+  usePageTitle("AI-Powered Interview Practice")
   useEffect(() => {
     document.documentElement.classList.add("landing-active")
     return () => {

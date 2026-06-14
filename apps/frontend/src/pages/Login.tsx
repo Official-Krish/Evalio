@@ -6,9 +6,11 @@ import { motion } from "motion/react"
 import { loginSchema, type LoginInput } from "@evalio/shared"
 import { useLogin } from "../lib/auth"
 import { AuthLayout } from "@/components/static/AuthLayout"
+import { usePageTitle } from "@/lib/usePageTitle"
 import toast from "react-hot-toast"
 
 export function LoginPage() {
+  usePageTitle("Sign In")
   const navigate = useNavigate()
   const loginMutation = useLogin()
   const [showPassword, setShowPassword] = useState(false)

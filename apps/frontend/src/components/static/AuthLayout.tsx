@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { Ambient } from "@/components/landing/Ambient"
-import { OrbitalMark } from "@/components/landing/svg/OrbitalMark"
+import { EvalioMark } from "@/components/landing/svg/EvalioMark"
 import { ConfidenceOrb } from "@/components/landing/svg/ConfidenceOrb"
 import { AuthAside } from "./AuthAside"
 
@@ -21,7 +21,7 @@ export function AuthLayout({ children, variant }: AuthLayoutProps) {
       <Ambient />
       <header className="landing-container flex items-center justify-between h-[72px] shrink-0">
         <Link to="/" className="flex items-center gap-2.5 text-[var(--landing-fg-muted)] hover:text-[var(--landing-fg)] transition-colors">
-          <OrbitalMark size={22} />
+          <EvalioMark size={22} />
           <span className="text-[11px] tracking-[0.14em] uppercase">Evalio</span>
         </Link>
         <Link to="/" className="text-[13px] text-[var(--landing-fg-faint)] hover:text-[var(--landing-fg-muted)] transition-colors">

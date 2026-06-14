@@ -11,6 +11,7 @@ import { StyleDepthPicker } from "../components/Create-Interview/StyleDepthPicke
 import { ResumeSection } from "../components/Create-Interview/ResumeSection"
 import { SessionCard } from "../components/Create-Interview/SessionCard"
 import { COMPANIES, getDefaultStyleDepth } from "@evalio/shared"
+import { usePageTitle } from "@/lib/usePageTitle"
 import type { Resume, InterviewSession, InterviewStyle, InterviewDepth } from "@evalio/shared"
 import toast from "react-hot-toast"
 
@@ -21,6 +22,7 @@ const stepVariants = {
 }
 
 export function NewInterviewPage() {
+  usePageTitle("New Interview")
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
 

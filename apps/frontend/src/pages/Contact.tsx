@@ -3,6 +3,7 @@ import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
 import { StaticPageHero } from "@/components/static/StaticPageHero"
 import { RevealSection } from "@/components/motion/RevealSection"
 import { client } from "@/lib/eden"
+import { usePageTitle } from "@/lib/usePageTitle"
 
 const SUBJECTS = [
   { value: "General inquiry", label: "General inquiry" },
@@ -14,6 +15,7 @@ const SUBJECTS = [
 ] as const
 
 export function ContactPage() {
+  usePageTitle("Contact")
   const presetSubject = useMemo(() => {
     const q = new URLSearchParams(window.location.search)
     return q.get("subject")

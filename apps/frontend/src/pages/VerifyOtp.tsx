@@ -3,10 +3,12 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom"
 import { motion } from "motion/react"
 import { useVerifyOtp, useResendOtp } from "../lib/auth"
 import { useResendTimer } from "../lib/useResendTimer"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { AuthLayout } from "@/components/static/AuthLayout"
 import toast from "react-hot-toast"
 
 export function VerifyOtpPage() {
+  usePageTitle("Verify Email")
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const emailParam = searchParams.get("email") ?? ""

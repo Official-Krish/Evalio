@@ -18,7 +18,7 @@ function buildOtpEmail(otp: string): string {
           <tr>
             <td style="padding:40px 36px 20px" align="center">
               <div style="width:44px;height:44px;background:linear-gradient(135deg,#a78bfa,#6366f1);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:24px">
-                <span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">IL</span>
+                <span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">EV</span>
               </div>
               <h1 style="color:#f1f5f9;font-size:22px;font-weight:600;margin:0 0 8px;letter-spacing:-0.3px">Verify your email</h1>
               <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin:0 0 28px">Use the code below to complete your signup for <strong style="color:#e2e8f0">Evalio</strong>. This code expires in 10 minutes.</p>
@@ -60,7 +60,7 @@ function buildResetOtpEmail(otp: string): string {
           <tr>
             <td style="padding:40px 36px 20px" align="center">
               <div style="width:44px;height:44px;background:linear-gradient(135deg,#a78bfa,#6366f1);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:24px">
-                <span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">IL</span>
+                <span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">EV</span>
               </div>
               <h1 style="color:#f1f5f9;font-size:22px;font-weight:600;margin:0 0 8px;letter-spacing:-0.3px">Reset your password</h1>
               <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin:0 0 28px">Use the code below to reset your password for <strong style="color:#e2e8f0">Evalio</strong>. This code expires in 10 minutes. If you didn't request this, ignore this email.</p>
@@ -102,7 +102,7 @@ function buildWelcomeEmail(name: string): string {
           <tr>
             <td style="padding:40px 36px 20px" align="center">
               <div style="width:44px;height:44px;background:linear-gradient(135deg,#a78bfa,#6366f1);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:24px">
-                <span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">IL</span>
+                <span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">EV</span>
               </div>
               <h1 style="color:#f1f5f9;font-size:22px;font-weight:600;margin:0 0 8px;letter-spacing:-0.3px">Welcome, ${name}!</h1>
               <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin:0 0 8px">Your email has been verified successfully.</p>
@@ -144,7 +144,7 @@ function buildContactEmail(name: string, senderEmail: string, subject: string, m
           <tr>
             <td style="padding:40px 36px 20px">
               <div style="width:44px;height:44px;background:linear-gradient(135deg,#a78bfa,#6366f1);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:24px">
-                <span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">IL</span>
+                <span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">EV</span>
               </div>
               <h1 style="color:#f1f5f9;font-size:22px;font-weight:600;margin:0 0 4px;letter-spacing:-0.3px">${subject}</h1>
               <p style="color:#94a3b8;font-size:13px;margin:0 0 24px">From: <strong style="color:#e2e8f0">${name}</strong> &lt;${senderEmail}&gt;</p>

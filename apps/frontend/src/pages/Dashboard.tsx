@@ -25,9 +25,11 @@ import {
   computeMilestones,
   computeRoleRecommendations,
 } from "../components/Dashboard/helpers"
+import { usePageTitle } from "@/lib/usePageTitle"
 import type { InterviewSession } from "@evalio/shared"
 
 export function DashboardPage() {
+  usePageTitle("Dashboard")
   const { data: session } = useSession()
   const user = session?.user
   const [showUpload, setShowUpload] = useState(false)

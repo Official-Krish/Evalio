@@ -3,10 +3,12 @@ import { Link, useNavigate } from "react-router-dom"
 import { motion } from "motion/react"
 import { useForgotPassword } from "../lib/auth"
 import { useResendTimer } from "../lib/useResendTimer"
+import { usePageTitle } from "@/lib/usePageTitle"
 import { AuthLayout } from "@/components/static/AuthLayout"
 import toast from "react-hot-toast"
 
 export function ForgotPasswordPage() {
+  usePageTitle("Reset Password")
   const navigate = useNavigate()
   const forgotMutation = useForgotPassword()
   const { cooldown, canResend, startCooldown } = useResendTimer()
