@@ -806,7 +806,7 @@ export const companies: CompanyConfig[] = [
   },
   {
     id: "deloitte-usi",
-    name: "Deloitte USI",
+    name: "Deloitte",
     description: "Consulting rigor. Client delivery. Structured methodology.",
     culture: [
       "Consulting rigor — structured problem-solving",

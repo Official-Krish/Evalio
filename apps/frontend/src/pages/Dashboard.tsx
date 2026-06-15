@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "motion/react";
 import { api } from "../lib/api";
 import { useSession } from "../lib/auth";
 import { ResumePreview } from "../components/ResumePreview";
@@ -157,55 +158,69 @@ export function DashboardPage() {
             )}
 
             {completed.length > 0 && (
-              <Link
-                to="/feedback"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "14px 18px",
-                  borderRadius: "10px",
-                  border: "1px solid var(--color-border)",
-                  background: "var(--color-bg-elevated)",
-                  textDecoration: "none",
-                  transition: "all 0.15s",
-                }}
-              >
-                <span style={{ fontSize: "20px" }}>💬</span>
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      color: "var(--color-text)",
-                      margin: 0,
-                    }}
-                  >
-                    Share your thoughts
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "11px",
-                      color: "var(--color-text-muted)",
-                      margin: "2px 0 0",
-                    }}
-                  >
-                    Help us improve Evalio with your feedback
-                  </p>
-                </div>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  stroke="var(--color-text-muted)"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+              <motion.div whileHover={{ x: 2 }} transition={{ duration: 0.15 }}>
+                <Link
+                  to="/feedback"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "14px 18px",
+                    borderRadius: "10px",
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-bg-elevated)",
+                    textDecoration: "none",
+                    transition: "border-color 0.15s, background 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor =
+                      "var(--app-accent-border, rgba(184,168,138,0.3))";
+                    e.currentTarget.style.background =
+                      "var(--app-accent-bg, rgba(184,168,138,0.04))";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--color-border)";
+                    e.currentTarget.style.background =
+                      "var(--color-bg-elevated)";
+                  }}
                 >
-                  <path d="M5 3l4 4-4 4" />
-                </svg>
-              </Link>
+                  <span style={{ fontSize: "18px" }}>💬</span>
+                  <div style={{ flex: 1 }}>
+                    <p
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: 500,
+                        color: "var(--color-text)",
+                        margin: 0,
+                        letterSpacing: "-0.01em",
+                      }}
+                    >
+                      Share your thoughts
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        color: "var(--color-text-muted)",
+                        margin: "2px 0 0",
+                      }}
+                    >
+                      Help us improve Evalio with your feedback
+                    </p>
+                  </div>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    stroke="var(--color-text-muted)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M5 3l4 4-4 4" />
+                  </svg>
+                </Link>
+              </motion.div>
             )}
           </div>
 

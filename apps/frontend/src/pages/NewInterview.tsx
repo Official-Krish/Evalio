@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
@@ -26,6 +26,33 @@ const stepVariants = {
   enter: { opacity: 0, x: 20 },
   center: { opacity: 1, x: 0 },
   exit: { opacity: 0, x: -20 },
+};
+
+// Reusable button styles
+const btnNext = (enabled: boolean): React.CSSProperties => ({
+  padding: "10px 24px",
+  borderRadius: "8px",
+  border: "none",
+  background: enabled ? "var(--landing-fg, #eceae6)" : "var(--color-border)",
+  color: enabled ? "var(--landing-bg, #080808)" : "var(--color-text-muted)",
+  fontSize: "13px",
+  fontWeight: 500,
+  cursor: enabled ? "pointer" : "default",
+  transition: "all 0.18s ease",
+  letterSpacing: "-0.01em",
+  opacity: enabled ? 1 : 0.55,
+});
+
+const btnBack: React.CSSProperties = {
+  padding: "10px 24px",
+  borderRadius: "8px",
+  border: "1px solid var(--color-border)",
+  background: "transparent",
+  color: "var(--color-text-muted)",
+  fontSize: "13px",
+  fontWeight: 400,
+  cursor: "pointer",
+  transition: "all 0.15s",
 };
 
 export function NewInterviewPage() {
@@ -158,12 +185,33 @@ export function NewInterviewPage() {
             ? ` Your next slot opens in ${daysUntilSlot} day${daysUntilSlot === 1 ? "" : "s"}.`
             : "";
         toast(
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "4px 0" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              padding: "4px 0",
+            }}
+          >
             <div>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--color-text)",
+                }}
+              >
                 Free tier limit reached
               </p>
-              <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--color-text-muted)", lineHeight: 1.4 }}>
+              <p
+                style={{
+                  margin: "4px 0 0",
+                  fontSize: 12,
+                  color: "var(--color-text-muted)",
+                  lineHeight: 1.4,
+                }}
+              >
                 You've used all 3 free interviews this 7-day period.{dayMsg}
               </p>
             </div>
@@ -250,23 +298,42 @@ export function NewInterviewPage() {
             transition={{ duration: 0.15 }}
           >
             <div style={{ marginBottom: "28px" }}>
-              <h1
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 style={{
-                  fontSize: "24px",
-                  fontWeight: 600,
-                  letterSpacing: "-0.02em",
+                  fontSize: "11px",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--color-text-muted)",
+                  margin: "0 0 6px",
+                }}
+              >
+                Step 1 of 5
+              </motion.p>
+              <motion.h1
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  fontSize: "clamp(1.25rem, 3vw, 1.6rem)",
+                  fontWeight: 500,
+                  letterSpacing: "-0.025em",
                   color: "var(--color-text)",
                   lineHeight: 1.2,
                   margin: 0,
                 }}
               >
                 Select a company
-              </h1>
+              </motion.h1>
               {lastCompleted && !selectedCompanyId && (
-                <p
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.15 }}
                   style={{
                     fontSize: "13px",
-                    color: "var(--color-text-secondary)",
+                    color: "var(--color-text-muted)",
                     marginTop: "6px",
                     margin: "6px 0 0",
                   }}
@@ -275,7 +342,7 @@ export function NewInterviewPage() {
                   {lastCompleted.overallScore != null
                     ? ` · ${Math.round(lastCompleted.overallScore)}%`
                     : ""}
-                </p>
+                </motion.p>
               )}
             </div>
             <CompanyGrid
@@ -292,23 +359,14 @@ export function NewInterviewPage() {
                 marginTop: "24px",
               }}
             >
-              <button
+              <motion.button
                 onClick={() => setStep(selectedCompanyId ? 1 : 4)}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: "var(--landing-fg, #eceae6)",
-                  color: "var(--landing-bg, #080808)",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                  letterSpacing: "-0.01em",
-                }}
+                whileHover={{ opacity: 0.88 }}
+                whileTap={{ scale: 0.97 }}
+                style={btnNext(true)}
               >
-                {selectedCompanyId ? "Continue" : "Skip"} &rarr;
-              </button>
+                {selectedCompanyId ? "Continue" : "Skip"} →
+              </motion.button>
             </div>
           </motion.div>
         )}
@@ -323,11 +381,27 @@ export function NewInterviewPage() {
             transition={{ duration: 0.15 }}
           >
             <div style={{ marginBottom: "28px" }}>
-              <h1
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 style={{
-                  fontSize: "24px",
-                  fontWeight: 600,
-                  letterSpacing: "-0.02em",
+                  fontSize: "11px",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--color-text-muted)",
+                  margin: "0 0 6px",
+                }}
+              >
+                Step 2 of 5
+              </motion.p>
+              <motion.h1
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  fontSize: "clamp(1.25rem, 3vw, 1.6rem)",
+                  fontWeight: 500,
+                  letterSpacing: "-0.025em",
                   color: "var(--color-text)",
                   lineHeight: 1.2,
                   margin: 0,
@@ -336,18 +410,21 @@ export function NewInterviewPage() {
                 {selectedCompany
                   ? `Role at ${selectedCompany.name}`
                   : "Enter your role"}
-              </h1>
-              <p
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
                 style={{
                   fontSize: "13px",
-                  color: "var(--color-text-secondary)",
+                  color: "var(--color-text-muted)",
                   margin: "6px 0 0",
                 }}
               >
                 {selectedCompany
                   ? "Select the position you're applying for"
                   : "Type the role you're targeting"}
-              </p>
+              </motion.p>
             </div>
             <RolePicker
               companyId={selectedCompanyId}
@@ -363,45 +440,24 @@ export function NewInterviewPage() {
                 marginTop: "24px",
               }}
             >
-              <button
+              <motion.button
                 onClick={() => setStep(0)}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  background: "transparent",
-                  color: "var(--color-text-secondary)",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}
+                whileTap={{ scale: 0.97 }}
+                style={btnBack}
               >
-                &larr; Back
-              </button>
-              <button
+                ← Back
+              </motion.button>
+              <motion.button
                 onClick={() => {
                   if (effectivePosition) setStep(2);
                   else toast.error("Select a role first");
                 }}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: effectivePosition
-                    ? "var(--landing-fg, #eceae6)"
-                    : "var(--color-border)",
-                  color: effectivePosition
-                    ? "var(--landing-bg, #080808)"
-                    : "var(--color-text-muted)",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: effectivePosition ? "pointer" : "default",
-                  transition: "all 0.15s",
-                  letterSpacing: "-0.01em",
-                }}
+                whileHover={{ opacity: effectivePosition ? 0.88 : 1 }}
+                whileTap={{ scale: 0.97 }}
+                style={btnNext(!!effectivePosition)}
               >
-                Continue to Round &rarr;
-              </button>
+                Continue to Round →
+              </motion.button>
             </div>
           </motion.div>
         )}
@@ -416,29 +472,48 @@ export function NewInterviewPage() {
             transition={{ duration: 0.15 }}
           >
             <div style={{ marginBottom: "28px" }}>
-              <h1
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 style={{
-                  fontSize: "24px",
-                  fontWeight: 600,
-                  letterSpacing: "-0.02em",
+                  fontSize: "11px",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--color-text-muted)",
+                  margin: "0 0 6px",
+                }}
+              >
+                Step 3 of 5
+              </motion.p>
+              <motion.h1
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  fontSize: "clamp(1.25rem, 3vw, 1.6rem)",
+                  fontWeight: 500,
+                  letterSpacing: "-0.025em",
                   color: "var(--color-text)",
                   lineHeight: 1.2,
                   margin: 0,
                 }}
               >
                 Interview round
-              </h1>
-              <p
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
                 style={{
                   fontSize: "13px",
-                  color: "var(--color-text-secondary)",
+                  color: "var(--color-text-muted)",
                   margin: "6px 0 0",
                 }}
               >
                 {selectedCompany
                   ? `What stage at ${selectedCompany.name}?`
                   : "What type of interview round?"}
-              </p>
+              </motion.p>
             </div>
             <RoundPicker
               companyId={selectedCompanyId}
@@ -459,38 +534,21 @@ export function NewInterviewPage() {
                 marginTop: "24px",
               }}
             >
-              <button
+              <motion.button
                 onClick={() => setStep(1)}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  background: "transparent",
-                  color: "var(--color-text-secondary)",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}
+                whileTap={{ scale: 0.97 }}
+                style={btnBack}
               >
-                &larr; Back
-              </button>
-              <button
+                ← Back
+              </motion.button>
+              <motion.button
                 onClick={() => setStep(3)}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: "var(--landing-fg, #eceae6)",
-                  color: "var(--landing-bg, #080808)",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                  letterSpacing: "-0.01em",
-                }}
+                whileHover={{ opacity: 0.88 }}
+                whileTap={{ scale: 0.97 }}
+                style={btnNext(true)}
               >
-                Continue to Style &rarr;
-              </button>
+                Continue to Style →
+              </motion.button>
             </div>
           </motion.div>
         )}
@@ -505,27 +563,46 @@ export function NewInterviewPage() {
             transition={{ duration: 0.15 }}
           >
             <div style={{ marginBottom: "28px" }}>
-              <h1
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 style={{
-                  fontSize: "24px",
-                  fontWeight: 600,
-                  letterSpacing: "-0.02em",
+                  fontSize: "11px",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--color-text-muted)",
+                  margin: "0 0 6px",
+                }}
+              >
+                Step 4 of 5
+              </motion.p>
+              <motion.h1
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  fontSize: "clamp(1.25rem, 3vw, 1.6rem)",
+                  fontWeight: 500,
+                  letterSpacing: "-0.025em",
                   color: "var(--color-text)",
                   lineHeight: 1.2,
                   margin: 0,
                 }}
               >
                 Style & Depth
-              </h1>
-              <p
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
                 style={{
                   fontSize: "13px",
-                  color: "var(--color-text-secondary)",
+                  color: "var(--color-text-muted)",
                   margin: "6px 0 0",
                 }}
               >
                 Choose how the AI interviews you
-              </p>
+              </motion.p>
             </div>
             <StyleDepthPicker
               style={interviewStyle}
@@ -540,38 +617,21 @@ export function NewInterviewPage() {
                 marginTop: "24px",
               }}
             >
-              <button
+              <motion.button
                 onClick={() => setStep(2)}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  background: "transparent",
-                  color: "var(--color-text-secondary)",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}
+                whileTap={{ scale: 0.97 }}
+                style={btnBack}
               >
-                &larr; Back
-              </button>
-              <button
+                ← Back
+              </motion.button>
+              <motion.button
                 onClick={() => setStep(4)}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: "var(--landing-fg, #eceae6)",
-                  color: "var(--landing-bg, #080808)",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                  letterSpacing: "-0.01em",
-                }}
+                whileHover={{ opacity: 0.88 }}
+                whileTap={{ scale: 0.97 }}
+                style={btnNext(true)}
               >
-                Continue to Resume &rarr;
-              </button>
+                Continue to Resume →
+              </motion.button>
             </div>
           </motion.div>
         )}
@@ -648,38 +708,35 @@ export function NewInterviewPage() {
                 marginBottom: "32px",
               }}
             >
-              <button
+              <motion.button
                 onClick={() => setStep(3)}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  background: "transparent",
-                  color: "var(--color-text-secondary)",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}
+                whileTap={{ scale: 0.97 }}
+                style={btnBack}
               >
-                &larr; Back
-              </button>
+                ← Back
+              </motion.button>
             </div>
 
             {selectedCompany && selectedRole && (
-              <div
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
                 style={{
                   marginBottom: "20px",
-                  padding: "16px 20px",
-                  borderRadius: "12px",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  padding: "14px 18px",
+                  borderRadius: "10px",
+                  border: "1px solid var(--color-border)",
+                  background: "var(--color-bg-card)",
                 }}
               >
                 <p
                   style={{
                     fontSize: "13px",
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: "var(--color-text)",
                     margin: 0,
+                    letterSpacing: "-0.01em",
                   }}
                 >
                   {selectedCompany.name} — {selectedRole.title}
@@ -708,7 +765,7 @@ export function NewInterviewPage() {
                         : "Bar Raiser"}{" "}
                   · ~{selectedRole.duration}min
                 </p>
-              </div>
+              </motion.div>
             )}
 
             <SessionCard

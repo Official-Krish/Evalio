@@ -1,19 +1,22 @@
-import { IconBuilding, IconAward, IconAlertCircle } from "@tabler/icons-react"
+import { IconBuilding, IconAward, IconAlertCircle } from "@tabler/icons-react";
 
 interface RemembersData {
-  strongest: string | null
-  weakest: string | null
-  mostImproved: string | null
-  impactNote: string
+  strongest: string | null;
+  weakest: string | null;
+  mostImproved: string | null;
+  impactNote: string;
 }
 
 interface InterviewerRemembersProps {
-  data: RemembersData
-  totalSessions: number
+  data: RemembersData;
+  totalSessions: number;
 }
 
-export function InterviewerRemembers({ data, totalSessions }: InterviewerRemembersProps) {
-  if (totalSessions === 0) return null
+export function InterviewerRemembers({
+  data,
+  totalSessions,
+}: InterviewerRemembersProps) {
+  if (totalSessions === 0) return null;
 
   const chips = [
     {
@@ -27,8 +30,8 @@ export function InterviewerRemembers({ data, totalSessions }: InterviewerRemembe
           {
             icon: <IconAward size={14} />,
             text: `Strongest topic: ${data.strongest}`,
-            color: "#7C3AED",
-            borderColor: "rgba(124,58,237,0.3)",
+            color: "var(--app-accent, #b8a88a)",
+            borderColor: "var(--app-accent-border, rgba(184,168,138,0.3))",
           },
         ]
       : []),
@@ -52,14 +55,14 @@ export function InterviewerRemembers({ data, totalSessions }: InterviewerRemembe
           },
         ]
       : []),
-  ]
+  ];
 
   return (
     <div
       style={{
         background: "var(--color-bg-card)",
         border: "1px solid var(--color-border)",
-        borderLeft: "2px solid rgba(124,58,237,0.3)",
+        borderLeft: "2px solid var(--app-accent-border, rgba(184,168,138,0.3))",
         borderRadius: "12px",
         padding: "20px 24px",
       }}
@@ -76,7 +79,13 @@ export function InterviewerRemembers({ data, totalSessions }: InterviewerRemembe
         YOUR INTERVIEWER REMEMBERS
       </p>
 
-      <p style={{ fontSize: "13px", color: "var(--color-text-muted)", marginBottom: "12px" }}>
+      <p
+        style={{
+          fontSize: "13px",
+          color: "var(--color-text-muted)",
+          marginBottom: "12px",
+        }}
+      >
         Across {totalSessions} session{totalSessions !== 1 ? "s" : ""}:
       </p>
 
@@ -94,11 +103,15 @@ export function InterviewerRemembers({ data, totalSessions }: InterviewerRemembe
               borderLeft: `3px solid ${chip.color}`,
             }}
           >
-            <span style={{ color: chip.color, display: "flex", flexShrink: 0 }}>{chip.icon}</span>
-            <span style={{ fontSize: "13px", color: "var(--color-text)" }}>{chip.text}</span>
+            <span style={{ color: chip.color, display: "flex", flexShrink: 0 }}>
+              {chip.icon}
+            </span>
+            <span style={{ fontSize: "13px", color: "var(--color-text)" }}>
+              {chip.text}
+            </span>
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }

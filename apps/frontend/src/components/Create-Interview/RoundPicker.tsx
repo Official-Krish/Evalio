@@ -122,9 +122,11 @@ export function RoundPicker({
                   padding: "18px 20px",
                   borderRadius: "12px",
                   border: active
-                    ? "1.5px solid var(--color-accent, #6366f1)"
+                    ? "1.5px solid var(--app-accent, #b8a88a)"
                     : "1px solid var(--color-border-light)",
-                  background: active ? "rgba(99,102,241,0.06)" : "transparent",
+                  background: active
+                    ? "var(--app-accent-bg, rgba(184,168,138,0.06))"
+                    : "transparent",
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                 }}
@@ -164,10 +166,10 @@ export function RoundPicker({
                 padding: "18px 20px",
                 borderRadius: "12px",
                 border: showingOther
-                  ? "1.5px solid var(--color-accent, #6366f1)"
+                  ? "1.5px solid var(--app-accent, #b8a88a)"
                   : "1px dashed var(--color-border)",
                 background: showingOther
-                  ? "rgba(99,102,241,0.06)"
+                  ? "var(--app-accent-bg, rgba(184,168,138,0.06))"
                   : "transparent",
                 cursor: "pointer",
                 transition: "all 0.2s ease",

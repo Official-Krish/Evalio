@@ -127,14 +127,18 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
                 borderRadius: "8px",
                 border: "1px solid var(--color-border)",
                 background: monthFilter
-                  ? "rgba(124,58,237,0.1)"
+                  ? "var(--app-accent-bg, rgba(184,168,138,0.1))"
                   : "var(--color-bg-hover)",
-                color: monthFilter ? "#A78BFA" : "var(--color-text-muted)",
+                color: monthFilter
+                  ? "var(--app-accent, #b8a88a)"
+                  : "var(--color-text-muted)",
                 cursor: "pointer",
                 transition: "all 0.15s",
               }}
               onMouseEnter={(e) => {
-                if (!monthFilter) e.currentTarget.style.borderColor = "#7C3AED";
+                if (!monthFilter)
+                  e.currentTarget.style.borderColor =
+                    "var(--app-accent, #b8a88a)";
               }}
               onMouseLeave={(e) => {
                 if (!monthFilter)
@@ -185,7 +189,7 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
                     week: "mt-0.5 flex w-full",
                     day: "flex-1 aspect-square p-0 text-center text-[11px] text-[var(--color-text-muted)]",
                     day_button:
-                      "size-full rounded-sm hover:bg-[var(--color-bg-hover)] data-[selected=true]:!bg-[#7C3AED] data-[selected=true]:!text-white",
+                      "size-full rounded-sm hover:bg-[var(--color-bg-hover)] data-[selected=true]:!bg-[var(--app-accent)] data-[selected=true]:!text-[#080808]",
                     outside: "opacity-0",
                     disabled: "opacity-0",
                     hidden: "hidden",
@@ -243,7 +247,9 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
                 outline: "none",
                 width: "160px",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "#7C3AED")}
+              onFocus={(e) =>
+                (e.target.style.borderColor = "var(--app-accent, #b8a88a)")
+              }
               onBlur={(e) =>
                 (e.target.style.borderColor = "var(--color-border)")
               }
@@ -425,7 +431,7 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
                 border: "none",
                 borderBottom:
                   n === safePage
-                    ? "2px solid #7C3AED"
+                    ? "2px solid var(--app-accent, #b8a88a)"
                     : "2px solid transparent",
                 background: "transparent",
                 color:

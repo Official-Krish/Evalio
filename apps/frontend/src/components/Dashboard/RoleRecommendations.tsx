@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 
 interface RoleRec {
   role: string;
@@ -64,85 +65,99 @@ export function RoleRecommendations({
         {recommendations.map((rec, i) => {
           const diff = difficultyMap[rec.role] ?? "Medium";
           return (
-            <Link
+            <motion.div
               key={i}
-              to="/interview/new"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                padding: "14px 16px",
-                borderRadius: "10px",
-                background: "var(--color-bg-card)",
-                border: "1px solid var(--color-border)",
-                textDecoration: "none",
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(124,58,237,0.25)";
-                e.currentTarget.style.background = "rgba(124,58,237,0.04)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-border)";
-                e.currentTarget.style.background = "var(--color-bg-card)";
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.25,
+                delay: i * 0.06,
+                ease: [0.22, 1, 0.36, 1],
               }}
             >
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    marginBottom: "2px",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "15px",
-                      fontWeight: 500,
-                      color: "var(--color-text)",
-                    }}
-                  >
-                    {rec.role}
-                  </span>
-                  <DifficultyBadge level={diff} />
-                </div>
-                <p
-                  style={{
-                    fontSize: "12px",
-                    color: "var(--color-text-muted)",
-                    margin: 0,
-                  }}
-                >
-                  {rec.reason}
-                </p>
-              </div>
-              <div
+              <Link
+                to="/interview/new"
                 style={{
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "50%",
-                  background: "rgba(124,58,237,0.15)",
-                  color: "#A78BFA",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "14px",
-                  flexShrink: 0,
-                  transition: "all 0.15s",
+                  gap: "12px",
+                  padding: "14px 16px",
+                  borderRadius: "10px",
+                  background: "var(--color-bg-card)",
+                  border: "1px solid var(--color-border)",
+                  textDecoration: "none",
+                  transition: "all 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#7C3AED";
-                  e.currentTarget.style.color = "#fff";
+                  e.currentTarget.style.borderColor =
+                    "var(--app-accent-border, rgba(184,168,138,0.3))";
+                  e.currentTarget.style.background =
+                    "var(--app-accent-bg, rgba(184,168,138,0.04))";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(124,58,237,0.15)";
-                  e.currentTarget.style.color = "#A78BFA";
+                  e.currentTarget.style.borderColor = "var(--color-border)";
+                  e.currentTarget.style.background = "var(--color-bg-card)";
                 }}
               >
-                &rarr;
-              </div>
-            </Link>
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: 500,
+                        color: "var(--color-text)",
+                      }}
+                    >
+                      {rec.role}
+                    </span>
+                    <DifficultyBadge level={diff} />
+                  </div>
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--color-text-muted)",
+                      margin: 0,
+                    }}
+                  >
+                    {rec.reason}
+                  </p>
+                </div>
+                <div
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    borderRadius: "50%",
+                    background: "var(--app-accent-bg, rgba(184,168,138,0.1))",
+                    color: "var(--app-accent, #b8a88a)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "14px",
+                    flexShrink: 0,
+                    transition: "all 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background =
+                      "var(--app-accent, #b8a88a)";
+                    e.currentTarget.style.color = "#080808";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background =
+                      "var(--app-accent-bg, rgba(184,168,138,0.1))";
+                    e.currentTarget.style.color = "var(--app-accent, #b8a88a)";
+                  }}
+                >
+                  &rarr;
+                </div>
+              </Link>
+            </motion.div>
           );
         })}
       </div>

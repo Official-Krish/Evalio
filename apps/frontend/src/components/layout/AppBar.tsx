@@ -66,6 +66,10 @@ export function AppBar() {
   const { data: session } = useSession();
   const logoutMutation = useLogout();
   const user = session?.user ?? null;
+  const isAdmin = user?.role === "ADMIN";
+  const visibleNavItems = isAdmin
+    ? navItems.filter((item) => item.label !== "Pro")
+    : navItems;
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -98,7 +102,7 @@ export function AppBar() {
             {user && (
               <>
                 <nav className="hidden sm:flex items-center gap-1">
-                  {navItems.map((item) => {
+                  {visibleNavItems.map((item) => {
                     const active =
                       location.pathname === item.path.split("?")[0];
                     return (
@@ -205,12 +209,16 @@ export function AppBar() {
                     </p>
                   </div>
                   {[
-                    ...navItems,
-                    {
-                      path: "/pricing",
-                      label: "Pricing",
-                      icon: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z M12 6v12 M9 9h4a2 2 0 0 1 0 4H9",
-                    },
+                    ...visibleNavItems,
+                    ...(isAdmin
+                      ? []
+                      : [
+                          {
+                            path: "/pricing",
+                            label: "Pricing",
+                            icon: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z M12 6v12 M9 9h4a2 2 0 0 1 0 4H9",
+                          },
+                        ]),
                   ].map((item) => {
                     const active =
                       location.pathname === item.path.split("?")[0];

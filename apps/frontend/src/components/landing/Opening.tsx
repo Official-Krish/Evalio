@@ -14,7 +14,7 @@ export function Opening() {
   const user = session?.user ?? null;
   return (
     <section className="landing-hero relative flex flex-col justify-center overflow-hidden border-b">
-      <div className="landing-hero-grid py-8 lg:mt-18 md:mt-26 sm:mt-14">
+      <div className="landing-hero-grid py-8 lg:mt-26 md:mt-46 sm:mt-34 max-sm:mt-[72px]">
         {/* Copy — 65% */}
         <div className="relative z-10 landing-hero-copy">
           {/* Early Access Badge */}
@@ -80,7 +80,7 @@ export function Opening() {
               to={user ? "/dashboard" : "/signup"}
               className="landing-cta-primary landing-cta-sharp"
             >
-              {user ? "Go to dashboard" : "Request early access"}
+              {user ? "Go to dashboard" : "Start Interviewing"}
               <svg
                 width="14"
                 height="14"

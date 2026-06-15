@@ -55,8 +55,8 @@ export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
                   fontSize: "10px",
                   padding: "2px 8px",
                   borderRadius: "4px",
-                  background: "rgba(99,102,241,0.1)",
-                  color: "#818CF8",
+                  background: "var(--app-accent-bg, rgba(184,168,138,0.1))",
+                  color: "var(--app-accent, #b8a88a)",
                   fontFamily: "monospace",
                 }}
               >
