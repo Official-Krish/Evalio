@@ -21,6 +21,8 @@ import { PricingPage } from "./pages/Pricing"
 import { AboutPage } from "./pages/About"
 import { FAQPage } from "./pages/FAQ"
 import { ContactPage } from "./pages/Contact"
+import { FeedbackPage } from "./pages/Feedback"
+import { AdminFeedbackPage } from "./pages/AdminFeedback"
 import { BlogPage } from "./pages/Blog"
 import { BlogPostPage } from "./pages/BlogPost"
 import { CareersPage } from "./pages/Careers"
@@ -43,6 +45,8 @@ const router = createBrowserRouter([
   { path: "/about", element: <AboutPage /> },
   { path: "/faq", element: <FAQPage /> },
   { path: "/contact", element: <ContactPage /> },
+  { path: "/feedback", element: <AuthGuard><FeedbackPage /></AuthGuard> },
+  { path: "/admin/feedback", element: <AuthGuard><AdminFeedbackPage /></AuthGuard> },
   { path: "/blog", element: <BlogPage /> },
   { path: "/blog/:slug", element: <BlogPostPage /> },
   { path: "/careers", element: <CareersPage /> },

@@ -31,6 +31,10 @@ export class InterviewSocket {
             resolve();
             return;
           }
+          if (data.type === "queued") {
+            this.emit("queued", data);
+            return;
+          }
           if (data.error) {
             this.emit("error", data);
             reject(new Error(data.error));
@@ -43,6 +47,8 @@ export class InterviewSocket {
             "time_limit",
             "time_warning",
             "time_limit_reached",
+            "position_update",
+            "slot_assigned",
           ];
           if (
             typeof data.type === "string" &&

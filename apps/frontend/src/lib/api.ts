@@ -165,4 +165,32 @@ export const api = {
       };
     };
   },
+
+  submitFeedback: async (input: {
+    subject: string;
+    rating: number;
+    category: string;
+    message: string;
+  }) => {
+    const { data, error } = await client.api.feedback.submit.post(input);
+    if (error) throw new Error(errorMessage(error.value));
+    return data as { feedback: { id: string } };
+  },
+
+  listFeedbacks: async () => {
+    const { data, error } = await client.api.feedback.get();
+    if (error) throw new Error(errorMessage(error.value));
+    return data as {
+      feedbacks: {
+        id: string;
+        userId: string;
+        subject: string;
+        rating: number;
+        category: string;
+        message: string;
+        createdAt: string;
+        user: { name: string | null; email: string };
+      }[];
+    };
+  },
 };

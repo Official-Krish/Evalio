@@ -11,6 +11,7 @@ import { evaluateRoutes } from "./routes/evaluate";
 import { companyRoutes } from "./routes/company";
 import { profileRoutes } from "./routes/profile";
 import { contactRoutes } from "./routes/contact";
+import { feedbackRoutes } from "./routes/feedback";
 import { globalRateLimit } from "./middleware/rateLimit";
 
 export const app = new Elysia()
@@ -40,5 +41,6 @@ export const app = new Elysia()
       .use(evaluateRoutes)
       .use(companyRoutes)
       .use(profileRoutes)
-      .use(contactRoutes),
+      .use(contactRoutes)
+      .use(feedbackRoutes),
   );

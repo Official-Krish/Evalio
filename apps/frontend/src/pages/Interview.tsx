@@ -12,9 +12,10 @@ import { SessionControls } from "@/components/interview/SessionControls";
 import { SessionHeader } from "@/components/interview/SessionHeader";
 import { LiveCaption } from "@/components/interview/LiveCaption";
 import { InterviewConnecting } from "@/components/interview/InterviewConnecting";
+import { InterviewQueue } from "@/components/interview/InterviewQueue";
 import toast from "react-hot-toast";
 
-type Phase = "connecting" | "ready" | "ai_speaking" | "user_speaking" | "ended";
+type Phase = "connecting" | "queued" | "ready" | "ai_speaking" | "user_speaking" | "ended";
 
 export function InterviewPage() {
   const { id } = useParams<{ id: string }>();
@@ -58,14 +59,16 @@ export function InterviewPage() {
   const [messages, setMessages] = useState<
     Array<{ role: "user" | "assistant"; text: string; id: string }>
   >([]);
+  const [queuedPosition, setQueuedPosition] = useState<number | null>(null);
 
   const phase = useMemo((): Phase => {
     if (feedbackReady) return "ended";
+    if (isConnecting && queuedPosition !== null) return "queued";
     if (isConnecting) return "connecting";
     if (aiPlaying || aiTurnActive) return "ai_speaking";
     if (micActive) return "user_speaking";
     return "ready";
-  }, [feedbackReady, isConnecting, aiPlaying, aiTurnActive, micActive]);
+  }, [feedbackReady, isConnecting, queuedPosition, aiPlaying, aiTurnActive, micActive]);
 
   const remainingMs = useMemo(() => {
     if (!timeLimit) return null;
@@ -121,8 +124,25 @@ export function InterviewPage() {
 
     socket.on("ready", () => {
       if (endedRef.current) return;
+      setQueuedPosition(null);
       setIsConnecting(false);
       setAiTurnActive(true);
+    });
+
+    socket.on("queued", (data: unknown) => {
+      if (endedRef.current) return;
+      const msg = data as Record<string, unknown>;
+      if (typeof msg.position === "number") {
+        setQueuedPosition(msg.position);
+      }
+    });
+
+    socket.on("position_update", (data: unknown) => {
+      if (endedRef.current) return;
+      const msg = data as Record<string, unknown>;
+      if (typeof msg.position === "number") {
+        setQueuedPosition(msg.position);
+      }
     });
 
     socket.on("transcript:assistant", () => {
@@ -287,7 +307,7 @@ export function InterviewPage() {
   }, [connectSocket]);
 
   useEffect(() => {
-    if (phase === "ended" || phase === "connecting") return;
+    if (phase === "ended" || phase === "connecting" || phase === "queued") return;
     const interval = setInterval(() => setDuration((d) => d + 1), 1000);
     return () => clearInterval(interval);
   }, [phase]);
@@ -366,8 +386,22 @@ export function InterviewPage() {
     );
   }
 
+  const handleLeaveQueue = useCallback(() => {
+    teardown();
+    navigate("/dashboard");
+  }, [teardown, navigate]);
+
   if (phase === "connecting") {
     return <InterviewConnecting />;
+  }
+
+  if (phase === "queued") {
+    return (
+      <InterviewQueue
+        position={queuedPosition ?? 1}
+        onLeave={handleLeaveQueue}
+      />
+    );
   }
 
   return (

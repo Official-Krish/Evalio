@@ -20,6 +20,7 @@ import type {
   InterviewDepth,
 } from "@evalio/shared";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 const stepVariants = {
   enter: { opacity: 0, x: 20 },
@@ -156,11 +157,45 @@ export function NewInterviewPage() {
           daysUntilSlot != null && daysUntilSlot > 0
             ? ` Your next slot opens in ${daysUntilSlot} day${daysUntilSlot === 1 ? "" : "s"}.`
             : "";
-        toast.error(`You've used all 3 free interviews this week.${dayMsg}`, {
-          duration: 6000,
-        });
+        toast(
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "4px 0" }}>
+            <div>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>
+                Free tier limit reached
+              </p>
+              <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--color-text-muted)", lineHeight: 1.4 }}>
+                You've used all 3 free interviews this 7-day period.{dayMsg}
+              </p>
+            </div>
+            <Link
+              to="/contact?subject=Pro+upgrade"
+              onClick={() => toast.dismiss()}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "8px 16px",
+                borderRadius: 6,
+                background: "var(--landing-accent, #b8a88a)",
+                color: "#080808",
+                fontSize: 12,
+                fontWeight: 600,
+                textDecoration: "none",
+                transition: "opacity 0.15s",
+                alignSelf: "flex-start",
+              }}
+            >
+              Contact for upgrade
+            </Link>
+          </div>,
+          { duration: 10_000 },
+        );
       } else {
-        toast.error(msg || "Failed to create interview");
+        const cleanMsg = msg
+          .replace(/^Error:\s*/i, "")
+          .replace(/^\[.*?\]\s*/, "")
+          .trim();
+        toast.error(cleanMsg || "Something went wrong. Please try again.");
       }
     },
   });
