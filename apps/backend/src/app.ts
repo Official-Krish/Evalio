@@ -14,6 +14,11 @@ import { contactRoutes } from "./routes/contact";
 import { feedbackRoutes } from "./routes/feedback";
 import { globalRateLimit } from "./middleware/rateLimit";
 
+const JWT_SECRET = Bun.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
+
 export const app = new Elysia()
   .get("/health", () => ({ status: "ok", timestamp: new Date().toISOString() }))
   .get("/ready", () => ({ status: "ok", timestamp: new Date().toISOString() }))
@@ -26,7 +31,7 @@ export const app = new Elysia()
   )
   .use(
     jwt({
-      secret: Bun.env.JWT_SECRET || "dev-secret",
+      secret: JWT_SECRET,
       exp: "7d",
     }),
   )

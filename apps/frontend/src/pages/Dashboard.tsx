@@ -184,7 +184,6 @@ export function DashboardPage() {
                       "var(--color-bg-elevated)";
                   }}
                 >
-                  <span style={{ fontSize: "18px" }}>💬</span>
                   <div style={{ flex: 1 }}>
                     <p
                       style={{

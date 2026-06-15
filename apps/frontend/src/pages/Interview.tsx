@@ -12,7 +12,9 @@ import { SessionControls } from "@/components/interview/SessionControls";
 import { SessionHeader } from "@/components/interview/SessionHeader";
 import { LiveCaption } from "@/components/interview/LiveCaption";
 import { InterviewConnecting } from "@/components/interview/InterviewConnecting";
+import { InterviewClosing } from "@/components/interview/InterviewClosing";
 import { InterviewQueue } from "@/components/interview/InterviewQueue";
+import { ConfirmDialog } from "@/components/interview/ConfirmDialog";
 import toast from "react-hot-toast";
 
 type Phase =
@@ -132,7 +134,18 @@ export function InterviewPage() {
   const connectSocket = useCallback(async () => {
     if (!user || !id || endedRef.current) return;
 
-    const socket = new InterviewSocket(user.id);
+    let wsToken: string;
+    try {
+      const durationMinutes =
+        user.role === "ADMIN" || user.role === "PRO" ? 30 : 15;
+      const res = await api.getWsToken(durationMinutes);
+      wsToken = res.token;
+    } catch {
+      toast.error("Authentication failed");
+      return;
+    }
+
+    const socket = new InterviewSocket(wsToken);
     socketRef.current = socket;
 
     socket.on("ready", () => {
@@ -339,18 +352,19 @@ export function InterviewPage() {
     return () => clearTimeout(timer);
   }, [closing, feedbackReady, id, navigate, teardown]);
 
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+
   const handleEnd = useCallback(() => {
     if (endedRef.current || closing || feedbackReady) return;
-    if (
-      !window.confirm(
-        "End this interview? You'll receive a closing summary and feedback.",
-      )
-    )
-      return;
+    setShowEndConfirm(true);
+  }, [closing, feedbackReady]);
+
+  const confirmEnd = useCallback(() => {
+    setShowEndConfirm(false);
     setClosing(true);
     stopMic();
     socketRef.current?.sendEndInterview();
-  }, [closing, feedbackReady, stopMic]);
+  }, [stopMic]);
 
   const handleMicToggle = async () => {
     if (endedRef.current || closing || feedbackReady) return;
@@ -418,6 +432,10 @@ export function InterviewPage() {
     );
   }
 
+  if (closing && !feedbackReady) {
+    return <InterviewClosing />;
+  }
+
   return (
     <div className="interview-room landing-page min-h-[100dvh] flex flex-col relative overflow-hidden">
       <Ambient />
@@ -437,12 +455,6 @@ export function InterviewPage() {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0">
-          {closing && !feedbackReady && (
-            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 px-6 py-2 rounded-full bg-[var(--landing-accent)]/10 border border-[var(--landing-accent)]/20 backdrop-blur-sm text-[13px] text-[var(--landing-fg-muted)] animate-pulse">
-              Interview ending...
-            </div>
-          )}
-
           <div className="interview-orb-stage">
             <PresenceOrb
               analyserRef={activeAnalyser}
@@ -467,6 +479,16 @@ export function InterviewPage() {
           />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showEndConfirm}
+        title="End interview?"
+        message="You'll receive a closing summary and feedback."
+        confirmLabel="End interview"
+        cancelLabel="Cancel"
+        onConfirm={confirmEnd}
+        onCancel={() => setShowEndConfirm(false)}
+      />
     </div>
   );
 }

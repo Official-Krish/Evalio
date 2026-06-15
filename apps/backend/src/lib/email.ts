@@ -220,7 +220,7 @@ export async function sendContactEmail(
   try {
     await resend.emails.send({
       from: EMAIL_FROM,
-      to: "krishanand@krishlabs.tech",
+      to: Bun.env.TO_EMAIL ?? "evalio@krishlabs.tech",
       replyTo: senderEmail,
       subject: `[Contact] ${subject}`,
       html: buildContactEmail(name, senderEmail, subject, message),

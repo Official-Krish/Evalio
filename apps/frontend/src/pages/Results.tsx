@@ -286,7 +286,6 @@ export function ResultsPage() {
           textAlign: "center",
         }}
       >
-        <p style={{ fontSize: "18px", margin: 0 }}>💬</p>
         <p
           style={{
             fontSize: "14px",

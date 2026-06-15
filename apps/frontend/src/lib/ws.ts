@@ -4,11 +4,11 @@ declare const __WS_HOST__: string;
 export class InterviewSocket {
   private ws: WebSocket | null = null;
   private handlers = new Map<string, MessageHandler[]>();
-  private userId: string;
+  private token: string;
   private closed = false;
 
-  constructor(userId: string) {
-    this.userId = userId;
+  constructor(token: string) {
+    this.token = token;
   }
 
   connect(interviewId: string): Promise<void> {
@@ -19,7 +19,7 @@ export class InterviewSocket {
       this.ws = new WebSocket(`${protocol}//${host}`);
 
       this.ws.onopen = () => {
-        this.send({ type: "init", interviewId, token: this.userId });
+        this.send({ type: "init", interviewId, token: this.token });
       };
 
       this.ws.onmessage = (event) => {

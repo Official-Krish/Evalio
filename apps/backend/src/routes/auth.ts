@@ -3,13 +3,21 @@ import { jwt } from "@elysia/jwt";
 import { prisma } from "../lib/prisma";
 import { authGuard } from "../middleware/auth";
 import { strictRateLimit } from "../middleware/rateLimit";
+import { redisSubscriber } from "../lib/redis";
 import {
   sendOtpEmail,
   sendWelcomeEmail,
   sendResetOtpEmail,
 } from "../lib/email";
 
-const SECRET = Bun.env.JWT_SECRET || "dev-secret";
+const SECRET = Bun.env.JWT_SECRET;
+if (!SECRET) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
+
+const OTP_RATE_PREFIX = "otp_rate:";
+const OTP_RATE_WINDOW = 30;
+const WS_TOKEN_EXPIRY = parseInt(Bun.env.WS_TOKEN_EXPIRY_SECONDS ?? "3600");
 
 const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -18,19 +26,16 @@ function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-const otpRateMap = new Map<string, number>();
-
-function checkOtpRateLimit(email: string): {
+async function checkOtpRateLimit(email: string): Promise<{
   allowed: boolean;
   retryAfter: number;
-} {
-  const now = Date.now();
-  const lastSent = otpRateMap.get(email);
-  if (lastSent && now - lastSent < 30_000) {
-    const retryAfter = Math.ceil((30_000 - (now - lastSent)) / 1000);
-    return { allowed: false, retryAfter };
+}> {
+  const key = `${OTP_RATE_PREFIX}${email.toLowerCase().trim()}`;
+  const ttl = await redisSubscriber.ttl(key);
+  if (ttl > 0) {
+    return { allowed: false, retryAfter: ttl };
   }
-  otpRateMap.set(email, now);
+  await redisSubscriber.setEx(key, OTP_RATE_WINDOW, "1");
   return { allowed: true, retryAfter: 0 };
 }
 
@@ -184,7 +189,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   .post(
     "/resend-otp",
     async ({ body, set }) => {
-      const { allowed, retryAfter } = checkOtpRateLimit(body.email);
+      const { allowed, retryAfter } = await checkOtpRateLimit(body.email);
       if (!allowed) {
         set.status = 429;
         return {
@@ -302,7 +307,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   .post(
     "/forgot-password",
     async ({ body, set }) => {
-      const { allowed, retryAfter } = checkOtpRateLimit(body.email);
+      const { allowed, retryAfter } = await checkOtpRateLimit(body.email);
       if (!allowed) {
         set.status = 429;
         return {
@@ -427,4 +432,25 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       }
       return { user: dbUser };
     }),
+  )
+  .guard({}, (app) =>
+    app.use(authGuard).post(
+      "/ws-token",
+      async ({ jwt, user, body }) => {
+        const interviewMins = body.durationMinutes ?? 15;
+        const expirySecs = interviewMins + 3;
+        const wsToken = await jwt.sign({
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          exp: Math.floor(Date.now() / 1000) + expirySecs * 60,
+        });
+        return { token: wsToken };
+      },
+      {
+        body: t.Object({
+          durationMinutes: t.Optional(t.Number()),
+        }),
+      },
+    ),
   );
