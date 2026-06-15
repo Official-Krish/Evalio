@@ -403,7 +403,8 @@ Note these for potential follow-up probes.`,
 7. After 4-5 questions, provide a brief verbal summary of strengths and areas for improvement.
 8. Do NOT ask more than one question at a time.
 9. Keep responses spoken-word friendly — no markdown, no code blocks in speech (describe code verbally instead).
-10. You have ${input.durationMinutes} minutes for this interview. Pace accordingly. After about ${Math.max(1, input.durationMinutes - 2)} minutes, begin wrapping up.`,
+10. You have ${input.durationMinutes} minutes for this interview. Pace accordingly. After about ${Math.max(1, input.durationMinutes - 2)} minutes, begin wrapping up.
+11. When interrupting the candidate, always begin with a polite phrase like "Sorry to interrupt, but..." or "I apologize for cutting in, but I'd like to ask..." before pivoting to your point.`,
   );
 
   return sections.join("\n\n");

@@ -28,24 +28,29 @@ const secondaryVariant = {
 
 export const FileUpload = ({
   onChange,
+  disabled,
 }: {
   onChange?: (files: File[]) => void;
+  disabled?: boolean;
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (newFiles: File[]) => {
+    if (disabled) return;
     setFiles((prevFiles) => [...prevFiles, ...newFiles]);
     if (onChange) onChange(newFiles);
   };
 
   const handleClick = () => {
+    if (disabled) return;
     fileInputRef.current?.click();
   };
 
   const { getRootProps, isDragActive } = useDropzone({
     multiple: false,
     noClick: true,
+    disabled,
     onDrop: handleFileChange,
     onDropRejected: (error) => {
       console.log(error);
@@ -78,54 +83,87 @@ export const FileUpload = ({
           </p>
           <div className="relative mx-auto mt-10 w-full max-w-xl">
             {files.length > 0 &&
-              files.map((file, idx) => (
+              (disabled ? (
                 <motion.div
-                  key={"file" + idx}
-                  layoutId={idx === 0 ? "file-upload" : "file-upload-" + idx}
-                  className={cn(
-                    "relative z-40 mx-auto mt-4 flex w-full flex-col items-start justify-start overflow-hidden rounded-md bg-white p-4 md:h-24 dark:bg-neutral-900",
-                    "shadow-sm",
-                  )}
+                  key="uploading"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="relative z-40 mx-auto mt-4 flex w-full items-center justify-center gap-3 rounded-md bg-white p-4 dark:bg-neutral-900 shadow-sm"
                 >
-                  <div className="flex w-full items-center justify-between gap-4">
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      layout
-                      className="max-w-xs truncate text-base text-neutral-700 dark:text-neutral-300"
-                    >
-                      {file.name}
-                    </motion.p>
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      layout
-                      className="shadow-input w-fit shrink-0 rounded-lg px-2 py-1 text-sm text-neutral-600 dark:bg-neutral-800 dark:text-white"
-                    >
-                      {(file.size / (1024 * 1024)).toFixed(2)} MB
-                    </motion.p>
-                  </div>
-
-                  <div className="mt-2 flex w-full flex-col items-start justify-between text-sm text-neutral-600 md:flex-row md:items-center dark:text-neutral-400">
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      layout
-                      className="rounded-md bg-gray-100 px-1 py-0.5 dark:bg-neutral-800"
-                    >
-                      {file.type}
-                    </motion.p>
-
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      layout
-                    >
-                      modified{" "}
-                      {new Date(file.lastModified).toLocaleDateString()}
-                    </motion.p>
-                  </div>
+                  <svg
+                    className="h-5 w-5 animate-spin text-neutral-500"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                    Uploading…
+                  </span>
                 </motion.div>
+              ) : (
+                files.map((file, idx) => (
+                  <motion.div
+                    key={"file" + idx}
+                    layoutId={idx === 0 ? "file-upload" : "file-upload-" + idx}
+                    className={cn(
+                      "relative z-40 mx-auto mt-4 flex w-full flex-col items-start justify-start overflow-hidden rounded-md bg-white p-4 md:h-24 dark:bg-neutral-900",
+                      "shadow-sm",
+                    )}
+                  >
+                    <div className="flex w-full items-center justify-between gap-4">
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        layout
+                        className="max-w-xs truncate text-base text-neutral-700 dark:text-neutral-300"
+                      >
+                        {file.name}
+                      </motion.p>
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        layout
+                        className="shadow-input w-fit shrink-0 rounded-lg px-2 py-1 text-sm text-neutral-600 dark:bg-neutral-800 dark:text-white"
+                      >
+                        {(file.size / (1024 * 1024)).toFixed(2)} MB
+                      </motion.p>
+                    </div>
+
+                    <div className="mt-2 flex w-full flex-col items-start justify-between text-sm text-neutral-600 md:flex-row md:items-center dark:text-neutral-400">
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        layout
+                        className="rounded-md bg-gray-100 px-1 py-0.5 dark:bg-neutral-800"
+                      >
+                        {file.type}
+                      </motion.p>
+
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        layout
+                      >
+                        modified{" "}
+                        {new Date(file.lastModified).toLocaleDateString()}
+                      </motion.p>
+                    </div>
+                  </motion.div>
+                ))
               ))}
             {!files.length && (
               <motion.div

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "motion/react";
 import { api } from "../../lib/api";
 import { fileNameFromUrl, detectSections } from "./helpers";
@@ -44,6 +45,8 @@ export function ResumeSection({
   onGithubUrlChange,
   onGithubToggle,
 }: ResumeSectionProps) {
+  const [isUploading, setIsUploading] = useState(false);
+
   const selectedResume = selectedResumeId
     ? (resumes.find((r) => r.id === selectedResumeId) ?? null)
     : null;
@@ -54,20 +57,23 @@ export function ResumeSection({
 
   const handleUploadResume = async (files: File[]) => {
     const file = files[0];
-    if (!file) return;
+    if (!file || isUploading) return;
+    setIsUploading(true);
     try {
       await api.uploadResume(file);
       toast.success("Resume uploaded!");
       onResumesRefetch();
     } catch (err) {
       toast.error((err as Error).message);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
     <div style={{ marginBottom: "48px" }}>
       {/* Animated drag zone via FileUpload */}
-      <FileUpload onChange={handleUploadResume} />
+      <FileUpload onChange={handleUploadResume} disabled={isUploading} />
 
       {resumes.length > 0 && (
         <div

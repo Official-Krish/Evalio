@@ -1,4 +1,5 @@
 import { WebSocket as WsWebSocket } from "ws";
+import { jwtVerify } from "jose";
 import { createGeminiSession, type GeminiSession } from "../gemini";
 import { prisma } from "../lib/prisma";
 import { buildInterviewPrompt, type PromptInput } from "../prompt";
@@ -11,6 +12,25 @@ import {
 } from "../lib/queue";
 import { dedupAppend } from "./dedup";
 import { finalizeInterview } from "./finalize";
+
+const SECRET = Bun.env.JWT_SECRET;
+const encoder = new TextEncoder();
+
+async function verifyWsToken(
+  token: string,
+): Promise<{ id: string; email: string } | null> {
+  if (!SECRET) return null;
+  try {
+    const key = encoder.encode(SECRET);
+    const { payload } = await jwtVerify(token, key);
+    if (typeof payload.id === "string" && typeof payload.email === "string") {
+      return { id: payload.id, email: payload.email };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export class InterviewConnection {
   private interviewId: string | null = null;
@@ -40,9 +60,18 @@ export class InterviewConnection {
   }
 
   private setupListeners() {
+    const MAX_MESSAGE_SIZE = 1024 * 1024;
+
     this.client.on("message", async (raw) => {
+      const rawData = raw instanceof Buffer ? raw : Buffer.from(raw.toString());
+      if (rawData.length > MAX_MESSAGE_SIZE) {
+        this.safeSend({ error: "Message too large" });
+        this.client.close();
+        return;
+      }
+
       try {
-        const msg = JSON.parse(raw.toString());
+        const msg = JSON.parse(rawData.toString());
         await this.handleMessage(msg);
       } catch {
         this.safeSend({ error: "Invalid JSON" });
@@ -309,7 +338,7 @@ export class InterviewConnection {
     } catch (err) {
       console.error("[ws] Gemini session failed:", err);
       await this.safeSend({
-        error: `Failed to connect to AI: ${(err as Error).message}`,
+        error: "Failed to connect to AI. Please try again.",
       });
       return;
     }
@@ -334,8 +363,7 @@ export class InterviewConnection {
     );
 
     this.gemini.on("message", async (event) => {
-      const data =
-        event instanceof Buffer ? event.toString() : String(event);
+      const data = event instanceof Buffer ? event.toString() : String(event);
 
       try {
         const parsed = JSON.parse(data);
@@ -348,10 +376,9 @@ export class InterviewConnection {
         const hasSetup = !!parsed.setupComplete;
         if (hasContent || hasSetup) {
           const label = hasSetup ? "setupComplete" : "serverContent";
-          const hasAudio =
-            !!parsed.serverContent?.modelTurn?.parts?.some(
-              (p: Record<string, unknown>) => p.inlineData,
-            );
+          const hasAudio = !!parsed.serverContent?.modelTurn?.parts?.some(
+            (p: Record<string, unknown>) => p.inlineData,
+          );
           console.log(
             `[gemini] \u2192 ${label}${hasAudio ? " (with audio)" : ""} turnComplete=${!!parsed.serverContent?.turnComplete}`,
           );
@@ -447,12 +474,21 @@ export class InterviewConnection {
   private async handleMessage(msg: Record<string, unknown>) {
     switch (msg.type) {
       case "init": {
-        const userId = msg.token as string | undefined;
-        if (!userId) {
+        const token = msg.token as string | undefined;
+        if (!token) {
           await this.safeSend({ error: "Authentication required" });
           this.client.close();
           return;
         }
+
+        const payload = await verifyWsToken(token);
+        if (!payload) {
+          await this.safeSend({ error: "Invalid or expired token" });
+          this.client.close();
+          return;
+        }
+
+        const userId = payload.id;
 
         this.interviewId = msg.interviewId as string;
         if (!this.interviewId) {
@@ -460,9 +496,7 @@ export class InterviewConnection {
           return;
         }
 
-        console.log(
-          `[ws] init: user=${userId} interview=${this.interviewId}`,
-        );
+        console.log(`[ws] init: user=${userId} interview=${this.interviewId}`);
 
         const interview = await prisma.interviewSession.findUnique({
           where: { id: this.interviewId },
@@ -508,17 +542,16 @@ export class InterviewConnection {
         this.interviewDepth = interview.interviewDepth ?? "STANDARD";
 
         const selectedRole =
-          companyConfig?.roles.find(
-            (r) => r.title === interview.roleTitle,
-          ) ?? null;
+          companyConfig?.roles.find((r) => r.title === interview.roleTitle) ??
+          null;
 
         const promptInput = {
           position: interview.position,
           candidateName: interview.user.name,
           resumeText: interview.resume?.extractedText ?? null,
           jobDescription:
-            (interview as { jobDescription?: string | null })
-              .jobDescription ?? null,
+            (interview as { jobDescription?: string | null }).jobDescription ??
+            null,
           githubUsername: github?.username ?? null,
           githubSummary: github?.summary ?? null,
           githubLanguages: (github?.languages as string[]) ?? [],
@@ -542,8 +575,8 @@ export class InterviewConnection {
           roleEvaluationCriteria: selectedRole?.evaluationCriteria ?? null,
           roleMustProbe: selectedRole?.mustProbe ?? null,
           interviewRound:
-            (interview as { interviewRound?: string | null })
-              .interviewRound ?? null,
+            (interview as { interviewRound?: string | null }).interviewRound ??
+            null,
           candidateHistory: null,
         };
 
@@ -610,10 +643,13 @@ export class InterviewConnection {
         const isChallengeMode =
           this.interviewDepth === "CHALLENGE" ||
           this.interviewDepth === "BAR_RAISER";
-        const isInterrupted = (msg as { interrupted?: boolean }).interrupted === true;
+        const isInterrupted =
+          (msg as { interrupted?: boolean }).interrupted === true;
 
         if (isInterrupted) {
-          if (this.currentTurnId && this.answerBuf) {
+          if (this.questionBuf) {
+            await this.flushTurn();
+          } else if (this.currentTurnId && this.answerBuf) {
             const prev = await prisma.interviewTurn.findUnique({
               where: { id: this.currentTurnId },
               select: { answerText: true },
@@ -626,8 +662,6 @@ export class InterviewConnection {
                   : this.answerBuf,
               },
             });
-          } else if (this.questionBuf) {
-            await this.flushTurn();
           }
           this.answerBuf = "";
           this.currentTurnId = null;

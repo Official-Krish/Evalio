@@ -29,8 +29,8 @@
         "@google/genai": "^2.8.0",
         "elysia": "^1.4.28",
         "elysia-rate-limit": "^4.6.2",
+        "jose": "^6.2.3",
         "mammoth": "^1.12.0",
-        "pdf2json": "^4.0.3",
         "redis": "^6.0.0",
         "resend": "^6.12.4",
         "unpdf": "^1.6.2",
@@ -1420,8 +1420,6 @@
     "path-parse": ["path-parse@1.0.7", "", {}, "sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw=="],
 
     "pathe": ["pathe@2.0.3", "", {}, "sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w=="],
-
-    "pdf2json": ["pdf2json@4.0.3", "", { "bin": { "pdf2json": "bin/pdf2json.js" } }, "sha512-QErPemxRHDI2RUli3+9/mv4V6Ib9VWI+UoP2S82yXEQtoXzWvu9NSjjo3vyiUiVJv+CJFuzNiKUI+UFFUdv8Lg=="],
 
     "perfect-debounce": ["perfect-debounce@2.1.0", "", {}, "sha512-LjgdTytVFXeUgtHZr9WYViYSM/g8MkcTPYDlPa3cDqMirHjKiSZPYd6DoL7pK8AJQr+uWkQvCjHNdiMqsrJs+g=="],
 

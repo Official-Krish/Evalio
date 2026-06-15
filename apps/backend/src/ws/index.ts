@@ -4,9 +4,29 @@ import { dequeueNext, activateInQueue } from "../lib/queue";
 import { InterviewConnection } from "./session";
 
 const WS_PORT = parseInt(Bun.env.WS_PORT ?? "8080");
+const CORS_ORIGIN = Bun.env.CORS_ORIGIN ?? "http://localhost:5173";
+
+function getOrigin(request: {
+  headers: Record<string, string | string[] | undefined>;
+}): string | null {
+  const origin = request.headers["origin"];
+  if (Array.isArray(origin)) return origin[0] ?? null;
+  return origin ?? null;
+}
 
 export function startWsServer() {
-  const wss = new WebSocketServer({ port: WS_PORT });
+  const wss = new WebSocketServer({
+    port: WS_PORT,
+    maxPayload: 1024 * 1024,
+    verifyClient: (info, cb) => {
+      const origin = getOrigin(info.req);
+      if (origin && !origin.startsWith(CORS_ORIGIN.replace(/\/$/, ""))) {
+        cb(false, 403, "Origin not allowed");
+        return;
+      }
+      cb(true);
+    },
+  });
   const wsMap = new Map<string, WsWebSocket>();
   const startCallbacks = new Map<string, () => Promise<void>>();
 
@@ -15,9 +35,7 @@ export function startWsServer() {
     for (let i = 0; i < entries.length; i++) {
       const ws = wsMap.get(entries[i]!);
       if (ws && ws.readyState === 1) {
-        ws.send(
-          JSON.stringify({ type: "position_update", position: i + 1 }),
-        );
+        ws.send(JSON.stringify({ type: "position_update", position: i + 1 }));
       }
     }
   }

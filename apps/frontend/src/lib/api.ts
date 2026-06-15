@@ -177,10 +177,18 @@ export const api = {
     return data as { feedback: { id: string } };
   },
 
+  getWsToken: async (durationMinutes?: number) => {
+    const { data, error } = await client.api.auth["ws-token"].post({
+      durationMinutes,
+    });
+    if (error) throw new Error(errorMessage(error.value));
+    return data as { token: string };
+  },
+
   listFeedbacks: async () => {
     const { data, error } = await client.api.feedback.get();
     if (error) throw new Error(errorMessage(error.value));
-    return data as {
+    return data as unknown as {
       feedbacks: {
         id: string;
         userId: string;

@@ -43,6 +43,7 @@ async function putObjectToS3(input: {
       Key: input.key,
       Body: input.body,
       ContentType: input.contentType,
+      ACL: "private",
     }),
   );
 }
@@ -59,6 +60,14 @@ type UploadFailure = {
 
 type UploadResponse = UploadSuccess | UploadFailure;
 
+function sanitizeFileName(name: string): string {
+  const ext = name.lastIndexOf(".");
+  const base = ext === -1 ? name : name.slice(0, ext);
+  const clean = base.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 100);
+  const suffix = ext === -1 ? "" : name.slice(ext).toLowerCase();
+  return clean + suffix;
+}
+
 export async function uploadResumeToS3({
   userId,
   version,
@@ -73,7 +82,8 @@ export async function uploadResumeToS3({
   mimeType: string;
 }): Promise<UploadResponse> {
   try {
-    const objectKey = `evalio/${userId}/v${version}/${fileName}`;
+    const safeName = sanitizeFileName(fileName);
+    const objectKey = `evalio/${userId}/v${version}/${safeName}`;
 
     await putObjectToS3({
       key: objectKey,

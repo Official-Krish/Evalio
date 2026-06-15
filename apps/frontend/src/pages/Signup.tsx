@@ -1,19 +1,23 @@
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { motion } from "motion/react"
-import { signupSchema, passwordRequirements, type SignupInput } from "@evalio/shared"
-import { useSignup } from "../lib/auth"
-import { AuthLayout } from "@/components/static/AuthLayout"
-import { usePageTitle } from "@/lib/usePageTitle"
-import toast from "react-hot-toast"
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "motion/react";
+import {
+  signupSchema,
+  passwordRequirements,
+  type SignupInput,
+} from "@evalio/shared";
+import { useSignup } from "../lib/auth";
+import { AuthLayout } from "@/components/static/AuthLayout";
+import { usePageTitle } from "@/lib/usePageTitle";
+import toast from "react-hot-toast";
 
 export function SignupPage() {
-  usePageTitle("Create Account")
-  const navigate = useNavigate()
-  const signupMutation = useSignup()
-  const [showPassword, setShowPassword] = useState(false)
+  usePageTitle("Create Account");
+  const navigate = useNavigate();
+  const signupMutation = useSignup();
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -21,19 +25,22 @@ export function SignupPage() {
     formState: { errors },
   } = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
-  })
+  });
 
-  const watchedPassword = watch("password", "")
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const watchedPassword = watch("password", "");
 
   const onSubmit = (data: SignupInput) => {
     signupMutation.mutate(data, {
       onSuccess: () => {
-        toast.success("Account created! Check your email for the verification code.")
-        navigate(`/verify-otp?email=${encodeURIComponent(data.email)}`)
+        toast.success(
+          "Account created! Check your email for the verification code.",
+        );
+        navigate(`/verify-otp?email=${encodeURIComponent(data.email)}`);
       },
       onError: (err) => toast.error(err.message),
-    })
-  }
+    });
+  };
 
   return (
     <AuthLayout variant="signup">
@@ -46,7 +53,9 @@ export function SignupPage() {
         <div className="mb-4 lg:mb-6">
           <p className="static-badge">Get started</p>
           <h1 className="static-title mt-4 text-[2rem]">Start interviewing.</h1>
-          <p className="static-subtitle mt-2">Free during early access. No card required.</p>
+          <p className="static-subtitle mt-2">
+            Free during early access. No card required.
+          </p>
           <div className="mt-5 flex flex-wrap gap-2">
             {["No card", "Instant setup", "Real pressure"].map((tag) => (
               <span
@@ -59,19 +68,48 @@ export function SignupPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="static-auth-card space-y-5">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="static-auth-card space-y-5"
+        >
           <div>
-            <label htmlFor="name" className="static-label">Name</label>
-            <input id="name" type="text" placeholder="Your name" className="static-input" {...register("name")} />
-            {errors.name && <p className="mt-1 text-[12px] text-red-400">{errors.name.message}</p>}
+            <label htmlFor="name" className="static-label">
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              placeholder="Your name"
+              className="static-input"
+              {...register("name")}
+            />
+            {errors.name && (
+              <p className="mt-1 text-[12px] text-red-400">
+                {errors.name.message}
+              </p>
+            )}
           </div>
           <div>
-            <label htmlFor="email" className="static-label">Email</label>
-            <input id="email" type="email" placeholder="you@example.com" className="static-input" {...register("email")} />
-            {errors.email && <p className="mt-1 text-[12px] text-red-400">{errors.email.message}</p>}
+            <label htmlFor="email" className="static-label">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              className="static-input"
+              {...register("email")}
+            />
+            {errors.email && (
+              <p className="mt-1 text-[12px] text-red-400">
+                {errors.email.message}
+              </p>
+            )}
           </div>
           <div>
-            <label htmlFor="password" className="static-label">Password</label>
+            <label htmlFor="password" className="static-label">
+              Password
+            </label>
             <div className="relative">
               <input
                 id="password"
@@ -89,10 +127,14 @@ export function SignupPage() {
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
-            {errors.password && <p className="mt-1 text-[12px] text-red-400">{errors.password.message}</p>}
+            {errors.password && (
+              <p className="mt-1 text-[12px] text-red-400">
+                {errors.password.message}
+              </p>
+            )}
             <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5">
               {passwordRequirements.map((req) => {
-                const met = !watchedPassword || req.test(watchedPassword)
+                const met = !watchedPassword || req.test(watchedPassword);
                 return (
                   <div
                     key={req.label}
@@ -104,10 +146,12 @@ export function SignupPage() {
                           : "text-red-400"
                     }`}
                   >
-                    <span className="text-[13px] leading-none shrink-0">{met ? "✓" : "○"}</span>
+                    <span className="text-[13px] leading-none shrink-0">
+                      {met ? "✓" : "○"}
+                    </span>
                     {req.label}
                   </div>
-                )
+                );
               })}
             </div>
           </div>
@@ -120,12 +164,15 @@ export function SignupPage() {
           </button>
           <p className="text-center text-[13px] text-[var(--landing-fg-faint)]">
             Already have an account?{" "}
-            <Link to="/login" className="text-[var(--landing-accent)] hover:underline">
+            <Link
+              to="/login"
+              className="text-[var(--landing-accent)] hover:underline"
+            >
               Sign in
             </Link>
           </p>
         </form>
       </motion.div>
     </AuthLayout>
-  )
+  );
 }

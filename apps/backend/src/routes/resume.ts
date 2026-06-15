@@ -4,6 +4,14 @@ import { authGuard } from "../middleware/auth";
 import { uploadResumeToS3 } from "../lib/s3";
 import { parseResume } from "../utils/ResumeParser";
 
+const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".txt"];
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+function getExtension(filename: string): string {
+  const dot = filename.lastIndexOf(".");
+  return dot === -1 ? "" : filename.slice(dot).toLowerCase();
+}
+
 export const resumeRoutes = new Elysia({ prefix: "/resumes" }).guard(
   {},
   (app) =>
@@ -16,6 +24,17 @@ export const resumeRoutes = new Elysia({ prefix: "/resumes" }).guard(
           if (!file || !file.name) {
             set.status = 400;
             return { error: "No file provided" };
+          }
+
+          const ext = getExtension(file.name);
+          if (!ALLOWED_EXTENSIONS.includes(ext)) {
+            set.status = 400;
+            return { error: "Only PDF, DOCX, and TXT files are allowed" };
+          }
+
+          if (file.size > MAX_FILE_SIZE) {
+            set.status = 400;
+            return { error: "File size must be under 10 MB" };
           }
 
           const buffer = Buffer.from(await file.arrayBuffer());
