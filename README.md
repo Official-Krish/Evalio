@@ -1,6 +1,6 @@
-# AI Evalio
+# Evalio
 
-Real-time voice interview simulator powered by Google Gemini. Practice technical and behavioral interviews with AI that adapts to your target company, role, and preferred style — with live audio, interruption handling, and post-interview scoring.
+Real-time voice interview simulator. Practice technical and behavioral interviews with AI that adapts to your target company, role, and preferred style — with live audio, interruption handling, and post-interview scoring.
 
 ## Architecture
 
@@ -9,22 +9,28 @@ ai-interview/
 ├── apps/
 │   ├── backend/          # Elysia.js HTTP server + WebSocket server
 │   │   ├── src/
-│   │   │   ├── prompt.ts       # Dynamic prompt assembly engine
-│   │   │   ├── ws.ts           # WebSocket handler, turn management
-│   │   │   ├── gemini.ts       # Gemini Live session wrapper
-│   │   │   ├── services/
-│   │   │   │   └── evaluate.ts # Post-interview evaluation (Gemini)
-│   │   │   └── routes/         # Auth, user, resume, interview CRUD
-│   │   └── prisma/             # PostgreSQL schema + migrations
-│   └── frontend/               # React 19 SPA
+│   │   │   ├── prompt.ts         # Dynamic prompt assembly engine
+│   │   │   ├── gemini.ts         # AI session wrapper (model-agnostic interface)
+│   │   │   ├── ws/
+│   │   │   │   ├── index.ts      # WebSocket server entry
+│   │   │   │   ├── session.ts    # InterviewConnection class
+│   │   │   │   ├── dedup.ts      # Transcription deduplication
+│   │   │   │   └── finalize.ts   # Post-interview finalization
+│   │   │   ├── lib/
+│   │   │   │   ├── redis.ts      # Redis client (queue backend)
+│   │   │   │   ├── queue.ts      # Queue helpers (tryActivate, enqueue, dequeue)
+│   │   │   │   └── email.ts      # Email templates (OTP, welcome, feedback)
+│   │   │   └── routes/           # Auth, user, resume, interview, feedback, pricing
+│   │   └── prisma/               # PostgreSQL schema + migrations
+│   └── frontend/                 # React 19 SPA
 │       └── src/
-│           ├── pages/          # NewInterview, Interview, Results, Dashboard
-│           ├── components/     # CompanyGrid, RolePicker, StyleDepthPicker, etc.
-│           ├── hooks/          # useMicrophone, useAudioPlayer
-│           └── lib/            # WebSocket client, API client, auth
+│           ├── pages/            # NewInterview, Interview, Results, Dashboard, Feedback, Pricing
+│           ├── components/       # CompanyGrid, RolePicker, SessionControls, InterviewQueue, Landing*
+│           ├── hooks/            # useMicrophone, useAudioPlayer
+│           └── lib/              # WebSocket client, API client, auth
 ├── packages/
-│   ├── shared/                 # Zod schemas, shared types, company configs
-│   ├── ui/                     # Shared UI primitives
+│   ├── shared/                   # Zod schemas, shared types, company configs
+│   ├── ui/                       # Shared UI primitives
 │   ├── eslint-config/
 │   └── typescript-config/
 ```
@@ -32,57 +38,67 @@ ai-interview/
 ## Features
 
 ### Voice Interview Engine
-- **Real-time bidirectional audio** via WebSocket + Gemini Live API (PCM 16kHz)
+
+- **Real-time bidirectional audio** via WebSocket + AI audio API
 - **AI can interrupt** mid-answer when answers go off-track
 - **User cannot interrupt AI** — mic blocked during AI speech
-- **Voice Activity Detection** — Gemini handles end-of-turn detection
-- **Incremental transcription** with progressive-refinement dedup
+- **Incremental transcription** with character-level deduplication
 
 ### 16 Company Profiles
+
 Each company has structured culture, interviewer behavior, and role-specific interview data:
 
-| Company | Style | Depth | Roles |
-|---------|-------|-------|-------|
-| Stripe | Challenging | Challenge | Backend, Payments, Platform |
-| Amazon | Bar Raiser | Challenge | SDE, PM, Solutions Architect |
-| Google | Professional | Probing | SWE, Data Scientist, UX Engineer |
-| Meta | Challenging | Probing | Frontend, ML, Infrastructure |
-| Netflix | Bar Raiser | Bar Raiser | Backend, Data, SRE |
-| Microsoft | Professional | Standard | SWE, DevOps, AI Engineer |
-| Apple | Challenging | Probing | iOS, Hardware, Security |
-| Uber | Professional | Challenge | Backend, Mobile, Data Science |
-| Airbnb | Supportive | Probing | Fullstack, Design, Staff |
-| Datadog | Professional | Standard | SRE, Cloud, Support |
-| Deloitte USI | Professional | Probing | Consultant, Data Analyst, Cloud |
-| Goldman Sachs | Bar Raiser | Challenge | Quant Dev, Risk, Platform |
-| Palantir | Challenging | Bar Raiser | FDE, Data, Security |
-| Figma | Supportive | Standard | Design Engineer, Frontend, Platform |
-| Notion | Supportive | Standard | Fullstack, Mobile, Infra |
-| Startup | Supportive | Challenge | CTO, Founder, Staff |
+| Company       | Style        | Depth      | Roles                               |
+| ------------- | ------------ | ---------- | ----------------------------------- |
+| Stripe        | Challenging  | Challenge  | Backend, Payments, Platform         |
+| Amazon        | Bar Raiser   | Challenge  | SDE, PM, Solutions Architect        |
+| Google        | Professional | Probing    | SWE, Data Scientist, UX Engineer    |
+| Meta          | Challenging  | Probing    | Frontend, ML, Infrastructure        |
+| Netflix       | Bar Raiser   | Bar Raiser | Backend, Data, SRE                  |
+| Microsoft     | Professional | Standard   | SWE, DevOps, AI Engineer            |
+| Apple         | Challenging  | Probing    | iOS, Hardware, Security             |
+| Uber          | Professional | Challenge  | Backend, Mobile, Data Science       |
+| Airbnb        | Supportive   | Probing    | Fullstack, Design, Staff            |
+| Datadog       | Professional | Standard   | SRE, Cloud, Support                 |
+| Deloitte      | Professional | Probing    | Consultant, Data Analyst, Cloud     |
+| Goldman Sachs | Bar Raiser   | Challenge  | Quant Dev, Risk, Platform           |
+| Palantir      | Challenging  | Bar Raiser | FDE, Data, Security                 |
+| Figma         | Supportive   | Standard   | Design Engineer, Frontend, Platform |
+| Notion        | Supportive   | Standard   | Fullstack, Mobile, Infra            |
+| Startup       | Supportive   | Challenge  | CTO, Founder, Staff                 |
 
 Roles define `topics`, `evaluationCriteria`, and `mustProbe` — so a Stripe Backend interview (distributed systems, APIs, caching) is completely different from a Stripe PM interview (prioritization, metrics, stakeholder management) even with the same style and depth.
 
 ### 4 Interview Styles
-Controls _how_ questions are asked — with per-style interruption behavior:
 
-| Style | Approach | Interruption |
-|-------|----------|-------------|
-| **Supportive** | Conversational, encouraging | Rare, gentle redirection |
-| **Professional** | Structured, neutral | When unfocused or repetitive |
-| **Challenging** | High-pressure, push for depth | Aggressive, cut off off-track answers |
-| **Bar Raiser** | Elite, surgical | Strategic — highest leverage point only |
+Controls _how_ questions are asked:
+
+| Style            | Approach                      | Interruption                            |
+| ---------------- | ----------------------------- | --------------------------------------- |
+| **Supportive**   | Conversational, encouraging   | Rare, gentle redirection                |
+| **Professional** | Structured, neutral           | When unfocused or repetitive            |
+| **Challenging**  | High-pressure, push for depth | Aggressive, cut off off-track answers   |
+| **Bar Raiser**   | Elite, surgical               | Strategic — highest leverage point only |
 
 ### 4 Interaction Depths
+
 Controls _how many_ follow-ups and _how hard_ each question is probed:
 
-| Depth | Follow-ups | Challenge Level |
-|-------|-----------|-----------------|
-| Standard | None | Smooth, conversational |
-| Probing | 1-2 per topic | Gentle elaboration requests |
-| Challenge | Until defended | Disagree, demand metrics |
-| Bar Raiser | Maximum rigor | Skepticism, evidence required |
+| Depth      | Follow-ups     | Challenge Level               |
+| ---------- | -------------- | ----------------------------- |
+| Standard   | None           | Smooth, conversational        |
+| Probing    | 1-2 per topic  | Gentle elaboration requests   |
+| Challenge  | Until defended | Disagree, demand metrics      |
+| Bar Raiser | Maximum rigor  | Skepticism, evidence required |
+
+### Interview Round Selection
+
+- 4 unique rounds per company (e.g., Stripe: Phone Screen, Technical Deep Dive, System Design, Leadership & Behavior)
+- Custom round input for roles not listed
+- Progress stepper showing step position in setup flow
 
 ### Prompt Assembly Engine
+
 Instead of a single static prompt, the system assembles a dynamic prompt from layers:
 
 ```
@@ -101,47 +117,80 @@ Interview Guidelines          ← Practical rules
 Impact weighting: **Role ~60%** (drives what gets asked), **Style ~25%** (how), **Company ~10%** (cultural emphasis), **Depth ~5%** (follow-up count).
 
 ### Evaluation & Scoring
-- Post-interview evaluation via Gemini 2.5 Flash
+
+- Post-interview evaluation via AI
 - Per-turn scoring with feedback
 - 6 dimension scores: Communication, Technical Depth, Problem Solving, Leadership, Ownership, Decision Making
 - Resume-strength correlation
 - Candidate skill profile updates over time
 - Candidates can retake interviews after 7 days (FREE tier: 3/week)
 
+### Queue Management System
+
+- Redis-backed FIFO queue when concurrent session limit is reached
+- MAX_CONCURRENT_SESSIONS=4 (configurable)
+- Real-time position updates pushed to waiting clients
+- Heartbeat (30s ping / 10s timeout) to detect stale connections
+- Automatic slot release and dequeue when an interview ends
+
+### Feedback System
+
+- Premium editorial feedback form with Tabler-style icons and progressive bar rating
+- Categories: Bug Report, Feature Request, Performance, UX, Other
+- Admin dashboard for reviewing all feedback
+- Automated thank-you email via Resend
+
+### Pricing & Rate Limits
+
+- **FREE tier**: 3 interviews / 7 days, 15 min cap
+- **PRO tier**: 6 interviews / 7 days, 30 min cap (contact for upgrade)
+- **Max tier**: Coming soon
+- Custom toast notifications for rate limit errors with upgrade links
+
 ### Real-time Audio Pipeline
 
 ```
-Browser Mic → PCM 16kHz → WebSocket → Gemini Live API → Audio + Transcription → Browser Speaker
-     │                           │                           │
-     └── audio_stream_end ───────┘                           └── turnComplete detection
-                                                                  ├── challenge mode: accumulate
-                                                                  └── standard mode: flush turn
+Browser Mic → PCM 16kHz → WebSocket → AI Audio API → Audio + Transcription → Browser Speaker
+     │                           │
+     └── audio_stream_end ───────┘
 ```
 
+### DSA Coding Round (Coming Soon)
+
+- LeetCode-style problems sourced from company-specific question data
+- 1900+ companies with real historical question frequency data
+- 6-phase interview: Understanding → Brute Force → Optimization → Implementation → Testing → Review
+- Event-driven code review (no auto-snapshots, AI reviews on request only)
+- Hidden rubric per question guides AI evaluation
+- Monaco Editor in-browser with Python/C++/TypeScript support
+- 25 min fixed timer with phase tracking
+
 ### Additional Features
+
 - **Resume upload & analysis** — PDF parsing, section detection, AI-tailored questions
 - **GitHub integration** — public repo analysis for code-specific questions
 - **Job description parsing** — paste a JD for targeted questions
 - **Custom company & role** — AI generates interview context on the fly
 - **Email verification** — OTP via Resend
-- **Rate limiting** — FREE: 3 interviews / 7 days, 15 min cap
 - **Interview history** — dashboard with scores, feedback, improvement tracking
+- **Role-based access control** — FREE, PRO, ADMIN tiers with different limits
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Runtime | [Bun](https://bun.sh) 1.3+ |
-| Backend | [Elysia.js](https://elysiajs.com) |
-| Frontend | React 19, [motion](https://motion.dev) (animations) |
-| Database | PostgreSQL + [Prisma](https://prisma.io) |
-| AI | Google Gemini 2.5 Flash (Live API with audio) |
-| Real-time | WebSocket (`ws`) |
-| Auth | JWT + OTP |
-| Email | Resend |
-| CSS | Tailwind CSS 4 |
-| Icons | react-icons (Font Awesome, Simple Icons) |
-| Monorepo | [Turborepo](https://turbo.build) |
+| Layer     | Technology                                          |
+| --------- | --------------------------------------------------- |
+| Runtime   | [Bun](https://bun.sh) 1.3+                          |
+| Backend   | [Elysia.js](https://elysiajs.com)                   |
+| Frontend  | React 19, [motion](https://motion.dev) (animations) |
+| Database  | PostgreSQL + [Prisma](https://prisma.io)            |
+| AI        | Multi-model (Gemini, more coming)                   |
+| Real-time | WebSocket (`ws`)                                    |
+| Queuing   | Redis                                               |
+| Auth      | JWT + OTP                                           |
+| Email     | Resend                                              |
+| CSS       | Tailwind CSS 4                                      |
+| Icons     | react-icons, Tabler Icons                           |
+| Monorepo  | [Turborepo](https://turbo.build)                    |
 
 ## Quick Start
 
@@ -149,7 +198,8 @@ Browser Mic → PCM 16kHz → WebSocket → Gemini Live API → Audio + Transcri
 
 - **Bun** 1.3+ (`curl -fsSL https://bun.sh/install | bash`)
 - **PostgreSQL** running locally or remotely
-- **Google AI Studio API key** for Gemini Live
+- **Redis** running locally or remotely (for queue system)
+- **AI API key** (Gemini or compatible)
 
 ### Setup
 
@@ -164,10 +214,12 @@ cp apps/frontend/.env.example apps/frontend/.env
 # Set up your .env files
 # apps/backend/.env requires:
 #   DATABASE_URL=postgresql://...
-#   GEMINI_API_KEY=your_key
+#   AI_API_KEY=your_key
 #   JWT_SECRET=...
 #   RESEND_API_KEY=...
+#   REDIS_HOST=localhost
 #   WS_PORT=8080
+#   MAX_CONCURRENT_SESSIONS=4
 #
 # apps/frontend/.env requires:
 #   VITE_API_HOST=http://localhost:3000
@@ -182,114 +234,59 @@ bun run dev
 
 ### Access
 
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:5173 |
-| API | http://localhost:3000 |
-| WebSocket | ws://localhost:8080 |
+| Service   | URL                   |
+| --------- | --------------------- |
+| Frontend  | http://localhost:5173 |
+| API       | http://localhost:3000 |
+| WebSocket | ws://localhost:8080   |
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Start all apps in development mode (hot reload) |
-| `bun run build` | Build all apps and packages |
-| `bun run lint` | Run ESLint across all packages |
-| `bun run check-types` | Run TypeScript type checking |
-| `bun run format` | Format code with Prettier |
-| `bun run --filter @evalio/backend dev` | Backend only |
-| `bun run --filter @evalio/frontend dev` | Frontend only |
+| Command                                 | Description                                     |
+| --------------------------------------- | ----------------------------------------------- |
+| `bun run dev`                           | Start all apps in development mode (hot reload) |
+| `bun run build`                         | Build all apps and packages                     |
+| `bun run lint`                          | Run ESLint across all packages                  |
+| `bun run check-types`                   | Run TypeScript type checking                    |
+| `bun run format`                        | Format code with Prettier                       |
+| `bun run --filter @evalio/backend dev`  | Backend only                                    |
+| `bun run --filter @evalio/frontend dev` | Frontend only                                   |
 
 ## API Overview
 
 ### HTTP Routes
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/api/auth/signup` | Register with email + password |
-| POST | `/api/auth/verify-otp` | Verify email with OTP |
-| POST | `/api/auth/login` | Login, receive JWT |
-| GET | `/api/interviews` | List user's interviews |
-| POST | `/api/interviews` | Create new interview |
-| GET | `/api/interviews/:id` | Get interview details |
-| POST | `/api/resumes/upload` | Upload resume (PDF) |
-| GET | `/api/github/profile` | Get linked GitHub profile |
-| POST | `/api/companies/generate` | AI-generate custom company context |
+| Method | Path                      | Description                        |
+| ------ | ------------------------- | ---------------------------------- |
+| POST   | `/api/auth/signup`        | Register with email + password     |
+| POST   | `/api/auth/verify-otp`    | Verify email with OTP              |
+| POST   | `/api/auth/login`         | Login, receive JWT                 |
+| GET    | `/api/interviews`         | List user's interviews             |
+| POST   | `/api/interviews`         | Create new interview               |
+| GET    | `/api/interviews/:id`     | Get interview details              |
+| POST   | `/api/resumes/upload`     | Upload resume (PDF)                |
+| GET    | `/api/github/profile`     | Get linked GitHub profile          |
+| POST   | `/api/companies/generate` | AI-generate custom company context |
+| POST   | `/api/feedback/submit`    | Submit feedback                    |
+| GET    | `/api/feedback`           | List feedbacks (admin only)        |
 
 ### WebSocket Messages
 
-| Direction | Type | Purpose |
-|-----------|------|---------|
-| Client → | `init` | Authenticate, start interview session |
-| Client → | `audio_chunk` | Send PCM audio data |
-| Client → | `audio_stream_end` | Signal end of user speech |
-| Client → | `end_interview` | Request closing + evaluation |
-| Server → | `ready` | Interview initialized, listening |
-| Server → | `serverContent` | AI speech (audio + transcription) |
-| Server → | `closing_started` | Interview entering closing phase |
-| Server → | `feedback_ready` | Evaluation complete, navigate to results |
-| Server → | `time_limit` | Total interview duration |
-| Server → | `time_warning` | 1 minute remaining |
-| Server → | `time_limit_reached` | Time expired, closing triggered |
-
-## Project Structure
-
-### Backend (`apps/backend`)
-
-```
-src/
-├── index.ts                  # Elysia app entry
-├── prompt.ts                 # Dynamic prompt assembly
-├── ws.ts                     # WebSocket server + Gemini bridge
-├── gemini.ts                 # Gemini Live API client
-├── lib/
-│   └── prisma.ts             # DB client
-├── middleware/
-│   ├── auth.ts               # JWT middleware
-│   └── rateLimit.ts          # Rate limiting
-├── routes/
-│   ├── auth.ts               # Signup, login, OTP
-│   ├── interview.ts          # CRUD + creation
-│   ├── resume.ts             # Upload, list
-│   ├── github.ts             # GitHub sync
-│   ├── company.ts            # Company config
-│   ├── evaluate.ts           # Evaluation status
-│   ├── user.ts               # Profile
-│   └── profile.ts            # Candidate skill profile
-└── services/
-    ├── evaluate.ts           # Post-interview scoring
-    └── candidateProfile.ts   # Skill profile updates
-```
-
-### Frontend (`apps/frontend`)
-
-```
-src/
-├── main.tsx                  # App entry
-├── App.tsx                   # Router setup
-├── lib/
-│   ├── ws.ts                 # WebSocket client class
-│   ├── api.ts                # HTTP client
-│   └── auth.ts               # Auth context
-├── hooks/
-│   ├── useMicrophone.ts      # Mic → PCM 16kHz → base64
-│   └── useAudioPlayer.ts     # base64 PCM → AudioContext playback
-├── pages/
-│   ├── NewInterview.tsx      # Multi-step interview setup wizard
-│   ├── Interview.tsx         # Live interview room
-│   ├── Results.tsx           # Post-interview scores + feedback
-│   ├── Dashboard.tsx         # Interview history
-│   ├── Login.tsx             # Auth pages
-│   └── ...
-└── components/
-    └── Create-Interview/
-        ├── CompanyGrid.tsx    # Company selection grid
-        ├── RolePicker.tsx     # Role selection + custom role
-        ├── StyleDepthPicker.tsx # Style & depth configuration
-        ├── ResumeSection.tsx  # Resume + GitHub upload
-        ├── ProgressStepper.tsx # Step indicator
-        └── SessionCard.tsx    # Session review + launch
-```
+| Direction | Type                 | Purpose                                  |
+| --------- | -------------------- | ---------------------------------------- |
+| Client →  | `init`               | Authenticate, start interview session    |
+| Client →  | `audio_chunk`        | Send PCM audio data                      |
+| Client →  | `audio_stream_end`   | Signal end of user speech                |
+| Client →  | `end_interview`      | Request closing + evaluation             |
+| Server →  | `ready`              | Interview initialized, listening         |
+| Server →  | `serverContent`      | AI speech (audio + transcription)        |
+| Server →  | `queued`             | Session queued (position in queue)       |
+| Server →  | `position_update`    | Queue position changed                   |
+| Server →  | `closing_started`    | Interview entering closing phase         |
+| Server →  | `feedback_ready`     | Evaluation complete, navigate to results |
+| Server →  | `time_limit`         | Total interview duration                 |
+| Server →  | `time_warning`       | 1 minute remaining                       |
+| Server →  | `time_limit_reached` | Time expired, closing triggered          |
 
 ## Key Design Decisions
 
@@ -303,7 +300,15 @@ In standard interview modes, each Q&A creates a new database turn. In Challenge 
 
 ### AI Interruption Without Backend Round-trip
 
-Interruption is detected on the frontend: when Gemini sends audio `inlineData` while `isUserSpeakingRef.current` is true, the mic is stopped immediately and `audio_stream_end` is sent. No backend round-trip needed, keeping latency low.
+Interruption is detected on the frontend: when AI sends audio while the user is speaking, the mic is stopped immediately and `audio_stream_end` is sent. No backend round-trip needed, keeping latency low.
+
+### Redis Queue for Session Management
+
+Instead of Kafka or PostgreSQL-based queuing, the system uses Redis Sorted Sets for FIFO queuing and Redis Sets for tracking active sessions. This provides O(log N) queue operations and real-time position updates without the overhead of a full message broker.
+
+### Event-Driven Code Snapshots (DSA)
+
+DSA rounds use event-driven code snapshots instead of auto-snapshots every 10 seconds. Code is sent only when the user requests review, clicks Run, says "I'm done," or the AI asks to see the current implementation — reducing storage and token cost by ~95%.
 
 ### Prompt Layering
 
