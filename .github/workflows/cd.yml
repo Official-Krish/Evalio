@@ -55,10 +55,17 @@ jobs:
           git config user.email github-actions@github.com
 
       - name: Update Image Tags
+        id: update_tags
         if: steps.changed.outputs.deploy == 'true'
         shell: bash
         run: |
-          VERSION=v1.${{ github.event.workflow_run.run_number }}
+          BASE_RUN=4
+          BASE_MINOR=4
+          OFFSET=$(( ${{ github.event.workflow_run.run_number }} - BASE_RUN ))
+          MINOR=$(( OFFSET / 10 + BASE_MINOR ))
+          PATCH=$(( OFFSET % 10 ))
+          VERSION="v1.${MINOR}.${PATCH}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
           if [ "$(cat changed/backend)" = "true" ]; then
             sed -i "s|image: krishanand01/evalio-backend:.*|image: krishanand01/evalio-backend:$VERSION|g" ops/deployment.yml
@@ -85,7 +92,7 @@ jobs:
           steps.gitcheck.outputs.changed == 'true'
         run: |
           git add ops/deployment.yml
-          git commit -m "chore: update image tags to v1.${{ github.event.workflow_run.run_number }}"
+          git commit -m "chore: update image tags to ${{ steps.update_tags.outputs.version }}"
 
       - name: Push Changes
         if: |

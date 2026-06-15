@@ -143,6 +143,10 @@ jobs:
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main'
 
+    env:
+      BASE_RUN: 4
+      BASE_MINOR: 4
+
     strategy:
       fail-fast: false
 
@@ -162,6 +166,16 @@ jobs:
       - name: Checkout
         if: matrix.changed == 'true'
         uses: actions/checkout@v4
+
+      - name: Compute Version
+        if: matrix.changed == 'true'
+        id: version
+        shell: bash
+        run: |
+          OFFSET=$(( ${{ github.run_number }} - ${{ env.BASE_RUN }} ))
+          MINOR=$(( OFFSET / 10 + ${{ env.BASE_MINOR }} ))
+          PATCH=$(( OFFSET % 10 ))
+          echo "tag=v1.${MINOR}.${PATCH}" >> "$GITHUB_OUTPUT"
 
       - name: Setup Docker Buildx
         if: matrix.changed == 'true'
@@ -184,7 +198,7 @@ jobs:
 
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:v1.${{ github.run_number }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.version.outputs.tag }}
 
           cache-from: type=gha
           cache-to: type=gha,mode=max
