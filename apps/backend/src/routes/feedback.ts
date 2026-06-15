@@ -3,13 +3,14 @@ import { prisma } from "../lib/prisma";
 import { authGuard } from "../middleware/auth";
 import { sendFeedbackThankYouEmail } from "../lib/email";
 
-export const feedbackRoutes = new Elysia({ prefix: "/feedback" })
-  .guard({}, (app) =>
+export const feedbackRoutes = new Elysia({ prefix: "/feedback" }).guard(
+  {},
+  (app) =>
     app
       .use(authGuard)
       .post(
         "/submit",
-        async ({ user, body, set }) => {
+        async ({ user, body }) => {
           const feedback = await prisma.feedback.create({
             data: {
               userId: user.id,
@@ -49,4 +50,4 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedback" })
         });
         return { feedbacks };
       }),
-  );
+);

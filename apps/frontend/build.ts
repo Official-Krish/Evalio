@@ -14,6 +14,9 @@ const result = await Bun.build({
   minify: true,
   target: "browser",
   sourcemap: "linked",
+  alias: {
+    "@": "./src",
+  },
   define: {
     "process.env.NODE_ENV": JSON.stringify("production"),
     __BACKEND_URL__: JSON.stringify(

@@ -275,6 +275,70 @@ export function ResultsPage() {
       {interview.summary && <SummarySection summary={interview.summary} />}
 
       {turns.length > 0 && <QASection turns={turns} />}
+
+      <div
+        style={{
+          marginTop: "48px",
+          padding: "24px",
+          borderRadius: "12px",
+          border: "1px solid var(--color-border)",
+          background: "var(--color-bg-elevated)",
+          textAlign: "center",
+        }}
+      >
+        <p style={{ fontSize: "18px", margin: 0 }}>💬</p>
+        <p
+          style={{
+            fontSize: "14px",
+            fontWeight: 600,
+            color: "var(--color-text)",
+            margin: "8px 0 4px",
+          }}
+        >
+          How was your interview experience?
+        </p>
+        <p
+          style={{
+            fontSize: "12px",
+            color: "var(--color-text-muted)",
+            margin: "0 0 14px",
+            lineHeight: 1.5,
+          }}
+        >
+          Your feedback helps us make Evalio better for everyone.
+        </p>
+        <Link
+          to="/feedback"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 20px",
+            borderRadius: "6px",
+            border: "none",
+            background: "var(--landing-accent, #b8a88a)",
+            color: "#080808",
+            fontSize: "13px",
+            fontWeight: 600,
+            textDecoration: "none",
+            transition: "opacity 0.15s",
+          }}
+        >
+          Share feedback
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M4 2l4 4-4 4" />
+          </svg>
+        </Link>
+      </div>
     </div>
   );
 }

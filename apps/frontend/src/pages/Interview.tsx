@@ -15,7 +15,13 @@ import { InterviewConnecting } from "@/components/interview/InterviewConnecting"
 import { InterviewQueue } from "@/components/interview/InterviewQueue";
 import toast from "react-hot-toast";
 
-type Phase = "connecting" | "queued" | "ready" | "ai_speaking" | "user_speaking" | "ended";
+type Phase =
+  | "connecting"
+  | "queued"
+  | "ready"
+  | "ai_speaking"
+  | "user_speaking"
+  | "ended";
 
 export function InterviewPage() {
   const { id } = useParams<{ id: string }>();
@@ -68,7 +74,14 @@ export function InterviewPage() {
     if (aiPlaying || aiTurnActive) return "ai_speaking";
     if (micActive) return "user_speaking";
     return "ready";
-  }, [feedbackReady, isConnecting, queuedPosition, aiPlaying, aiTurnActive, micActive]);
+  }, [
+    feedbackReady,
+    isConnecting,
+    queuedPosition,
+    aiPlaying,
+    aiTurnActive,
+    micActive,
+  ]);
 
   const remainingMs = useMemo(() => {
     if (!timeLimit) return null;
@@ -307,7 +320,8 @@ export function InterviewPage() {
   }, [connectSocket]);
 
   useEffect(() => {
-    if (phase === "ended" || phase === "connecting" || phase === "queued") return;
+    if (phase === "ended" || phase === "connecting" || phase === "queued")
+      return;
     const interval = setInterval(() => setDuration((d) => d + 1), 1000);
     return () => clearInterval(interval);
   }, [phase]);
@@ -369,6 +383,11 @@ export function InterviewPage() {
   const activeSide = phase === "ai_speaking" ? "ai" : "user";
   const activeAnalyser = activeSide === "ai" ? aiAnalyserRef : userAnalyserRef;
 
+  const handleLeaveQueue = useCallback(() => {
+    teardown();
+    navigate("/dashboard");
+  }, [teardown, navigate]);
+
   if (error) {
     return (
       <div className="interview-room flex flex-col items-center justify-center min-h-[100dvh] gap-6 px-6">
@@ -385,11 +404,6 @@ export function InterviewPage() {
       </div>
     );
   }
-
-  const handleLeaveQueue = useCallback(() => {
-    teardown();
-    navigate("/dashboard");
-  }, [teardown, navigate]);
 
   if (phase === "connecting") {
     return <InterviewConnecting />;

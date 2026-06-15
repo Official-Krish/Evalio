@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { useSession } from "../lib/auth";
@@ -153,6 +154,58 @@ export function DashboardPage() {
 
             {!isLoading && interviews.length === 0 && (
               <EmptyState onUpload={() => setShowUpload(true)} />
+            )}
+
+            {completed.length > 0 && (
+              <Link
+                to="/feedback"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "14px 18px",
+                  borderRadius: "10px",
+                  border: "1px solid var(--color-border)",
+                  background: "var(--color-bg-elevated)",
+                  textDecoration: "none",
+                  transition: "all 0.15s",
+                }}
+              >
+                <span style={{ fontSize: "20px" }}>💬</span>
+                <div style={{ flex: 1 }}>
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      color: "var(--color-text)",
+                      margin: 0,
+                    }}
+                  >
+                    Share your thoughts
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      color: "var(--color-text-muted)",
+                      margin: "2px 0 0",
+                    }}
+                  >
+                    Help us improve Evalio with your feedback
+                  </p>
+                </div>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  stroke="var(--color-text-muted)"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 3l4 4-4 4" />
+                </svg>
+              </Link>
             )}
           </div>
 
