@@ -71,7 +71,7 @@ spec:
     spec:
       containers:
         - name: evalio-backend
-          image: krishanand01/evalio-backend:v1.4
+          image: krishanand01/evalio-backend:v1.4.2
           ports:
             - containerPort: 3000
             - containerPort: 8080
