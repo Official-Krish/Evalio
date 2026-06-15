@@ -1,5 +1,4 @@
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
-import mammoth from "mammoth";
+import { extractText } from "unpdf";
 
 export async function parseResume(
   buffer: Buffer,
@@ -9,22 +8,11 @@ export async function parseResume(
 
   switch (ext) {
     case "pdf": {
-      const data = new Uint8Array(buffer);
-      const doc = await pdfjs.getDocument({ data }).promise;
-      let text = "";
-      for (let i = 1; i <= doc.numPages; i++) {
-        const page = await doc.getPage(i);
-        const content = await page.getTextContent();
-        text +=
-          content.items
-            .map((item) => ("str" in item ? item.str : ""))
-            .join(" ") + "\n";
-        page.cleanup();
-      }
-      doc.destroy();
-      return text;
+      const { text } = await extractText(new Uint8Array(buffer));
+      return text.join("\n");
     }
     case "docx": {
+      const mammoth = await import("mammoth");
       const result = await mammoth.extractRawText({ buffer });
       return result.value;
     }
