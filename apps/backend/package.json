@@ -38,9 +38,9 @@
     "elysia": "^1.4.28",
     "elysia-rate-limit": "^4.6.2",
     "mammoth": "^1.12.0",
-    "pdfjs-dist": "6.0.227",
     "redis": "^6.0.0",
     "resend": "^6.12.4",
+    "unpdf": "^1.6.2",
     "ws": "^8.21.0",
     "zod": "^4.4.3"
   }
