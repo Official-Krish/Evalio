@@ -1,23 +1,22 @@
-import { Link } from "react-router-dom"
-import { motion } from "motion/react"
-import { InterviewSystem } from "./InterviewSystem"
-import { useSession } from "@/lib/auth"
+import { Link } from "react-router-dom";
+import { motion } from "motion/react";
+import { InterviewSystem } from "./InterviewSystem";
+import { useSession } from "@/lib/auth";
 
 const PUNCH_LINES = [
   "Uploads your résumé.",
   "Challenges your assumptions.",
   "Finds the weak answers.",
-]
+];
 
 export function Opening() {
   const { data: session } = useSession();
   const user = session?.user ?? null;
   return (
     <section className="landing-hero relative flex flex-col justify-center overflow-hidden border-b">
-      <div className="landing-hero-grid py-8 lg:mt-18">
+      <div className="landing-hero-grid py-8 lg:mt-26 md:mt-46 sm:mt-34 max-sm:mt-[72px]">
         {/* Copy — 65% */}
         <div className="relative z-10 landing-hero-copy">
-
           {/* Early Access Badge */}
           <motion.div
             initial={{ opacity: 0, y: -8 }}
@@ -29,7 +28,9 @@ export function Opening() {
               <span className="landing-early-access-dot" />
               <span className="landing-early-access-label">Early Access</span>
               <span className="landing-early-access-divider" />
-              <span className="landing-early-access-slots">Limited spots open</span>
+              <span className="landing-early-access-slots">
+                Limited spots open
+              </span>
             </span>
           </motion.div>
 
@@ -68,41 +69,53 @@ export function Opening() {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.75, ease: [0.22, 1, 0.36, 1] }}
+            transition={{
+              duration: 0.8,
+              delay: 0.75,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="mt-10 lg:mt-12 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6"
           >
-            <Link to={user ? "/dashboard" : "/signup"} className="landing-cta-primary landing-cta-sharp">
-              {user ? "Go to dashboard" : "Request early access"}
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+            <Link
+              to={user ? "/dashboard" : "/signup"}
+              className="landing-cta-primary landing-cta-sharp"
+            >
+              {user ? "Go to dashboard" : "Start Interviewing"}
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="none"
+                aria-hidden
+              >
+                <path
+                  d="M3 7h8M8 4l3 3-3 3"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </Link>
             <div className="flex flex-col gap-1">
-              <span className="landing-early-access-note">No credit card required</span>
-              <span className="landing-early-access-note">Free during early access · 3 sessions/week</span>
+              <span className="landing-early-access-note">
+                No credit card required
+              </span>
+              <span className="landing-early-access-note">
+                Free during early access · 3 sessions/week
+              </span>
             </div>
           </motion.div>
 
-          {/* Social proof */}
+          {/* Early adopters signal */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.1, duration: 0.8 }}
-            className="mt-8 flex items-center gap-3"
+            className="mt-8 flex items-center gap-2"
           >
-            <div className="landing-avatars-stack">
-              {["AR", "KL", "MV", "JT", "SP"].map((initials, i) => (
-                <span
-                  key={initials}
-                  className="landing-avatar"
-                  style={{ marginLeft: i === 0 ? 0 : "-8px", zIndex: 5 - i }}
-                >
-                  {initials}
-                </span>
-              ))}
-            </div>
-            <span className="landing-social-proof">
-              <strong style={{ color: "var(--landing-fg)", fontWeight: 500 }}>240+</strong> candidates already practicing
+            <span className="text-[12px] text-[var(--landing-fg-faint)]">
+              AI calibrated to real interviewers at every stage
             </span>
           </motion.div>
         </div>
@@ -121,13 +134,40 @@ export function Opening() {
       >
         <span className="text-[10px] tracking-[0.2em] uppercase">Scroll</span>
         <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden>
-          <rect x="4.5" y="2" width="3" height="6" rx="1.5" fill="currentColor" opacity="0.4">
-            <animate attributeName="y" values="2;6;2" dur="2s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2s" repeatCount="indefinite" />
+          <rect
+            x="4.5"
+            y="2"
+            width="3"
+            height="6"
+            rx="1.5"
+            fill="currentColor"
+            opacity="0.4"
+          >
+            <animate
+              attributeName="y"
+              values="2;6;2"
+              dur="2s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="opacity"
+              values="0.4;0.8;0.4"
+              dur="2s"
+              repeatCount="indefinite"
+            />
           </rect>
-          <rect x="1" y="1" width="10" height="18" rx="5" stroke="currentColor" strokeWidth="0.75" opacity="0.25" />
+          <rect
+            x="1"
+            y="1"
+            width="10"
+            height="18"
+            rx="5"
+            stroke="currentColor"
+            strokeWidth="0.75"
+            opacity="0.25"
+          />
         </svg>
       </motion.div>
     </section>
-  )
+  );
 }

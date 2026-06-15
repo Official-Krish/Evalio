@@ -17,7 +17,7 @@ const items = [
   { label: "Pricing", path: "/pricing", icon: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z M12 6v12 M9 9h4a2 2 0 0 1 0 4H9" },
 ]
 
-export function ProfileDropdown({ user }: { user: { name: string; email: string } }) {
+export function ProfileDropdown({ user }: { user: { name: string; email: string; role?: string } }) {
   const navigate = useNavigate()
   const logout = useLogout()
   const [open, setOpen] = useState(false)
@@ -102,6 +102,16 @@ export function ProfileDropdown({ user }: { user: { name: string; email: string 
                   }}
                 />
               ))}
+              {user.role === "ADMIN" && (
+                <DropdownItem
+                  label="Admin"
+                  icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2z M3.65 11.25a.5.5 0 0 0 0 .9l.2.1a2.5 2.5 0 0 1 1.25 2.15v.3a.5.5 0 0 0 .5.5h.15a2.5 2.5 0 0 1 2.15 1.25l.1.2a.5.5 0 0 0 .9 0l.1-.2a2.5 2.5 0 0 1 2.15-1.25h.15a.5.5 0 0 0 .5-.5v-.3a2.5 2.5 0 0 1 1.25-2.15l.2-.1a.5.5 0 0 0 0-.9l-.2-.1a2.5 2.5 0 0 1-1.25-2.15v-.3a.5.5 0 0 0-.5-.5h-.15a2.5 2.5 0 0 1-2.15-1.25l-.1-.2a.5.5 0 0 0-.9 0l-.1.2a2.5 2.5 0 0 1-2.15 1.25h-.15a.5.5 0 0 0-.5.5v.3a2.5 2.5 0 0 1-1.25 2.15z"
+                  onClick={() => {
+                    setOpen(false)
+                    navigate("/admin/feedback")
+                  }}
+                />
+              )}
             </div>
 
             <div className="px-1.5 pb-1.5">

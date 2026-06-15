@@ -11,6 +11,7 @@ import { LandingCompanies } from "@/components/landing/LandingCompanies"
 import { LandingStyles } from "@/components/landing/LandingStyles"
 import { LandingEvaluation } from "@/components/landing/LandingEvaluation"
 import { Threshold } from "@/components/landing/Threshold"
+import { LandingPricing } from "@/components/landing/LandingPricing"
 import { Footer } from "@/components/Footer"
 
 export function LandingPage() {
@@ -35,6 +36,7 @@ export function LandingPage() {
         <LandingCompanies />
         <LandingStyles />
         <LandingEvaluation />
+        <LandingPricing />
         <Threshold />
       </main>
       <Footer />

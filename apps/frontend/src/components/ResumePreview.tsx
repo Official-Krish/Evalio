@@ -1,12 +1,12 @@
-import { useQuery } from "@tanstack/react-query"
-import { motion } from "motion/react"
-import { api } from "../lib/api"
-import type { Resume } from "@evalio/shared"
+import { useQuery } from "@tanstack/react-query";
+import { motion } from "motion/react";
+import { api } from "../lib/api";
+import type { Resume } from "@evalio/shared";
 
 interface ResumePreviewProps {
-  resumeId: string | null | undefined
-  open: boolean
-  onClose: () => void
+  resumeId: string | null | undefined;
+  open: boolean;
+  onClose: () => void;
 }
 
 export function ResumePreview({ resumeId, open, onClose }: ResumePreviewProps) {
@@ -15,12 +15,15 @@ export function ResumePreview({ resumeId, open, onClose }: ResumePreviewProps) {
     queryFn: () => api.listResumes(),
     select: (d) => (d.resumes as Resume[]).find((r) => r.id === resumeId),
     enabled: open && !!resumeId,
-  })
+  });
 
-  if (!open) return null
+  if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -28,9 +31,23 @@ export function ResumePreview({ resumeId, open, onClose }: ResumePreviewProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--landing-line)]">
-          <h3 className="text-sm font-medium text-[var(--landing-fg)]">Resume Preview</h3>
-          <button onClick={onClose} className="text-[var(--landing-fg-faint)] hover:text-[var(--landing-fg-muted)] transition-colors p-1">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <h3 className="text-sm font-medium text-[var(--landing-fg)]">
+            Resume Preview
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-[var(--landing-fg-faint)] hover:text-[var(--landing-fg-muted)] transition-colors p-1"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -57,7 +74,8 @@ export function ResumePreview({ resumeId, open, onClose }: ResumePreviewProps) {
         {resume?.originalUrl && (
           <div className="flex items-center justify-between px-6 py-3 border-t border-[var(--landing-line)]">
             <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>
-              v{resume.version} &middot; {new Date(resume.uploadedAt).toLocaleDateString()}
+              v{resume.version}{" "}
+              {new Date(resume.uploadedAt).toLocaleDateString()}
             </span>
             <a
               href={resume.originalUrl}
@@ -76,5 +94,5 @@ export function ResumePreview({ resumeId, open, onClose }: ResumePreviewProps) {
         )}
       </motion.div>
     </div>
-  )
+  );
 }
