@@ -4,6 +4,7 @@ import { IdentityCard } from "../components/Profile/IdentityCard";
 import { ResumeVault } from "../components/Profile/ResumeVault";
 import { StreakHeatmap } from "../components/Profile/StreakHeatmap";
 import { SkillProfileCard } from "../components/Profile/SkillProfileCard";
+import { FailurePatternDetailCard } from "../components/Profile/FailurePatternDetailCard";
 import { GithubIntegrationCard } from "../components/Profile/GithubIntegrationCard";
 import { api } from "../lib/api";
 import { usePageTitle } from "@/lib/usePageTitle";
@@ -42,6 +43,13 @@ export function ProfilePage() {
     enabled: !!user,
   });
 
+  const failurePatterns =
+    (skillsData?.profile as { failurePatterns?: unknown } | null)
+      ?.failurePatterns ?? [];
+  const normalizedPatterns = Array.isArray(failurePatterns)
+    ? failurePatterns
+    : [];
+
   // Fetch Github details
   const { data: githubProfileData } = useQuery({
     queryKey: ["githubProfile"],
@@ -51,6 +59,9 @@ export function ProfilePage() {
 
   const interviews = interviewsData ?? [];
   const resumes = resumesData ?? [];
+  const completedCount = interviews.filter(
+    (i) => i.status === "COMPLETED",
+  ).length;
 
   const userProfile = userData?.user as
     | (import("@evalio/shared").User & {
@@ -101,6 +112,12 @@ export function ProfilePage() {
           <SkillProfileCard
             profile={skillsData?.profile}
             loading={skillsLoading}
+          />
+          <FailurePatternDetailCard
+            patterns={
+              normalizedPatterns as import("../constants/signals").FailurePattern[]
+            }
+            completedCount={completedCount}
           />
           <GithubIntegrationCard initialUsername={githubUsername} />
           <ResumeVault resumes={resumes} />

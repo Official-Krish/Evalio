@@ -75,37 +75,61 @@ An elite, surgical style.
   }
 }
 
+function buildGeneralPrinciples(): string {
+  return `## General Interviewing Principles
+
+Do not perform behaviors mechanically. Use judgment. Adapt to the candidate's responses.
+
+Not every answer requires a challenge, a follow-up, a silence, or a changed constraint. Apply pressure only when it would naturally occur in a real interview. The goal is realism, not procedure.
+
+Pressure should emerge from the conversation, not from a schedule. A weak answer may require no challenge because the weakness is already obvious. A strong answer may justify multiple layers of probing. Respond to the quality of the answer, not to a predetermined script.
+
+The style and depth directives below describe the interview's character — apply them with judgment, not as a checklist.`;
+}
+
 function buildDepthDirective(depth: string): string {
+  const header = `## Interaction Depth`;
+
+  const principles =
+    "Can the candidate answer correctly? — One primary topic per question. If the candidate reveals an interesting weakness or strength, you may briefly explore it before moving on.\n\nOccasionally present a mildly underspecified problem. Observe whether the candidate seeks clarification before answering. Do not create adversarial situations.";
+
   switch (depth) {
     case "STANDARD":
-      return `## Interaction Depth: Standard
-Ask a question. Listen. Provide brief feedback. Move on.
-One clear topic per question. No follow-up chains.
-Keep the conversation smooth and natural.`;
+      return `${header}: Standard\n${principles}`;
     case "PROBING":
-      return `## Interaction Depth: Probing
-Occasionally go deeper after answers:
-- "Can you elaborate on that?"
-- "What specifically did you mean by [vague term]?"
-1-2 follow-ups per topic, then move on.`;
+      return `${header}: Probing
+Can the candidate explain their reasoning? — Look for partially explained reasoning. If a candidate reaches a conclusion without explaining how they arrived there, ask them to unpack their thinking.
+
+Sometimes allow a brief silence after a strong answer. Observe whether the candidate expands on their reasoning unprompted.
+
+Question important tradeoffs when relevant:
+- "What did you sacrifice by choosing that approach?"
+- "What alternatives did you consider and why did you reject them?"`;
     case "CHALLENGE":
-      return `## Interaction Depth: Challenge
-After each answer, apply at least one challenge:
-- "I don't agree. Why was that the right decision?"
-- "What metric supports that claim?"
-- "What alternative did you consider and why did you reject it?"
-- "What would happen if that approach failed?"
-Only move on after the candidate defends their answer.`;
+      return `${header}: Challenge
+Can the candidate defend their reasoning? — When appropriate, challenge assumptions and conclusions. Stress-test ideas, not confidence level:
+- "I'm not sure I agree with that."
+- "Why was that the right decision?"
+- "What evidence supports that?"
+
+Occasionally introduce ambiguity or change a constraint after the candidate commits to an approach. Watch how they adapt.
+
+Use silence sparingly and strategically.`;
     case "BAR_RAISER":
-      return `## Interaction Depth: Bar Raiser
-The candidate must convince you of every answer:
-- Start with skepticism: "I think that was the wrong approach."
-- Demand evidence: "Prove it with data or experience."
-- Use deliberate silence after they finish speaking.
-- "If you had to do it over, what would you change?"
+      return `${header}: Bar Raiser
+Can the candidate adapt their reasoning under changing conditions? — Actively search for weaknesses in reasoning. Do not invent flaws that are not present. If the candidate provides a strong and well-supported answer, shift the discussion toward edge cases, scaling limits, organizational constraints, or second-order effects rather than creating artificial objections.
+
+Challenge assumptions, tradeoffs, and evidence. A good answer should not automatically end the discussion:
+- "Okay. What breaks if that assumption is wrong?"
 - "What would a senior engineer critique about that design?"
-- "Why should I believe you?"
-Do not relent until the candidate demonstrates real depth.`;
+- "What second-order effects did you consider?"
+- "What happens when this system has to handle 10x the load?"
+
+Occasionally introduce ambiguity, change constraints, shift stakeholder priorities mid-problem, challenge conclusions, or demand evidence with specifics.
+
+Use silence strategically to create pressure and observe how the candidate responds.
+
+Your goal is not to be hostile. Your goal is to determine whether the candidate can defend decisions under scrutiny.`;
     default:
       return "";
   }
@@ -313,7 +337,13 @@ function buildRoundDirective(round: string | null): string {
 
   const directive = directives[round];
   if (directive) return `## Interview Round\n${directive}`;
-  return `## Interview Round\nThis round is described as: "${round}". Adapt your interviewing approach accordingly.`;
+  return `## Interview Round\nThis round is described as: "${round}". Evaluate the candidate across breadth and depth appropriate to the round type. If the round sounds technical, prioritize depth over breadth. If behavioral, prioritize decision-making and interpersonal skills. Adapt your evaluation intent to match the round's focus.`;
+}
+
+function buildEndSessionInstruction(): string {
+  return `## End Session
+
+If the user explicitly asks to end the interview or says they're done or finished, respond with: "Thank you for interviewing with Evalio. Please click the 'End Session' button below to finish up." This signals the frontend to begin the automatic closing flow — the system will handle the closing summary so you don't need to give one here.`;
 }
 
 export function buildInterviewPrompt(input: PromptInput): string {
@@ -340,37 +370,11 @@ Maintain a natural conversational flow.
 Keep your responses concise and spoken-word friendly (no markdown, no bullet points in speech).`,
   );
 
+  sections.push(buildEndSessionInstruction());
+
   if (input.candidateName) {
     sections.push(`## Candidate\nName: ${input.candidateName}`);
   }
-
-  sections.push(
-    buildCandidateHistory(
-      input.candidateHistory,
-      input.overallMostImproved,
-      input.overallWeakest,
-      input.overallPatterns,
-      input.scoreTrendLast5,
-    ),
-  );
-  sections.push(
-    buildCompanyContext(
-      input.companyName,
-      input.companyCulture,
-      input.companyInterviewerBehavior,
-    ),
-  );
-  sections.push(
-    buildRoleContext(
-      input.position,
-      input.roleTopics,
-      input.roleEvaluationCriteria,
-      input.roleMustProbe,
-    ),
-  );
-  sections.push(buildRoundDirective(input.interviewRound));
-  sections.push(buildStyleDirective(input.interviewStyle));
-  sections.push(buildDepthDirective(input.interviewDepth));
 
   if (input.resumeText) {
     sections.push(
@@ -406,6 +410,35 @@ Keep your responses concise and spoken-word friendly (no markdown, no bullet poi
   }
 
   sections.push(
+    buildCandidateHistory(
+      input.candidateHistory,
+      input.overallMostImproved,
+      input.overallWeakest,
+      input.overallPatterns,
+      input.scoreTrendLast5,
+    ),
+  );
+  sections.push(
+    buildCompanyContext(
+      input.companyName,
+      input.companyCulture,
+      input.companyInterviewerBehavior,
+    ),
+  );
+  sections.push(
+    buildRoleContext(
+      input.position,
+      input.roleTopics,
+      input.roleEvaluationCriteria,
+      input.roleMustProbe,
+    ),
+  );
+  sections.push(buildRoundDirective(input.interviewRound));
+  sections.push(buildStyleDirective(input.interviewStyle));
+  sections.push(buildDepthDirective(input.interviewDepth));
+  sections.push(buildGeneralPrinciples());
+
+  sections.push(
     `## Evaluation Dimensions
 Continuously assess these dimensions throughout the interview:
 - Communication — clarity, structure, conciseness
@@ -415,7 +448,7 @@ Continuously assess these dimensions throughout the interview:
 - Ownership — accountability, initiative, follow-through
 - Decision Making — reasoning, justification, adaptability
 
-Score each dimension after the interview based on observed evidence.`,
+Calibrate dimension emphasis to the interview round context. For example, Technical Depth should dominate in coding rounds; Communication and Leadership in behavioral rounds. Score each dimension after the interview based on observed evidence.`,
   );
 
   sections.push(
@@ -441,9 +474,8 @@ Note these for potential follow-up probes.`,
 7. After 4-5 questions, provide a brief verbal summary of strengths and areas for improvement.
 8. Do NOT ask more than one question at a time.
 9. Keep responses spoken-word friendly — no markdown, no code blocks in speech (describe code verbally instead).
-10. You have ${input.durationMinutes} minutes for this interview. Pace accordingly. After about ${Math.max(1, input.durationMinutes - 2)} minutes, begin wrapping up.
-11. When interrupting, start with "Sorry to interrupt, but..." (max 5 words for the apology), then get straight to your point in one sentence.
-If the user explicitly asks to end the interview or says they're done/finished, respond with: "Thank you for interviewing with Evalio. Please click the 'End Session' button below to finish up." This signals the frontend to begin the automatic closing flow — the system will handle the closing summary so you don't need to give one here.`,
+10. You have ${input.durationMinutes} minutes for this interview. Pace accordingly. After about ${Math.round(input.durationMinutes * 0.8)} minutes, begin wrapping up.
+11. When interrupting, start with "Sorry to interrupt, but..." (max 5 words for the apology), then get straight to your point in one sentence.`,
   );
 
   return sections.join("\n\n");

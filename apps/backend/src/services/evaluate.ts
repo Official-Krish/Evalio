@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { prisma } from "../lib/prisma";
 import { updateCandidateProfile } from "./profile";
+import { aggregateFailurePatterns } from "./failurePatterns";
 
 interface TurnEvaluation {
   orderNumber: number;
@@ -146,6 +147,7 @@ export async function evaluateInterview(interviewId: string, retries = 1) {
       resume: { select: { extractedText: true } },
       user: {
         select: {
+          id: true,
           name: true,
           githubProfile: {
             select: { summary: true, languages: true },
@@ -279,6 +281,10 @@ export async function evaluateInterview(interviewId: string, retries = 1) {
   // Trigger candidate profile update asynchronously
   updateCandidateProfile(interviewId).catch((err) =>
     console.error("[evaluate] profile update failed:", err),
+  );
+
+  aggregateFailurePatterns(interview.user.id).catch((err) =>
+    console.error("[evaluate] pattern aggregation failed:", err),
   );
 
   return { evaluation: result, summary };

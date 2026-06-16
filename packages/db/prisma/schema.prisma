@@ -76,6 +76,8 @@ model CandidateSkillProfile {
   problemSolving    Json     @default("[]")
   leadership        Json     @default("[]")
   commonPatterns    Json     @default("[]")
+  patternSignals    Json     @default("[]")
+  failurePatterns   Json     @default("[]")
   mostImprovedSkill String?
   weakestSkill      String?
   generatedAt       DateTime @default(now())

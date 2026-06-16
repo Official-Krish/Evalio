@@ -13,6 +13,7 @@ import { ReadinessHero } from "../components/Dashboard/ReadinessHero";
 import { AiCoachCard } from "../components/Dashboard/AiCoachCard";
 import { TrendsSection } from "../components/Dashboard/TrendsSection";
 import { WeaknessDetection } from "../components/Dashboard/WeaknessDetection";
+import { FailurePatternCard } from "../components/Dashboard/FailurePatternCard";
 import { InterviewerRemembers } from "../components/Dashboard/InterviewerRemembers";
 import { RoleRecommendations } from "../components/Dashboard/RoleRecommendations";
 import { SidebarRight } from "../components/Dashboard/SidebarRight";
@@ -58,6 +59,19 @@ export function DashboardPage() {
     [completed],
   );
   const milestones = useMemo(() => computeMilestones(completed), [completed]);
+
+  const { data: skillProfile } = useQuery({
+    queryKey: ["skills"],
+    queryFn: api.getSkillProfile,
+    enabled: completed.length >= 4,
+  });
+
+  const failurePatterns =
+    (skillProfile?.profile as { failurePatterns?: unknown } | null)
+      ?.failurePatterns ?? [];
+  const normalizedPatterns = Array.isArray(failurePatterns)
+    ? failurePatterns
+    : [];
 
   // Derive dashboard insights from the latest evaluated interview
   const latestSummary = useMemo(() => {
@@ -116,21 +130,20 @@ export function DashboardPage() {
 
             {completed.length > 1 && <TrendsSection completed={completed} />}
 
+            {completed.length >= 4 && (
+              <FailurePatternCard
+                patterns={
+                  normalizedPatterns as import("../constants/signals").FailurePattern[]
+                }
+                completedCount={completed.length}
+              />
+            )}
+
             {completed.length > 0 && latestSummary && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "16px",
-                }}
-                className="max-md:grid-cols-1"
-              >
-                <WeaknessDetection summary={latestSummary} />
-                <InterviewerRemembers
-                  summary={latestSummary}
-                  totalSessions={totalSessions}
-                />
-              </div>
+              <InterviewerRemembers
+                summary={latestSummary}
+                totalSessions={totalSessions}
+              />
             )}
 
             {latestSummary && <RoleRecommendations summary={latestSummary} />}
