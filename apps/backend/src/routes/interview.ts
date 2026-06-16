@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma";
 import { authGuard } from "../middleware/auth";
 import { extractUsername, parseGithubProfile } from "../utils/githubParser";
 import { strictRateLimit } from "../middleware/rateLimit";
+import type { InterviewStyle, InterviewDepth } from "@evalio/db";
 
 export const interviewRoutes = new Elysia({ prefix: "/interview" })
   .use(strictRateLimit)
@@ -97,10 +98,10 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
                 interviewRound: body.interviewRound,
               }),
               ...(body.interviewStyle && {
-                interviewStyle: body.interviewStyle as any,
+                interviewStyle: body.interviewStyle as InterviewStyle,
               }),
               ...(body.interviewDepth && {
-                interviewDepth: body.interviewDepth as any,
+                interviewDepth: body.interviewDepth as InterviewDepth,
               }),
             },
           });
@@ -145,6 +146,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
           include: {
             _count: { select: { turns: true } },
             resume: { select: { id: true, version: true } },
+            summary: true,
           },
         });
         return { interviews };

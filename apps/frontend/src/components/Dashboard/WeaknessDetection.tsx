@@ -1,23 +1,20 @@
-import { IconChartBar, IconMessageOff, IconLetterCase } from "@tabler/icons-react"
-
-interface Weakness {
-  label: string
-  count: number
-  type: "metric" | "conclusion" | "filler"
-}
+import { IconAlertTriangle } from "@tabler/icons-react";
+import type { InterviewSummary } from "@evalio/shared";
 
 interface WeaknessDetectionProps {
-  weaknesses: Weakness[]
+  summary: InterviewSummary | null;
 }
 
-const iconMap: Record<string, { icon: React.ReactNode; color: string }> = {
-  "Missing Metrics": { icon: <IconChartBar size={15} />, color: "#EF4444" },
-  "Weak Conclusions": { icon: <IconMessageOff size={15} />, color: "#F59E0B" },
-  "Filler Words": { icon: <IconLetterCase size={15} />, color: "#F59E0B" },
-}
+export function WeaknessDetection({ summary }: WeaknessDetectionProps) {
+  const weaknesses = (summary?.weaknesses as string[]) ?? [];
+  const improvements = (summary?.improvementAreas as string[]) ?? [];
 
-export function WeaknessDetection({ weaknesses }: WeaknessDetectionProps) {
-  if (weaknesses.length === 0) return null
+  const items = [
+    ...weaknesses.map((w) => ({ label: w, type: "weakness" as const })),
+    ...improvements.map((i) => ({ label: i, type: "improvement" as const })),
+  ];
+
+  if (items.length === 0) return null;
 
   return (
     <div
@@ -41,43 +38,56 @@ export function WeaknessDetection({ weaknesses }: WeaknessDetectionProps) {
       </p>
 
       <div style={{ display: "flex", flexDirection: "column" }}>
-        {weaknesses.map((w, i) => {
-          const meta = iconMap[w.label] ?? { icon: <IconChartBar size={15} />, color: "#EF4444" }
-          return (
-            <div
-              key={w.label}
+        {items.map((item, i) => (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px",
+              padding: "10px 0",
+              borderBottom:
+                i < items.length - 1
+                  ? "0.5px solid var(--color-border-light)"
+                  : "none",
+            }}
+          >
+            <span
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "10px 0",
-                borderBottom: i < weaknesses.length - 1 ? "0.5px solid var(--color-border-light)" : "none",
+                fontSize: "11px",
+                color: "var(--color-text-muted)",
+                width: "16px",
+                textAlign: "right",
+                flexShrink: 0,
+                marginTop: "2px",
               }}
             >
-              <span style={{ fontSize: "11px", color: "var(--color-text-muted)", width: "16px", textAlign: "right" }}>
-                {i + 1}.
-              </span>
-              <span style={{ color: meta.color, display: "flex", flexShrink: 0 }}>{meta.icon}</span>
-              <span style={{ flex: 1, fontSize: "13px", fontWeight: 500, color: "var(--color-text)" }}>
-                {w.label}
-              </span>
-              <span
-                style={{
-                  background: "rgba(239,68,68,0.08)",
-                  color: "#FCA5A5",
-                  borderRadius: "999px",
-                  fontSize: "10px",
-                  padding: "2px 8px",
-                  fontWeight: 500,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Detected {w.count}&times;
-              </span>
-            </div>
-          )
-        })}
+              {i + 1}.
+            </span>
+            <span
+              style={{
+                color: item.type === "weakness" ? "#EF4444" : "#F59E0B",
+                display: "flex",
+                flexShrink: 0,
+                marginTop: "2px",
+              }}
+            >
+              <IconAlertTriangle size={15} />
+            </span>
+            <span
+              style={{
+                flex: 1,
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "var(--color-text)",
+                lineHeight: 1.5,
+              }}
+            >
+              {item.label}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
-  )
+  );
 }

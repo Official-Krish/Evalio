@@ -223,6 +223,7 @@ export class InterviewConnection {
           this.interviewDepth === "CHALLENGE" ||
           this.interviewDepth === "BAR_RAISER";
 
+        // Always attempt flush — don't rely on turnComplete having fired
         if (isChallengeMode && this.currentTurnId) {
           await this.flushChallengeTurn();
         } else if (this.questionBuf) {
@@ -242,13 +243,7 @@ export class InterviewConnection {
           this.answerBuf = "";
         }
 
-        if (this.currentTurnId) {
-          await finalizeInterview(this.interviewId);
-        } else {
-          console.log(
-            `[ws] skipping finalize — no turns recorded for ${this.interviewId}`,
-          );
-        }
+        await finalizeInterview(this.interviewId);
 
         await releaseSlot(this.interviewId);
         this.wsMap.delete(this.interviewId);
@@ -296,6 +291,7 @@ export class InterviewConnection {
 
   private async handleTurnCompleteDuringClosing() {
     if (!this.interviewId || !this.closingMode || this.finalized) return;
+    this.finalized = true;
     console.log("[ws] closing turn complete — finalizing");
 
     const isChallengeMode =
@@ -442,10 +438,22 @@ export class InterviewConnection {
       }
     });
 
-    this.gemini.on("close", () => {
-      console.log("[gemini] connection closed");
-      this.cleanup();
-      this.client.close();
+    this.gemini.on("close", (...args: unknown[]) => {
+      const code = args[0] as number | undefined;
+      const reason = args[1] as string | undefined;
+      if (!this.finalized) {
+        if (code === 1011 && !this.closingMode) {
+          this.safeSend({
+            type: "error",
+            code: "gemini_timeout",
+            message: "AI session expired - please try again.",
+          });
+        }
+        console.log(
+          `[gemini] connection closed code=${code} reason="${reason}" - triggering cleanup`,
+        );
+        this.cleanup("gemini_close");
+      }
     });
 
     this.gemini.on("error", (err) => {
@@ -666,6 +674,7 @@ export class InterviewConnection {
           this.answerBuf = "";
           this.currentTurnId = null;
           this.questionBuf = "";
+          this.waitingForAiResponse = true;
 
           try {
             this.gemini.send(

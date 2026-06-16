@@ -1,5 +1,4 @@
 import { motion } from "motion/react";
-import { useNavigate } from "react-router-dom";
 
 function formatWait(position: number): string {
   if (position <= 1) return "You're next";

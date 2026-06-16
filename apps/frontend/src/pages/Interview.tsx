@@ -92,16 +92,22 @@ export function InterviewPage() {
 
   const aiSpeakingRef = useRef(false);
   const phaseRef = useRef(phase);
-  const autoMicPendingRef = useRef(false);
+  const autoEndPendingRef = useRef(false);
+  const turnCompletedRef = useRef(false);
   const isUserSpeakingRef = useRef(false);
   const closingRef = useRef(false);
   const feedbackReadyRef = useRef(false);
+  const micActiveRef = useRef(micActive);
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
   useEffect(() => {
+    micActiveRef.current = micActive;
+  }, [micActive]);
+  useEffect(() => {
+    const wasSpeaking = aiSpeakingRef.current;
     aiSpeakingRef.current = aiPlaying;
-    if (!aiPlaying && !endedRef.current && !micActive) {
+    if (!aiPlaying && wasSpeaking && !endedRef.current && !micActive) {
       setAiTurnActive(false);
     }
   }, [aiPlaying, micActive]);
@@ -136,9 +142,7 @@ export function InterviewPage() {
 
     let wsToken: string;
     try {
-      const durationMinutes =
-        user.role === "ADMIN" || user.role === "PRO" ? 30 : 15;
-      const res = await api.getWsToken(durationMinutes);
+      const res = await api.getWsToken();
       wsToken = res.token;
     } catch {
       toast.error("Authentication failed");
@@ -173,8 +177,10 @@ export function InterviewPage() {
 
     socket.on("transcript:assistant", () => {
       if (endedRef.current) return;
-      aiSpeakingRef.current = true;
-      setAiTurnActive(true);
+      if (!turnCompletedRef.current) {
+        turnCompletedRef.current = false;
+        setAiTurnActive(true);
+      }
     });
 
     socket.on("transcript:user", () => {
@@ -224,43 +230,27 @@ export function InterviewPage() {
       }
 
       if (turnComplete && outputText) {
+        turnCompletedRef.current = true;
         setMessages((prev) => [
           ...prev,
           { role: "assistant", text: outputText, id: `ai-${Date.now()}` },
         ]);
-        if (!audioBase64 && !aiSpeakingRef.current) {
+
+        // Detect AI signaling end-of-interview — auto-trigger closing
+        if (outputText.includes("Thank you for interviewing with Evalio")) {
+          autoEndPendingRef.current = true;
+          setTimeout(() => {
+            if (autoEndPendingRef.current && !endedRef.current) {
+              autoEndPendingRef.current = false;
+              socketRef.current?.sendEndInterview();
+            }
+          }, 800);
+        } else if (!audioBase64) {
           setAiTurnActive(false);
-          // Auto-start mic when AI finishes speaking
-          if (
-            !micActive &&
-            !endedRef.current &&
-            !closingRef.current &&
-            !autoMicPendingRef.current
-          ) {
-            autoMicPendingRef.current = true;
-            setTimeout(() => {
-              autoMicPendingRef.current = false;
-              if (
-                !endedRef.current &&
-                !closingRef.current &&
-                !micActive &&
-                !aiSpeakingRef.current
-              ) {
-                isUserSpeakingRef.current = true;
-                startMic((base64) => {
-                  if (!endedRef.current) {
-                    socketRef.current?.sendAudio(base64);
-                  }
-                }).catch(() => {
-                  isUserSpeakingRef.current = false;
-                });
-              }
-            }, 300);
-          }
         }
       }
 
-      if (turnComplete && inputText && !outputText) {
+      if (turnComplete && inputText) {
         setMessages((prev) => [
           ...prev,
           { role: "user", text: inputText, id: `user-${Date.now()}` },
@@ -376,7 +366,7 @@ export function InterviewPage() {
       return;
     }
 
-    if (aiSpeakingRef.current || aiPlaying) {
+    if (aiPlaying || aiTurnActive) {
       toast.error("Wait for the interviewer to finish");
       return;
     }

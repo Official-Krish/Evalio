@@ -244,7 +244,6 @@ export async function sendOtpEmail(
       subject: "Verify your email — Evalio",
       html: buildOtpEmail(otp),
     });
-    console.log(`[email] OTP sent to ${email}`);
     return true;
   } catch (err) {
     console.error("[email] send failed:", err);
@@ -264,7 +263,6 @@ export async function sendResetOtpEmail(
       subject: "Reset your password — Evalio",
       html: buildResetOtpEmail(otp),
     });
-    console.log(`[email] Reset OTP sent to ${email}`);
     return true;
   } catch (err) {
     console.error("[email] send failed:", err);

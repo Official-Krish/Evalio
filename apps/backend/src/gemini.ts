@@ -85,8 +85,6 @@ export async function createGeminiSession(systemPrompt: string) {
     config: {
       responseModalities: [Modality.AUDIO],
       systemInstruction: systemPrompt,
-      inputAudioTranscription: { languageCode: "en-US" },
-      outputAudioTranscription: { languageCode: "en-US" },
     },
     callbacks: {
       onmessage: (message) => {
@@ -128,7 +126,7 @@ export async function createGeminiSession(systemPrompt: string) {
         console.log(
           `[gemini SDK] closed code=${event.code} reason="${event.reason}"`,
         );
-        bus.emit("close");
+        bus.emit("close", event.code, event.reason);
       },
     },
   });

@@ -1,28 +1,37 @@
-import { useState, useRef, type KeyboardEvent, type ClipboardEvent } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { motion } from "motion/react"
-import { resetPasswordSchema, passwordRequirements, type ResetPasswordInput } from "@evalio/shared"
-import { useResetPassword, useForgotPassword } from "../lib/auth"
-import { useResendTimer } from "../lib/useResendTimer"
-import { usePageTitle } from "@/lib/usePageTitle"
-import { AuthLayout } from "@/components/static/AuthLayout"
-import toast from "react-hot-toast"
+import {
+  useState,
+  useRef,
+  type KeyboardEvent,
+  type ClipboardEvent,
+} from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "motion/react";
+import {
+  resetPasswordSchema,
+  passwordRequirements,
+  type ResetPasswordInput,
+} from "@evalio/shared";
+import { useResetPassword, useForgotPassword } from "../lib/auth";
+import { useResendTimer } from "../lib/useResendTimer";
+import { usePageTitle } from "@/lib/usePageTitle";
+import { AuthLayout } from "@/components/static/AuthLayout";
+import toast from "react-hot-toast";
 
 export function ResetPasswordPage() {
-  usePageTitle("Set New Password")
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const emailParam = searchParams.get("email") ?? ""
+  usePageTitle("Set New Password");
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const emailParam = searchParams.get("email") ?? "";
 
-  const [showPassword, setShowPassword] = useState(false)
-  const [digits, setDigits] = useState(["", "", "", "", "", ""])
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-  const { cooldown, canResend, startCooldown } = useResendTimer()
+  const [showPassword, setShowPassword] = useState(false);
+  const [digits, setDigits] = useState(["", "", "", "", "", ""]);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const { cooldown, canResend, startCooldown } = useResendTimer();
 
-  const resetMutation = useResetPassword()
-  const forgotMutation = useForgotPassword()
+  const resetMutation = useResetPassword();
+  const forgotMutation = useForgotPassword();
   const {
     register,
     handleSubmit,
@@ -32,64 +41,67 @@ export function ResetPasswordPage() {
   } = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: { email: emailParam, otp: "", password: "" },
-  })
+  });
 
-  const watchedPassword = watch("password", "")
-  const otp = digits.join("")
+  // eslint-disable-next-line react-hooks/incompatible-library -- React Hook Form watch is incompatible with React Compiler but safe at runtime
+  const watchedPassword = watch("password", "");
+  const otp = digits.join("");
 
   const handleDigitChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return
-    const next = [...digits]
-    next[index] = value.slice(-1)
-    setDigits(next)
-    setValue("otp", next.join(""))
+    if (!/^\d*$/.test(value)) return;
+    const next = [...digits];
+    next[index] = value.slice(-1);
+    setDigits(next);
+    setValue("otp", next.join(""));
     if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus()
+      inputRefs.current[index + 1]?.focus();
     }
-  }
+  };
 
   const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace" && !digits[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus()
+      inputRefs.current[index - 1]?.focus();
     }
-  }
+  };
 
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault()
-    const text = e.clipboardData.getData("text")
-    const nums = text.replace(/\D/g, "").slice(0, 6).split("")
-    const next = ["", "", "", "", "", ""]
-    nums.forEach((n, i) => { next[i] = n })
-    setDigits(next)
-    setValue("otp", next.join(""))
-    const focusAt = Math.min(nums.length, 5)
-    inputRefs.current[focusAt]?.focus()
-  }
+    e.preventDefault();
+    const text = e.clipboardData.getData("text");
+    const nums = text.replace(/\D/g, "").slice(0, 6).split("");
+    const next = ["", "", "", "", "", ""];
+    nums.forEach((n, i) => {
+      next[i] = n;
+    });
+    setDigits(next);
+    setValue("otp", next.join(""));
+    const focusAt = Math.min(nums.length, 5);
+    inputRefs.current[focusAt]?.focus();
+  };
 
   const handleResend = () => {
     forgotMutation.mutate(
       { email: emailParam },
       {
         onSuccess: () => {
-          toast.success("New code sent!")
-          startCooldown()
-          setDigits(["", "", "", "", "", ""])
-          inputRefs.current[0]?.focus()
+          toast.success("New code sent!");
+          startCooldown();
+          setDigits(["", "", "", "", "", ""]);
+          inputRefs.current[0]?.focus();
         },
         onError: (err) => toast.error(err.message),
-      }
-    )
-  }
+      },
+    );
+  };
 
   const onSubmit = (data: ResetPasswordInput) => {
     resetMutation.mutate(data, {
       onSuccess: () => {
-        toast.success("Password reset! Sign in with your new password.")
-        navigate("/login")
+        toast.success("Password reset! Sign in with your new password.");
+        navigate("/login");
       },
       onError: (err) => toast.error(err.message),
-    })
-  }
+    });
+  };
 
   return (
     <AuthLayout variant="login">
@@ -103,11 +115,17 @@ export function ResetPasswordPage() {
           <p className="static-badge">Reset password</p>
           <h1 className="static-title mt-4 text-[2rem]">Set a new password.</h1>
           <p className="static-subtitle mt-2">
-            Enter the code sent to <span className="text-[var(--landing-fg)] font-medium">{emailParam || "your email"}</span>
+            Enter the code sent to{" "}
+            <span className="text-[var(--landing-fg)] font-medium">
+              {emailParam || "your email"}
+            </span>
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="static-auth-card space-y-5">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="static-auth-card space-y-5"
+        >
           <input type="hidden" {...register("email")} />
 
           <div>
@@ -116,7 +134,9 @@ export function ResetPasswordPage() {
               {digits.map((d, i) => (
                 <input
                   key={i}
-                  ref={(el) => { inputRefs.current[i] = el }}
+                  ref={(el) => {
+                    inputRefs.current[i] = el;
+                  }}
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
@@ -129,11 +149,17 @@ export function ResetPasswordPage() {
                 />
               ))}
             </div>
-            {errors.otp && <p className="mt-1 text-[12px] text-red-400">{errors.otp.message}</p>}
+            {errors.otp && (
+              <p className="mt-1 text-[12px] text-red-400">
+                {errors.otp.message}
+              </p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="password" className="static-label">New password</label>
+            <label htmlFor="password" className="static-label">
+              New password
+            </label>
             <div className="relative">
               <input
                 id="password"
@@ -151,10 +177,14 @@ export function ResetPasswordPage() {
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
-            {errors.password && <p className="mt-1 text-[12px] text-red-400">{errors.password.message}</p>}
+            {errors.password && (
+              <p className="mt-1 text-[12px] text-red-400">
+                {errors.password.message}
+              </p>
+            )}
             <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5">
               {passwordRequirements.map((req) => {
-                const met = !watchedPassword || req.test(watchedPassword)
+                const met = !watchedPassword || req.test(watchedPassword);
                 return (
                   <div
                     key={req.label}
@@ -166,10 +196,12 @@ export function ResetPasswordPage() {
                           : "text-red-400"
                     }`}
                   >
-                    <span className="text-[13px] leading-none shrink-0">{met ? "✓" : "○"}</span>
+                    <span className="text-[13px] leading-none shrink-0">
+                      {met ? "✓" : "○"}
+                    </span>
                     {req.label}
                   </div>
-                )
+                );
               })}
             </div>
           </div>
@@ -199,5 +231,5 @@ export function ResetPasswordPage() {
         </form>
       </motion.div>
     </AuthLayout>
-  )
+  );
 }

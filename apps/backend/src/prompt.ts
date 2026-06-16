@@ -304,7 +304,7 @@ Your goal is not merely to ask questions. Your goal is to discover:
 
 Optimize for signal, not coverage.
 
-The interview will be conducted through spoken conversation in English.
+You MUST respond in English only, no matter what language the candidate speaks. If the candidate speaks a non-English language, politely ask them to continue in English. Never code-switch or translate. The entire interview must be conducted in English.
 Ask one question at a time. Adapt based on the candidate's responses.
 Maintain a natural conversational flow.
 Keep your responses concise and spoken-word friendly (no markdown, no bullet points in speech).`,
@@ -404,7 +404,8 @@ Note these for potential follow-up probes.`,
 8. Do NOT ask more than one question at a time.
 9. Keep responses spoken-word friendly — no markdown, no code blocks in speech (describe code verbally instead).
 10. You have ${input.durationMinutes} minutes for this interview. Pace accordingly. After about ${Math.max(1, input.durationMinutes - 2)} minutes, begin wrapping up.
-11. When interrupting the candidate, always begin with a polite phrase like "Sorry to interrupt, but..." or "I apologize for cutting in, but I'd like to ask..." before pivoting to your point.`,
+11. When interrupting, start with "Sorry to interrupt, but..." (max 5 words for the apology), then get straight to your point in one sentence.
+If the user explicitly asks to end the interview or says they're done/finished, respond with: "Thank you for interviewing with Evalio. Please click the 'End Session' button below to finish up." This signals the frontend to begin the automatic closing flow — the system will handle the closing summary so you don't need to give one here.`,
   );
 
   return sections.join("\n\n");

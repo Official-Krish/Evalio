@@ -62,7 +62,7 @@ export const FileUpload = ({
       <motion.div
         onClick={handleClick}
         whileHover="animate"
-        className="group/file relative block w-full cursor-pointer overflow-hidden rounded-lg p-10"
+        className="group/file relative block w-full cursor-pointer overflow-hidden rounded-lg p-10 bg-[var(--color-bg-subtle)]"
       >
         <input
           ref={fileInputRef}
@@ -88,7 +88,7 @@ export const FileUpload = ({
                   key="uploading"
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="relative z-40 mx-auto mt-4 flex w-full items-center justify-center gap-3 rounded-md bg-white p-4 dark:bg-neutral-900 shadow-sm"
+                  className="relative z-40 mx-auto mt-4 flex w-full items-center justify-center gap-3 rounded-md bg-[var(--color-bg-elevated)] p-4 shadow-sm"
                 >
                   <svg
                     className="h-5 w-5 animate-spin text-neutral-500"
@@ -120,7 +120,7 @@ export const FileUpload = ({
                     key={"file" + idx}
                     layoutId={idx === 0 ? "file-upload" : "file-upload-" + idx}
                     className={cn(
-                      "relative z-40 mx-auto mt-4 flex w-full flex-col items-start justify-start overflow-hidden rounded-md bg-white p-4 md:h-24 dark:bg-neutral-900",
+                      "relative z-40 mx-auto mt-4 flex w-full flex-col items-start justify-start overflow-hidden rounded-md bg-[var(--color-bg-elevated)] p-4 md:h-24",
                       "shadow-sm",
                     )}
                   >
@@ -175,8 +175,9 @@ export const FileUpload = ({
                   damping: 20,
                 }}
                 className={cn(
-                  "relative z-40 mx-auto mt-4 flex h-32 w-full max-w-[8rem] items-center justify-center rounded-md bg-white group-hover/file:shadow-2xl dark:bg-neutral-900",
-                  "shadow-[0px_10px_50px_rgba(0,0,0,0.1)]",
+                  "relative z-40 mx-auto mt-4 flex h-32 w-full max-w-[8rem] items-center justify-center rounded-md",
+                  "bg-[var(--color-bg-elevated)] shadow-[0px_10px_50px_rgba(0,0,0,0.4)]",
+                  "group-hover/file:shadow-[0px_10px_50px_rgba(0,0,0,0.6)]",
                 )}
               >
                 {isDragActive ? (
@@ -197,7 +198,7 @@ export const FileUpload = ({
             {!files.length && (
               <motion.div
                 variants={secondaryVariant}
-                className="absolute inset-0 z-30 mx-auto mt-4 flex h-32 w-full max-w-[8rem] items-center justify-center rounded-md border border-dashed border-sky-400 bg-transparent opacity-0"
+                className="absolute inset-0 z-30 mx-auto mt-4 flex h-32 w-full max-w-[8rem] items-center justify-center rounded-md border border-dashed border-[var(--app-accent-border)] bg-transparent opacity-0"
               ></motion.div>
             )}
           </div>
@@ -211,7 +212,7 @@ export function GridPattern() {
   const columns = 41;
   const rows = 11;
   return (
-    <div className="flex shrink-0 scale-105 flex-wrap items-center justify-center gap-x-px gap-y-px bg-gray-100 dark:bg-neutral-900">
+    <div className="flex shrink-0 scale-105 flex-wrap items-center justify-center gap-x-px gap-y-px bg-[var(--color-bg)]">
       {Array.from({ length: rows }).map((_, row) =>
         Array.from({ length: columns }).map((_, col) => {
           const index = row * columns + col;
@@ -220,8 +221,8 @@ export function GridPattern() {
               key={`${col}-${row}`}
               className={`flex h-10 w-10 shrink-0 rounded-[2px] ${
                 index % 2 === 0
-                  ? "bg-gray-50 dark:bg-neutral-950"
-                  : "bg-gray-50 shadow-[0px_0px_1px_3px_rgba(255,255,255,1)_inset] dark:bg-neutral-950 dark:shadow-[0px_0px_1px_3px_rgba(0,0,0,1)_inset]"
+                  ? "bg-[var(--color-bg-subtle)]"
+                  : "bg-[var(--color-bg-subtle)] shadow-[0px_0px_1px_3px_var(--color-bg)_inset]"
               }`}
             />
           );

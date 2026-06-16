@@ -46,9 +46,14 @@
   --color-bg-hover: #1a1a22;
   --color-border: #1e1e2a;
   --color-border-light: #161620;
+  --color-border-secondary: rgba(255, 255, 255, 0.12);
+  --color-border-tertiary: #141420;
   --color-text: #eceae6;
   --color-text-secondary: #8a8884;
   --color-text-muted: #5c5a56;
+  --color-text-tertiary: #3a3a3a;
+  --color-background-secondary: #0f0f15;
+  --ring-track: rgba(255, 255, 255, 0.07);
   /* App accent aliases for dark theme */
   --app-accent: #b8a88a;
   --app-accent-soft: #cfc0a6;
@@ -65,9 +70,14 @@
   --color-bg-hover: #f0ede8;
   --color-border: #e8e4dc;
   --color-border-light: #f0ede8;
+  --color-border-secondary: rgba(0, 0, 0, 0.12);
+  --color-border-tertiary: #d8d4cc;
   --color-text: #121110;
   --color-text-secondary: #5c5a56;
   --color-text-muted: #9a9894;
+  --color-text-tertiary: #c0beb8;
+  --color-background-secondary: #ece9e4;
+  --ring-track: rgba(0, 0, 0, 0.07);
   /* App accent aliases for light theme */
   --app-accent: #8a7a5c;
   --app-accent-soft: #a0906e;
@@ -1531,3 +1541,280 @@ html.landing-active {
   background: linear-gradient(90deg, rgba(138,122,92,0.04) 0%, rgba(138,122,92,0.1) 50%, rgba(138,122,92,0.04) 100%);
   background-size: 200% 100%;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   IMMERSIVE APP PAGES — Apple-level Experience Layer
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Hero numeral — the big cinematic score/stat ─────────────── */
+.evalio-hero-numeral {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(96px, 18vw, 220px);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 0.88;
+  letter-spacing: -0.04em;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.evalio-hero-numeral-sm {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(56px, 10vw, 120px);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 0.88;
+  letter-spacing: -0.04em;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Section label — editorial 10px uppercase tag ─────────────── */
+.evalio-section-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.evalio-section-label-accent {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--app-accent, #b8a88a);
+  font-weight: 500;
+}
+
+/* ─── Glass card — frosted depth surface ──────────────────────── */
+.evalio-glass-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.evalio-glass-card:hover {
+  border-color: var(--app-accent-border, rgba(184,168,138,0.25));
+  box-shadow: 0 0 0 1px var(--app-accent-border, rgba(184,168,138,0.08)),
+              0 20px 60px -20px rgba(0,0,0,0.4);
+}
+
+/* ─── Score ring ──────────────────────────────────────────────── */
+@keyframes evalio-ring-appear {
+  from { stroke-dashoffset: 1000; opacity: 0; }
+}
+
+@keyframes evalio-glow-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.06); }
+}
+
+/* ─── Score bar fill animation ──────────────────────────────── */
+@keyframes evalio-bar-fill {
+  from { width: 0%; }
+}
+
+.evalio-score-bar {
+  animation: evalio-bar-fill 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: 0.3s;
+  width: 0%;
+}
+
+/* ─── Cinematic reveal — score number explosion ─────────────── */
+@keyframes evalio-score-explode {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(20px);
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0px);
+  }
+}
+
+.evalio-score-explode {
+  animation: evalio-score-explode 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ─── Stagger reveal ─────────────────────────────────────────── */
+@keyframes evalio-reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.evalio-reveal {
+  opacity: 0;
+  animation: evalio-reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ─── Ambient radial glow ─────────────────────────────────────── */
+.evalio-ambient-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, var(--app-accent-glow, rgba(184,168,138,0.1)) 0%, transparent 70%);
+}
+
+/* ─── Scroll indicator ───────────────────────────────────────── */
+@keyframes evalio-scroll-bob {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
+
+.evalio-scroll-bob {
+  animation: evalio-scroll-bob 2s ease-in-out infinite;
+}
+
+/* ─── Session card hover ─────────────────────────────────────── */
+.evalio-session-card {
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+}
+
+.evalio-session-card:hover {
+  border-color: var(--app-accent-border, rgba(184,168,138,0.3));
+  background: var(--color-bg-hover);
+  transform: translateY(-1px);
+}
+
+/* ─── Profile banner ─────────────────────────────────────────── */
+@keyframes evalio-grain-shift {
+  0% { background-position: 0 0; }
+  100% { background-position: 100px 100px; }
+}
+
+.evalio-profile-banner {
+  height: 200px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── Avatar ring glow ───────────────────────────────────────── */
+@keyframes evalio-avatar-ring {
+  0%, 100% { box-shadow: 0 0 0 0 var(--app-accent-border, rgba(184,168,138,0.3)); }
+  50% { box-shadow: 0 0 0 6px var(--app-accent-glow, rgba(184,168,138,0.12)); }
+}
+
+/* ─── Heatmap cell scanner ───────────────────────────────────── */
+@keyframes evalio-cell-scan {
+  from { opacity: 0; transform: scaleX(0); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
+/* ─── Strength / weakness bar ────────────────────────────────── */
+.evalio-strength-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s;
+}
+
+.evalio-strength-bar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+}
+
+.evalio-strength-bar.positive::before { background: #22c55e; }
+.evalio-strength-bar.negative::before { background: var(--app-accent, #b8a88a); }
+.evalio-strength-bar.positive { background: rgba(34,197,94,0.05); }
+.evalio-strength-bar.negative { background: rgba(184,168,138,0.06); }
+
+/* ─── QA Card ────────────────────────────────────────────────── */
+.evalio-qa-card {
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.evalio-qa-card:hover {
+  border-color: var(--color-border);
+}
+
+/* ─── Score badge ────────────────────────────────────────────── */
+.evalio-score-badge-great {
+  background: rgba(34,197,94,0.1);
+  color: #4ade80;
+  border: 1px solid rgba(34,197,94,0.2);
+}
+.evalio-score-badge-ok {
+  background: rgba(234,179,8,0.1);
+  color: #facc15;
+  border: 1px solid rgba(234,179,8,0.2);
+}
+.evalio-score-badge-poor {
+  background: rgba(239,68,68,0.1);
+  color: #f87171;
+  border: 1px solid rgba(239,68,68,0.2);
+}
+
+/* ─── Bento grid ─────────────────────────────────────────────── */
+.evalio-bento-grid {
+  display: grid;
+  gap: 16px;
+}
+
+/* ─── Milestone timeline ─────────────────────────────────────── */
+.evalio-milestone-dot-done {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--app-accent, #b8a88a);
+  box-shadow: 0 0 8px var(--app-accent-glow, rgba(184,168,138,0.3));
+  flex-shrink: 0;
+}
+
+.evalio-milestone-dot-pending {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .evalio-score-explode,
+  .evalio-reveal,
+  .evalio-score-bar,
+  .evalio-scroll-bob {
+    animation: none !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    transform: none !important;
+  }
+}
+
