@@ -29,15 +29,8 @@ function ScoreBadge({ score }: { score: number }) {
         : "evalio-score-badge-poor";
   return (
     <span
-      className={cls}
-      style={{
-        fontSize: "13px",
-        fontWeight: 700,
-        borderRadius: "8px",
-        padding: "4px 12px",
-        flexShrink: 0,
-        fontVariantNumeric: "tabular-nums",
-      }}
+      className={`${cls} text-[13px] font-[700] rounded-lg px-3 py-1 flex-shrink-0`}
+      style={{ fontVariantNumeric: "tabular-nums" }}
     >
       {score}/10
     </span>
@@ -64,14 +57,7 @@ function QACard({ turn, index }: { turn: InterviewTurn; index: number }) {
     >
       <button
         onClick={() => setExpanded((p) => !p)}
-        style={{
-          width: "100%",
-          textAlign: "left",
-          background: "none",
-          border: "none",
-          padding: 0,
-          cursor: "pointer",
-        }}
+        className="w-full text-left bg-none border-none p-0 cursor-pointer"
       >
         <div
           className="evalio-qa-card"
@@ -82,61 +68,23 @@ function QACard({ turn, index }: { turn: InterviewTurn; index: number }) {
           }}
         >
           {/* Question header */}
-          <div
-            style={{
-              padding: "18px 20px",
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: "16px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "12px",
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              {/* Q number */}
+          <div className="flex items-start justify-between gap-4 p-[18px_20px]">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
               <span
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  letterSpacing: "0.12em",
-                  color: "var(--color-text-muted)",
-                  textTransform: "uppercase",
-                  flexShrink: 0,
-                  paddingTop: "3px",
-                  minWidth: "24px",
-                }}
+                className="text-[10px] font-[600] tracking-[0.12em] uppercase flex-shrink-0 pt-[3px] min-w-[24px]"
+                style={{ color: "var(--color-text-muted)" }}
               >
                 Q{index + 1}
               </span>
               <p
-                style={{
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  color: "var(--color-text)",
-                  lineHeight: 1.5,
-                  margin: 0,
-                }}
+                className="text-[14px] font-[500] leading-[1.5] m-0"
+                style={{ color: "var(--color-text)" }}
               >
                 {turn.questionText}
               </p>
             </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                flexShrink: 0,
-              }}
-            >
+            <div className="flex items-center gap-3 flex-shrink-0">
               {score != null && <ScoreBadge score={score} />}
-              {/* Chevron */}
               <motion.svg
                 animate={{ rotate: expanded ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
@@ -148,7 +96,7 @@ function QACard({ turn, index }: { turn: InterviewTurn; index: number }) {
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                style={{ flexShrink: 0 }}
+                className="flex-shrink-0"
               >
                 <path d="M3 5l4 4 4-4" />
               </motion.svg>
@@ -163,74 +111,46 @@ function QACard({ turn, index }: { turn: InterviewTurn; index: number }) {
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                style={{ overflow: "hidden" }}
+                className="overflow-hidden"
               >
                 <div
-                  style={{
-                    borderTop: "1px solid var(--color-border)",
-                    padding: "18px 20px 18px 52px",
-                  }}
+                  className="p-[18px_20px_18px_52px]"
+                  style={{ borderTop: "1px solid var(--color-border)" }}
                 >
-                  {/* Answer */}
                   <p
-                    style={{
-                      fontSize: "13px",
-                      lineHeight: 1.7,
-                      color: "var(--color-text-secondary)",
-                      margin: 0,
-                    }}
+                    className="text-[13px] leading-[1.7] m-0"
+                    style={{ color: "var(--color-text-secondary)" }}
                   >
                     {turn.answerText || "(no answer recorded)"}
                   </p>
 
-                  {/* Feedback */}
                   {turn.feedback && (
                     <div
+                      className="mt-3 px-[14px] py-[10px] rounded-lg"
                       style={{
-                        marginTop: "12px",
-                        padding: "10px 14px",
-                        borderRadius: "8px",
                         background: "var(--color-bg-hover)",
                         borderLeft:
                           "2px solid var(--app-accent-border, rgba(184,168,138,0.35))",
                       }}
                     >
                       <p
-                        style={{
-                          fontSize: "12px",
-                          lineHeight: 1.6,
-                          color: "var(--color-text-muted)",
-                          margin: 0,
-                          fontStyle: "italic",
-                        }}
+                        className="text-[12px] leading-[1.6] m-0 italic"
+                        style={{ color: "var(--color-text-muted)" }}
                       >
                         {turn.feedback}
                       </p>
                     </div>
                   )}
 
-                  {/* Model answer — only for low scores */}
                   {isLow && (
-                    <div style={{ marginTop: "14px" }}>
+                    <div className="mt-[14px]">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowModel((p) => !p);
                         }}
-                        style={{
-                          fontSize: "11px",
-                          letterSpacing: "0.06em",
-                          textTransform: "uppercase",
-                          color: "var(--app-accent, #b8a88a)",
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          padding: 0,
-                          fontWeight: 500,
-                        }}
+                        className="text-[11px] tracking-[0.06em] uppercase bg-none border-none cursor-pointer inline-flex items-center gap-1.5 p-0 font-[500]"
+                        style={{ color: "var(--app-accent, #b8a88a)" }}
                       >
                         <motion.span
                           animate={{ rotate: showModel ? 90 : 0 }}
@@ -247,13 +167,11 @@ function QACard({ turn, index }: { turn: InterviewTurn; index: number }) {
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.25 }}
-                            style={{ overflow: "hidden" }}
+                            className="overflow-hidden"
                           >
                             <div
+                              className="mt-[10px] px-4 py-3 rounded-lg"
                               style={{
-                                marginTop: "10px",
-                                padding: "12px 16px",
-                                borderRadius: "8px",
                                 background:
                                   "var(--app-accent-bg, rgba(184,168,138,0.05))",
                                 border:
@@ -261,12 +179,8 @@ function QACard({ turn, index }: { turn: InterviewTurn; index: number }) {
                               }}
                             >
                               <p
-                                style={{
-                                  fontSize: "13px",
-                                  lineHeight: 1.65,
-                                  color: "var(--color-text-secondary)",
-                                  margin: 0,
-                                }}
+                                className="text-[13px] leading-[1.65] m-0"
+                                style={{ color: "var(--color-text-secondary)" }}
                               >
                                 A strong response would directly address the
                                 question with a specific example from your
@@ -295,28 +209,26 @@ export function QASection({ turns }: { turns: InterviewTurn[] }) {
   const { ref, visible } = useInView();
 
   return (
-    <div style={{ paddingBottom: "64px" }}>
+    <div className="pb-16">
       <div ref={ref}>
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={visible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "20px",
-          }}
+          className="flex items-center justify-between mb-5"
         >
-          <p className="evalio-section-label">Questions &amp; Answers</p>
+          <p
+            className="text-[11px] tracking-[0.1em] uppercase"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            QUESTIONS & ANSWERS
+          </p>
           <span
+            className="text-[11px] px-[10px] py-[2px] rounded-full border"
             style={{
-              fontSize: "11px",
               color: "var(--color-text-muted)",
               background: "var(--color-bg-hover)",
-              border: "1px solid var(--color-border)",
-              borderRadius: "999px",
-              padding: "2px 10px",
+              borderColor: "var(--color-border)",
             }}
           >
             {turns.length} exchange{turns.length !== 1 ? "s" : ""}
@@ -324,7 +236,7 @@ export function QASection({ turns }: { turns: InterviewTurn[] }) {
         </motion.div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <div className="flex flex-col gap-2">
         {turns.map((turn, i) => (
           <QACard key={turn.id} turn={turn} index={i} />
         ))}

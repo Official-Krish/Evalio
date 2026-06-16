@@ -102,6 +102,7 @@ export function NewInterviewPage() {
   const [previewResumeId, setPreviewResumeId] = useState<string | null>(null);
   const [githubUrl, setGithubUrl] = useState("");
   const [githubOpen, setGithubOpen] = useState(false);
+  const [useConnectedGithub, setUseConnectedGithub] = useState(true);
   const [jobDescription, setJobDescription] = useState("");
 
   const { data: resumes, refetch: refetchResumes } = useQuery({
@@ -109,6 +110,21 @@ export function NewInterviewPage() {
     queryFn: () => api.listResumes(),
     select: (d) => d.resumes as Resume[],
   });
+
+  const { data: githubProfile } = useQuery({
+    queryKey: ["githubProfile"],
+    queryFn: () => api.getGithubProfile(),
+    select: (d) => d.profile,
+    retry: 1,
+    staleTime: 60_000,
+  });
+
+  const effectiveGithubUrl = useMemo(() => {
+    if (useConnectedGithub && githubProfile?.username) {
+      return `https://github.com/${githubProfile.username}`;
+    }
+    return githubUrl;
+  }, [useConnectedGithub, githubProfile, githubUrl]);
 
   // Auto-default to the most recently uploaded resume (user can override)
   const sortedResumes = useMemo(() => {
@@ -260,7 +276,7 @@ export function NewInterviewPage() {
     createMutation.mutate({
       position: effectivePosition,
       resumeId: effectiveResumeId,
-      githubUrl: githubUrl || undefined,
+      githubUrl: effectiveGithubUrl || undefined,
       jobDescription: jobDescription.trim() || undefined,
       companyId: effectiveCompanyId ?? undefined,
       companyName: effectiveCompanyName ?? undefined,
@@ -648,13 +664,25 @@ export function NewInterviewPage() {
             <ResumeSection
               resumes={resumes ?? []}
               selectedResumeId={effectiveResumeId}
-              githubUrl={githubUrl}
+              githubUrl={effectiveGithubUrl}
               githubOpen={githubOpen}
+              githubProfile={githubProfile}
+              useConnectedGithub={useConnectedGithub}
               onResumeSelect={setSelectedResumeId}
               onPreviewResume={setPreviewResumeId}
               onResumesRefetch={() => refetchResumes()}
-              onGithubUrlChange={setGithubUrl}
+              onGithubUrlChange={(url) => {
+                setGithubUrl(url);
+                setUseConnectedGithub(false);
+              }}
               onGithubToggle={() => setGithubOpen((p) => !p)}
+              onUseConnectedGithub={() => {
+                setUseConnectedGithub(true);
+                setGithubOpen(false);
+                if (githubProfile?.username) {
+                  setGithubUrl(`https://github.com/${githubProfile.username}`);
+                }
+              }}
             />
 
             {/* Job description */}

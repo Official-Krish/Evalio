@@ -242,13 +242,7 @@ export class InterviewConnection {
           this.answerBuf = "";
         }
 
-        if (this.currentTurnId) {
-          await finalizeInterview(this.interviewId);
-        } else {
-          console.log(
-            `[ws] skipping finalize — no turns recorded for ${this.interviewId}`,
-          );
-        }
+        await finalizeInterview(this.interviewId);
 
         await releaseSlot(this.interviewId);
         this.wsMap.delete(this.interviewId);
@@ -296,6 +290,7 @@ export class InterviewConnection {
 
   private async handleTurnCompleteDuringClosing() {
     if (!this.interviewId || !this.closingMode || this.finalized) return;
+    this.finalized = true;
     console.log("[ws] closing turn complete — finalizing");
 
     const isChallengeMode =
@@ -666,6 +661,7 @@ export class InterviewConnection {
           this.answerBuf = "";
           this.currentTurnId = null;
           this.questionBuf = "";
+          this.waitingForAiResponse = true;
 
           try {
             this.gemini.send(

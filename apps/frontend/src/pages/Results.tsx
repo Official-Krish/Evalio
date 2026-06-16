@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { api } from "../lib/api";
 import { ResultsSkeleton } from "../components/skeletons/ResultsSkeleton";
@@ -8,6 +9,7 @@ import { ResumeAnalysis } from "../components/Result/ResumeAnalysis";
 import { SummarySection } from "../components/Result/SummarySection";
 import { QASection } from "../components/Result/QASection";
 import { usePageTitle } from "@/lib/usePageTitle";
+import toast from "react-hot-toast";
 import type { EvaluationStatus, InterviewSession } from "@evalio/shared";
 
 const STYLE_LABELS: Record<string, string> = {
@@ -28,11 +30,18 @@ export function ResultsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { data: interview, isLoading } = useQuery({
+  const {
+    data: interview,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["interview", id],
     queryFn: () => api.getInterview(id!),
     enabled: !!id,
     select: (d) => d.interview,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const { data: evalStatus } = useQuery({
@@ -45,6 +54,31 @@ export function ResultsPage() {
         : false,
   });
 
+  const queryClient = useQueryClient();
+  const [evalStuck, setEvalStuck] = useState(false);
+  const [retryingEval, setRetryingEval] = useState(false);
+
+  useEffect(() => {
+    if (evalStatus?.status !== "pending") return;
+    const timer = setTimeout(() => setEvalStuck(true), 90_000);
+    return () => clearTimeout(timer);
+  }, [evalStatus?.status]);
+
+  const handleRetryEval = async () => {
+    if (!id || retryingEval) return;
+    setRetryingEval(true);
+    try {
+      await api.evaluate(id);
+      queryClient.invalidateQueries({ queryKey: ["eval-status", id] });
+      queryClient.invalidateQueries({ queryKey: ["interview", id] });
+      toast.success("Evaluation complete");
+    } catch {
+      toast.error("Evaluation failed. Try again.");
+    } finally {
+      setRetryingEval(false);
+    }
+  };
+
   const { data: allInterviews } = useQuery({
     queryKey: ["interviews"],
     queryFn: () => api.listInterviews(),
@@ -53,6 +87,28 @@ export function ResultsPage() {
   });
 
   if (isLoading) return <ResultsSkeleton />;
+
+  if (isError) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-[var(--color-text-secondary)]">
+          Failed to load interview
+        </p>
+        <div className="flex items-center justify-center gap-3 mt-3">
+          <button
+            onClick={() => refetch()}
+            className="text-accent text-sm hover:underline cursor-pointer"
+          >
+            Try again
+          </button>
+          <span className="text-[var(--color-text-muted)] text-xs">|</span>
+          <Link to="/dashboard" className="text-accent text-sm hover:underline">
+            Back to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!interview) {
     return (
@@ -114,41 +170,20 @@ export function ResultsPage() {
   const turns = interview.turns ?? [];
 
   return (
-    <div style={{ maxWidth: "720px", margin: "0 auto", paddingBottom: "80px" }}>
+    <div className="max-w-[720px] mx-auto pb-20">
       {/* ─── Hero header ─────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        style={{ paddingBottom: "48px", paddingTop: "16px" }}
+        className="pb-12 pt-4"
       >
-        {/* Back link */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "32px",
-          }}
-        >
+        {/* Back link + Practice again */}
+        <div className="flex items-center justify-between mb-8">
           <Link
             to="/dashboard"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              fontSize: "12px",
-              color: "var(--color-text-muted)",
-              textDecoration: "none",
-              letterSpacing: "0.04em",
-              transition: "color 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.color = "var(--color-text)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color = "var(--color-text-muted)")
-            }
+            className="inline-flex items-center gap-2 text-[12px] tracking-[0.04em] no-underline transition-colors duration-200 hover:text-[var(--color-text)]"
+            style={{ color: "var(--color-text-muted)" }}
           >
             <svg
               width="14"
@@ -166,16 +201,11 @@ export function ResultsPage() {
           </Link>
           <button
             onClick={() => navigate("/interview/new")}
+            className="text-[12px] px-4 py-[6px] rounded-full border cursor-pointer transition-all duration-200 tracking-[0.02em]"
             style={{
-              fontSize: "12px",
-              padding: "6px 16px",
-              borderRadius: "999px",
-              border: "1px solid var(--color-border)",
+              borderColor: "var(--color-border)",
               background: "transparent",
               color: "var(--color-text-muted)",
-              cursor: "pointer",
-              transition: "all 0.2s",
-              letterSpacing: "0.02em",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor =
@@ -191,33 +221,28 @@ export function ResultsPage() {
           </button>
         </div>
 
-        {/* Session meta */}
-        <p className="evalio-section-label" style={{ marginBottom: "12px" }}>
-          Session Report
+        {/* Section label */}
+        <p
+          className="text-[11px] tracking-[0.1em] uppercase mb-3"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          SESSION REPORT
         </p>
+
+        {/* Title */}
         <h1
-          style={{
-            fontSize: "clamp(22px, 4vw, 32px)",
-            fontWeight: 500,
-            letterSpacing: "-0.03em",
-            color: "var(--color-text)",
-            lineHeight: 1.1,
-            margin: "0 0 10px",
-          }}
+          className="text-[clamp(22px,4vw,32px)] font-[500] tracking-[-0.03em] leading-[1.1] m-0 mb-[10px]"
+          style={{ color: "var(--color-text)" }}
         >
           {interview.position || "Interview Session"}
         </h1>
 
         {/* Meta tags row */}
         <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
+          className="flex items-center gap-2 flex-wrap text-[13px]"
+          style={{ color: "var(--color-text-muted)" }}
         >
-          <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
+          <span>
             {new Date(interview.createdAt).toLocaleDateString("en-US", {
               month: "long",
               day: "numeric",
@@ -225,32 +250,20 @@ export function ResultsPage() {
             })}
           </span>
           {turns.length > 0 && (
-            <span
-              style={{ fontSize: "12px", color: "var(--color-text-muted)" }}
-            >
-              · {turns.length} turns
+            <span>
+              · {turns.length} turn{turns.length !== 1 ? "s" : ""}
             </span>
           )}
-          {interview.durationSeconds && (
-            <span
-              style={{ fontSize: "12px", color: "var(--color-text-muted)" }}
-            >
-              · {Math.round(interview.durationSeconds / 60)} min
-            </span>
+          {interview.durationSeconds != null && (
+            <span>· {Math.round(interview.durationSeconds / 60)} min</span>
           )}
 
           {interview.companyName && (
             <span
+              className="text-[11px] tracking-[0.06em] px-[10px] py-[3px] rounded-full border-[0.5px]"
               style={{
-                fontSize: "11px",
-                padding: "3px 10px",
-                borderRadius: "999px",
-                background: "var(--app-accent-bg, rgba(184,168,138,0.08))",
-                border:
-                  "1px solid var(--app-accent-border, rgba(184,168,138,0.2))",
-                color: "var(--app-accent, #b8a88a)",
-                fontWeight: 500,
-                letterSpacing: "0.04em",
+                borderColor: "var(--color-border-secondary)",
+                color: "var(--color-text-secondary)",
               }}
             >
               {interview.companyName}
@@ -258,13 +271,10 @@ export function ResultsPage() {
           )}
           {interview.interviewStyle && (
             <span
+              className="text-[11px] tracking-[0.06em] px-[10px] py-[3px] rounded-full border-[0.5px]"
               style={{
-                fontSize: "11px",
-                padding: "3px 10px",
-                borderRadius: "999px",
-                background: "rgba(99,102,241,0.06)",
-                border: "1px solid rgba(99,102,241,0.2)",
-                color: "#a5b4fc",
+                borderColor: "var(--color-border-secondary)",
+                color: "var(--color-text-secondary)",
               }}
             >
               {STYLE_LABELS[interview.interviewStyle] ??
@@ -273,13 +283,10 @@ export function ResultsPage() {
           )}
           {interview.interviewDepth && (
             <span
+              className="text-[11px] tracking-[0.06em] px-[10px] py-[3px] rounded-full border-[0.5px]"
               style={{
-                fontSize: "11px",
-                padding: "3px 10px",
-                borderRadius: "999px",
-                background: "rgba(52,211,153,0.06)",
-                border: "1px solid rgba(52,211,153,0.2)",
-                color: "#6ee7b7",
+                borderColor: "var(--color-border-secondary)",
+                color: "var(--color-text-secondary)",
               }}
             >
               {DEPTH_LABELS[interview.interviewDepth] ??
@@ -289,18 +296,21 @@ export function ResultsPage() {
         </div>
       </motion.div>
 
-      {/* ─── Divider line ─────────────────────────────────────── */}
-      <div
-        style={{
-          height: "1px",
-          background: "var(--color-border)",
-          marginBottom: "0",
-        }}
+      {/* ─── Divider ─────────────────────────────────────────── */}
+      <hr
+        className="border-t-[0.5px] my-6"
+        style={{ borderColor: "var(--color-border-tertiary)" }}
       />
 
-      {/* ─── Score section (cinematic) ────────────────────────── */}
+      {/* ─── Score section ───────────────────────────────────── */}
       {isScored && interview.overallScore != null ? (
-        <div style={{ paddingTop: "64px" }}>
+        <div>
+          <p
+            className="text-[11px] tracking-[0.1em] uppercase mb-4"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            OVERALL SCORE
+          </p>
           <ScoreSection
             overall={overall}
             delta={delta}
@@ -313,50 +323,68 @@ export function ResultsPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          style={{
-            paddingTop: "64px",
-            paddingBottom: "48px",
-            display: "flex",
-            alignItems: "center",
-            gap: "14px",
-          }}
+          className="flex items-center gap-[14px] pt-16 pb-12"
         >
           <div
-            className="animate-spin"
+            className="animate-spin size-5 rounded-full border-2"
             style={{
-              width: "20px",
-              height: "20px",
-              borderRadius: "50%",
-              border: "2px solid var(--app-accent, #b8a88a)",
+              borderColor: "var(--app-accent, #b8a88a)",
               borderTopColor: "transparent",
             }}
           />
           <div>
             <p
-              style={{
-                fontSize: "14px",
-                fontWeight: 500,
-                color: "var(--color-text)",
-                margin: 0,
-              }}
+              className="text-[14px] font-[500] m-0"
+              style={{ color: "var(--color-text)" }}
             >
-              Evaluating your session…
+              {retryingEval
+                ? "Re-evaluating your session…"
+                : "Evaluating your session…"}
             </p>
             <p
-              style={{
-                fontSize: "12px",
-                color: "var(--color-text-muted)",
-                margin: "2px 0 0",
-              }}
+              className="text-[12px] m-0 mt-[2px]"
+              style={{ color: "var(--color-text-muted)" }}
             >
               This usually takes 30–60 seconds
             </p>
+            {evalStuck && !retryingEval && (
+              <button
+                onClick={handleRetryEval}
+                className="mt-4 text-[12px] px-4 py-[6px] rounded-full border cursor-pointer transition-all duration-200"
+                style={{
+                  borderColor: "var(--app-accent, #b8a88a)",
+                  background: "transparent",
+                  color: "var(--app-accent, #b8a88a)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background =
+                    "var(--app-accent-bg, rgba(184,168,138,0.1))";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                Stuck? Retry evaluation
+              </button>
+            )}
           </div>
         </motion.div>
       )}
 
+      {/* ─── Divider ─────────────────────────────────────────── */}
+      <hr
+        className="border-t-[0.5px] my-6"
+        style={{ borderColor: "var(--color-border-tertiary)" }}
+      />
+
       {/* ─── Resume analysis ──────────────────────────────────── */}
       {interview.summary && <ResumeAnalysis summary={interview.summary} />}
+
+      {/* ─── Divider ─────────────────────────────────────────── */}
+      <hr
+        className="border-t-[0.5px] my-6"
+        style={{ borderColor: "var(--color-border-tertiary)" }}
+      />
 
       {/* ─── Summary narrative ────────────────────────────────── */}
       {interview.summary && <SummarySection summary={interview.summary} />}
@@ -370,74 +398,47 @@ export function ResultsPage() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="mt-6 py-10 px-8 rounded-xl border text-center relative overflow-hidden"
         style={{
-          marginTop: "24px",
-          padding: "40px 32px",
-          borderRadius: "20px",
-          border: "1px solid var(--color-border)",
+          borderColor: "var(--color-border)",
           background: "var(--color-bg-card)",
-          textAlign: "center",
-          position: "relative",
-          overflow: "hidden",
         }}
       >
-        {/* Ambient glow */}
         <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
           style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
             width: "300px",
             height: "200px",
             background:
               "radial-gradient(ellipse, var(--app-accent-glow, rgba(184,168,138,0.08)) 0%, transparent 70%)",
-            pointerEvents: "none",
           }}
         />
-        <p className="evalio-section-label" style={{ marginBottom: "12px" }}>
+        <p
+          className="text-[11px] tracking-[0.1em] uppercase mb-3"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
           Your Voice Matters
         </p>
         <h2
-          style={{
-            fontSize: "22px",
-            fontWeight: 500,
-            letterSpacing: "-0.02em",
-            color: "var(--color-text)",
-            margin: "0 0 8px",
-          }}
+          className="text-[22px] font-[500] tracking-[-0.02em] m-0 mb-2"
+          style={{ color: "var(--color-text)" }}
         >
           How was your experience?
         </h2>
         <p
-          style={{
-            fontSize: "13px",
-            color: "var(--color-text-secondary)",
-            margin: "0 0 24px",
-            lineHeight: 1.6,
-          }}
+          className="text-[13px] m-0 mb-6 leading-[1.6]"
+          style={{ color: "var(--color-text-secondary)" }}
         >
           Your feedback helps us make every interview session better.
         </p>
         <Link
           to="/feedback"
+          className="inline-flex items-center gap-2 px-6 py-[10px] rounded-full text-[13px] font-[600] no-underline transition-opacity duration-200 hover:opacity-85"
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "10px 24px",
-            borderRadius: "999px",
-            border: "none",
             background: "var(--color-text)",
             color: "var(--color-bg)",
-            fontSize: "13px",
-            fontWeight: 600,
-            textDecoration: "none",
-            transition: "opacity 0.2s",
             letterSpacing: "0.02em",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
           Share feedback
           <svg

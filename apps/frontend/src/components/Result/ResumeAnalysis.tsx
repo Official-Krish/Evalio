@@ -1,113 +1,82 @@
-import type { InterviewSummary } from "@evalio/shared"
+import type { InterviewSummary } from "@evalio/shared";
 
 export function ResumeAnalysis({ summary }: { summary: InterviewSummary }) {
-  const strengths = summary.resumeStrengths as string[]
-  const weaknesses = summary.resumeWeaknesses as string[]
+  const strengths = summary.resumeStrengths as string[];
+  const weaknesses = summary.resumeWeaknesses as string[];
 
-  if (strengths.length === 0 && weaknesses.length === 0) return null
+  if (strengths.length === 0 && weaknesses.length === 0) return null;
 
   return (
-    <div style={{ padding: "0 0 48px" }}>
+    <div className="pb-12">
       <p
-        style={{
-          fontSize: "11px",
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "rgba(255,255,255,0.3)",
-          marginBottom: "16px",
-        }}
+        className="text-[11px] tracking-[0.1em] uppercase mb-4"
+        style={{ color: "var(--color-text-tertiary)" }}
       >
-        Resume analysis
+        RESUME ANALYSIS
       </p>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "16px",
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {strengths.length > 0 && (
           <div
+            className="rounded-xl p-4 pl-5 border-[0.5px] flex flex-col gap-2"
             style={{
-              borderRadius: "10px",
-              border: "1px solid rgba(16,185,129,0.15)",
-              background: "rgba(16,185,129,0.04)",
-              padding: "16px 18px",
+              borderColor: "var(--color-border-tertiary)",
+              background: "#EAF3DE22",
             }}
           >
             <p
-              style={{
-                fontSize: "12px",
-                fontWeight: 500,
-                color: "rgba(16,185,129,0.8)",
-                margin: "0 0 10px",
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-              }}
+              className="text-[11px] tracking-[0.08em] uppercase font-[500] mb-1"
+              style={{ color: "#3B6D11" }}
             >
               What works
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {strengths.map((s, i) => (
+            {strengths.map((s, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <span
+                  className="w-1 h-1 rounded-full mt-[7px] flex-shrink-0"
+                  style={{ background: "#639922" }}
+                />
                 <p
-                  key={i}
-                  style={{
-                    fontSize: "13px",
-                    color: "rgba(255,255,255,0.55)",
-                    lineHeight: 1.5,
-                    margin: 0,
-                    paddingLeft: "10px",
-                    borderLeft: "2px solid rgba(16,185,129,0.4)",
-                  }}
+                  className="text-[13px] leading-[1.55] m-0"
+                  style={{ color: "var(--color-text-muted)" }}
                 >
                   {s}
                 </p>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         )}
 
         {weaknesses.length > 0 && (
           <div
+            className="rounded-xl p-4 pl-5 border-[0.5px] flex flex-col gap-2"
             style={{
-              borderRadius: "10px",
-              border: "1px solid rgba(245,158,11,0.15)",
-              background: "rgba(245,158,11,0.04)",
-              padding: "16px 18px",
+              borderColor: "var(--color-border-tertiary)",
+              background: "#FAEEDA22",
             }}
           >
             <p
-              style={{
-                fontSize: "12px",
-                fontWeight: 500,
-                color: "rgba(245,158,11,0.8)",
-                margin: "0 0 10px",
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-              }}
+              className="text-[11px] tracking-[0.08em] uppercase font-[500] mb-1"
+              style={{ color: "#854F0B" }}
             >
               What to improve
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {weaknesses.map((w, i) => (
+            {weaknesses.map((w, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <span
+                  className="w-1 h-1 rounded-full mt-[7px] flex-shrink-0"
+                  style={{ background: "#BA7517" }}
+                />
                 <p
-                  key={i}
-                  style={{
-                    fontSize: "13px",
-                    color: "rgba(255,255,255,0.55)",
-                    lineHeight: 1.5,
-                    margin: 0,
-                    paddingLeft: "10px",
-                    borderLeft: "2px solid rgba(245,158,11,0.4)",
-                  }}
+                  className="text-[13px] leading-[1.55] m-0"
+                  style={{ color: "var(--color-text-muted)" }}
                 >
                   {w}
                 </p>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

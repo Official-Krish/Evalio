@@ -92,12 +92,12 @@ export function InterviewPage() {
 
   const aiSpeakingRef = useRef(false);
   const phaseRef = useRef(phase);
-  const autoMicPendingRef = useRef(false);
+  const autoEndPendingRef = useRef(false);
+  const turnCompletedRef = useRef(false);
   const isUserSpeakingRef = useRef(false);
   const closingRef = useRef(false);
   const feedbackReadyRef = useRef(false);
   const micActiveRef = useRef(micActive);
-  const startMicRef = useRef(startMic);
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
@@ -105,11 +105,9 @@ export function InterviewPage() {
     micActiveRef.current = micActive;
   }, [micActive]);
   useEffect(() => {
-    startMicRef.current = startMic;
-  }, [startMic]);
-  useEffect(() => {
+    const wasSpeaking = aiSpeakingRef.current;
     aiSpeakingRef.current = aiPlaying;
-    if (!aiPlaying && !endedRef.current && !micActive) {
+    if (!aiPlaying && wasSpeaking && !endedRef.current && !micActive) {
       setAiTurnActive(false);
     }
   }, [aiPlaying, micActive]);
@@ -180,7 +178,12 @@ export function InterviewPage() {
     socket.on("transcript:assistant", () => {
       if (endedRef.current) return;
       aiSpeakingRef.current = true;
-      setAiTurnActive(true);
+      // Don't re-set aiTurnActive if the turn already completed
+      // (transcript:assistant fires AFTER message, can undo setAiTurnActive(false))
+      if (!turnCompletedRef.current) {
+        turnCompletedRef.current = false;
+        setAiTurnActive(true);
+      }
     });
 
     socket.on("transcript:user", () => {
@@ -230,45 +233,27 @@ export function InterviewPage() {
       }
 
       if (turnComplete && outputText) {
+        turnCompletedRef.current = true;
         setMessages((prev) => [
           ...prev,
           { role: "assistant", text: outputText, id: `ai-${Date.now()}` },
         ]);
-        if (!audioBase64 && !aiSpeakingRef.current) {
+
+        // Detect AI signaling end-of-interview — auto-trigger closing
+        if (outputText.includes("Thank you for interviewing with Evalio")) {
+          autoEndPendingRef.current = true;
+          setTimeout(() => {
+            if (autoEndPendingRef.current && !endedRef.current) {
+              autoEndPendingRef.current = false;
+              socketRef.current?.sendEndInterview();
+            }
+          }, 800);
+        } else if (!audioBase64 && !aiSpeakingRef.current) {
           setAiTurnActive(false);
-          // Auto-start mic when AI finishes speaking
-          if (
-            !micActiveRef.current &&
-            !endedRef.current &&
-            !closingRef.current &&
-            !autoMicPendingRef.current
-          ) {
-            autoMicPendingRef.current = true;
-            setTimeout(() => {
-              autoMicPendingRef.current = false;
-              if (
-                !endedRef.current &&
-                !closingRef.current &&
-                !micActiveRef.current &&
-                !aiSpeakingRef.current
-              ) {
-                isUserSpeakingRef.current = true;
-                startMicRef
-                  .current((base64) => {
-                    if (!endedRef.current) {
-                      socketRef.current?.sendAudio(base64);
-                    }
-                  })
-                  .catch(() => {
-                    isUserSpeakingRef.current = false;
-                  });
-              }
-            }, 300);
-          }
         }
       }
 
-      if (turnComplete && inputText && !outputText) {
+      if (turnComplete && inputText) {
         setMessages((prev) => [
           ...prev,
           { role: "user", text: inputText, id: `user-${Date.now()}` },

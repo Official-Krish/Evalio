@@ -35,12 +35,15 @@ interface GithubIntegrationCardProps {
   initialUsername?: string | null;
 }
 
+const PER_PAGE = 3;
+
 export function GithubIntegrationCard({
   initialUsername: _initialUsername,
 }: GithubIntegrationCardProps) {
   const queryClient = useQueryClient();
   const [usernameInput, setUsernameInput] = useState("");
   const [linking, setLinking] = useState(false);
+  const [projectPage, setProjectPage] = useState(1);
 
   // Fetch linked GitHub profile from local backend
   const { data, isLoading, refetch } = useQuery({
@@ -422,7 +425,7 @@ export function GithubIntegrationCard({
                 </div>
               )}
 
-              {/* Top Projects Pinned */}
+              {/* Top Projects with Pagination */}
               {profile.projects && profile.projects.length > 0 && (
                 <div>
                   <p
@@ -444,118 +447,219 @@ export function GithubIntegrationCard({
                       gap: "8px",
                     }}
                   >
-                    {profile.projects.slice(0, 3).map((proj) => (
-                      <div
-                        key={proj.name}
-                        style={{
-                          padding: "10px 14px",
-                          borderRadius: "10px",
-                          border: "1px solid var(--color-border-light)",
-                          background: "rgba(255, 255, 255, 0.015)",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <div
-                          style={{ flex: 1, minWidth: 0, paddingRight: "10px" }}
-                        >
-                          <a
-                            href={`https://github.com/${profile.username}/${proj.name}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              fontSize: "13px",
-                              fontWeight: 600,
-                              color: "var(--color-text)",
-                              textDecoration: "none",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                            }}
-                          >
-                            {proj.name}
-                            <IconExternalLink size={11} />
-                          </a>
-                          {proj.description && (
-                            <p
+                    {(() => {
+                      const totalPages = Math.ceil(
+                        profile.projects.length / PER_PAGE,
+                      );
+                      const safePage = Math.min(projectPage, totalPages);
+                      const start = (safePage - 1) * PER_PAGE;
+                      const pageItems = profile.projects.slice(
+                        start,
+                        start + PER_PAGE,
+                      );
+                      return (
+                        <>
+                          {pageItems.map((proj) => (
+                            <div
+                              key={proj.name}
                               style={{
-                                fontSize: "11px",
-                                color: "var(--color-text-muted)",
-                                margin: "3px 0 0",
-                                lineHeight: 1.4,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                display: "-webkit-box",
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: "vertical",
+                                padding: "10px 14px",
+                                borderRadius: "10px",
+                                border: "1px solid var(--color-border-light)",
+                                background: "rgba(255, 255, 255, 0.015)",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "flex-start",
                               }}
                             >
-                              {proj.description}
-                            </p>
-                          )}
-                        </div>
+                              <div
+                                style={{
+                                  flex: 1,
+                                  minWidth: 0,
+                                  paddingRight: "10px",
+                                }}
+                              >
+                                <a
+                                  href={`https://github.com/${profile.username}/${proj.name}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    fontSize: "13px",
+                                    fontWeight: 600,
+                                    color: "var(--color-text)",
+                                    textDecoration: "none",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                  }}
+                                >
+                                  {proj.name}
+                                  <IconExternalLink size={11} />
+                                </a>
+                                {proj.description && (
+                                  <p
+                                    style={{
+                                      fontSize: "11px",
+                                      color: "var(--color-text-muted)",
+                                      margin: "3px 0 0",
+                                      lineHeight: 1.4,
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      display: "-webkit-box",
+                                      WebkitLineClamp: 2,
+                                      WebkitBoxOrient: "vertical",
+                                    }}
+                                  >
+                                    {proj.description}
+                                  </p>
+                                )}
+                              </div>
 
-                        {/* Project meta (stars, language) */}
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "12px",
-                            flexShrink: 0,
-                            marginTop: "2px",
-                          }}
-                        >
-                          {proj.language && (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "12px",
+                                  flexShrink: 0,
+                                  marginTop: "2px",
+                                }}
+                              >
+                                {proj.language && (
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "4px",
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        width: "6px",
+                                        height: "6px",
+                                        borderRadius: "50%",
+                                        background:
+                                          LANGUAGE_COLORS[proj.language] ??
+                                          "#8a8884",
+                                      }}
+                                    />
+                                    <span
+                                      style={{
+                                        fontSize: "11px",
+                                        color: "var(--color-text-secondary)",
+                                      }}
+                                    >
+                                      {proj.language}
+                                    </span>
+                                  </div>
+                                )}
+                                {proj.stars !== undefined && proj.stars > 0 && (
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "3px",
+                                      color: "var(--color-text-muted)",
+                                    }}
+                                  >
+                                    <IconStar size={12} />
+                                    <span
+                                      style={{
+                                        fontSize: "11px",
+                                        fontVariantNumeric: "tabular-nums",
+                                      }}
+                                    >
+                                      {proj.stars}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+
+                          {totalPages > 1 && (
                             <div
                               style={{
                                 display: "flex",
                                 alignItems: "center",
-                                gap: "4px",
+                                justifyContent: "center",
+                                gap: "6px",
+                                paddingTop: "8px",
                               }}
                             >
-                              <span
+                              <button
+                                onClick={() =>
+                                  setProjectPage((p) => Math.max(1, p - 1))
+                                }
+                                disabled={safePage <= 1}
                                 style={{
-                                  width: "6px",
-                                  height: "6px",
-                                  borderRadius: "50%",
-                                  background:
-                                    LANGUAGE_COLORS[proj.language] ?? "#8a8884",
-                                }}
-                              />
-                              <span
-                                style={{
+                                  padding: "4px 10px",
+                                  borderRadius: "6px",
+                                  border: "1px solid var(--color-border)",
+                                  background: "transparent",
+                                  color: "var(--color-text-muted)",
                                   fontSize: "11px",
-                                  color: "var(--color-text-secondary)",
+                                  cursor: safePage <= 1 ? "default" : "pointer",
+                                  opacity: safePage <= 1 ? 0.35 : 1,
                                 }}
                               >
-                                {proj.language}
-                              </span>
-                            </div>
-                          )}
-                          {proj.stars !== undefined && proj.stars > 0 && (
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "3px",
-                                color: "var(--color-text-muted)",
-                              }}
-                            >
-                              <IconStar size={12} />
-                              <span
+                                Prev
+                              </button>
+                              {Array.from(
+                                { length: totalPages },
+                                (_, i) => i + 1,
+                              ).map((n) => (
+                                <button
+                                  key={n}
+                                  onClick={() => setProjectPage(n)}
+                                  style={{
+                                    padding: "2px 0",
+                                    width: "22px",
+                                    border: "none",
+                                    borderBottom:
+                                      n === safePage
+                                        ? "2px solid var(--app-accent, #b8a88a)"
+                                        : "2px solid transparent",
+                                    background: "transparent",
+                                    color:
+                                      n === safePage
+                                        ? "var(--color-text)"
+                                        : "var(--color-text-muted)",
+                                    cursor: "pointer",
+                                    fontSize: "11px",
+                                    lineHeight: 1.4,
+                                  }}
+                                >
+                                  {n}
+                                </button>
+                              ))}
+                              <button
+                                onClick={() =>
+                                  setProjectPage((p) =>
+                                    Math.min(totalPages, p + 1),
+                                  )
+                                }
+                                disabled={safePage >= totalPages}
                                 style={{
+                                  padding: "4px 10px",
+                                  borderRadius: "6px",
+                                  border: "1px solid var(--color-border)",
+                                  background: "transparent",
+                                  color: "var(--color-text-muted)",
                                   fontSize: "11px",
-                                  fontVariantNumeric: "tabular-nums",
+                                  cursor:
+                                    safePage >= totalPages
+                                      ? "default"
+                                      : "pointer",
+                                  opacity: safePage >= totalPages ? 0.35 : 1,
                                 }}
                               >
-                                {proj.stars}
-                              </span>
+                                Next
+                              </button>
                             </div>
                           )}
-                        </div>
-                      </div>
-                    ))}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               )}

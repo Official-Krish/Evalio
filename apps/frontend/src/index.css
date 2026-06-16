@@ -46,9 +46,13 @@
   --color-bg-hover: #1a1a22;
   --color-border: #1e1e2a;
   --color-border-light: #161620;
+  --color-border-secondary: #1a1a24;
+  --color-border-tertiary: #141420;
   --color-text: #eceae6;
   --color-text-secondary: #8a8884;
   --color-text-muted: #5c5a56;
+  --color-text-tertiary: #3a3a3a;
+  --color-background-secondary: #0f0f15;
   /* App accent aliases for dark theme */
   --app-accent: #b8a88a;
   --app-accent-soft: #cfc0a6;
@@ -65,9 +69,13 @@
   --color-bg-hover: #f0ede8;
   --color-border: #e8e4dc;
   --color-border-light: #f0ede8;
+  --color-border-secondary: #e0dcd4;
+  --color-border-tertiary: #d8d4cc;
   --color-text: #121110;
   --color-text-secondary: #5c5a56;
   --color-text-muted: #9a9894;
+  --color-text-tertiary: #c0beb8;
+  --color-background-secondary: #ece9e4;
   /* App accent aliases for light theme */
   --app-accent: #8a7a5c;
   --app-accent-soft: #a0906e;

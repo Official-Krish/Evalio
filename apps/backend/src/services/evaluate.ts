@@ -1,25 +1,25 @@
-import { GoogleGenAI } from "@google/genai"
-import { prisma } from "../lib/prisma"
-import { updateCandidateProfile } from "./profile"
+import { GoogleGenAI } from "@google/genai";
+import { prisma } from "../lib/prisma";
+import { updateCandidateProfile } from "./profile";
 
 interface TurnEvaluation {
-  orderNumber: number
-  score: number
-  feedback: string
+  orderNumber: number;
+  score: number;
+  feedback: string;
 }
 
 interface EvaluationResult {
-  overallScore: number
-  communicationScore: number
-  technicalScore: number
-  problemSolvingScore: number
-  summary: string
-  keyStrengths: string[]
-  areasForImprovement: string[]
-  recommendedTopics: string[]
-  resumeStrengths: string[]
-  resumeWeaknesses: string[]
-  turns: TurnEvaluation[]
+  overallScore: number;
+  communicationScore: number;
+  technicalScore: number;
+  problemSolvingScore: number;
+  summary: string;
+  keyStrengths: string[];
+  areasForImprovement: string[];
+  recommendedTopics: string[];
+  resumeStrengths: string[];
+  resumeWeaknesses: string[];
+  turns: TurnEvaluation[];
 }
 
 const EVALUATION_SCHEMA = {
@@ -41,7 +41,10 @@ const EVALUATION_SCHEMA = {
       type: "number",
       description: "Problem solving ability score 0-100",
     },
-    summary: { type: "string", description: "Brief overall evaluation summary" },
+    summary: {
+      type: "string",
+      description: "Brief overall evaluation summary",
+    },
     keyStrengths: {
       type: "array",
       items: { type: "string" },
@@ -65,7 +68,8 @@ const EVALUATION_SCHEMA = {
     resumeWeaknesses: {
       type: "array",
       items: { type: "string" },
-      description: "Top 3 gaps or improvements needed in the candidate's resume",
+      description:
+        "Top 3 gaps or improvements needed in the candidate's resume",
     },
     turns: {
       type: "array",
@@ -99,22 +103,22 @@ const EVALUATION_SCHEMA = {
     "resumeWeaknesses",
     "turns",
   ],
-} as const
+} as const;
 
 function buildEvaluationPrompt(input: {
-  position: string | null
-  candidateName: string | null
-  resumeText: string | null
-  githubSummary: string | null
-  githubLanguages: string[]
-  turns: { orderNumber: number; questionText: string; answerText: string }[]
+  position: string | null;
+  candidateName: string | null;
+  resumeText: string | null;
+  githubSummary: string | null;
+  githubLanguages: string[];
+  turns: { orderNumber: number; questionText: string; answerText: string }[];
 }) {
   const questions = input.turns
     .map(
       (t) =>
-        `[Question ${t.orderNumber}]: ${t.questionText}\n[Answer ${t.orderNumber}]: ${t.answerText || "(no answer)"}`
+        `[Question ${t.orderNumber}]: ${t.questionText}\n[Answer ${t.orderNumber}]: ${t.answerText || "(no answer)"}`,
     )
-    .join("\n\n")
+    .join("\n\n");
 
   return `You are an expert technical interviewer. Evaluate the following interview.
 
@@ -129,10 +133,10 @@ ${questions || "No structured Q&A recorded"}
 Score each turn individually (0-100) with specific feedback.
 Provide overall scores for communication, technical knowledge, and problem solving.
 List key strengths, areas for improvement, and recommended topics for further study.
-Also analyze the candidate's resume briefly — what are its strongest points (resumeStrengths) and what could be improved (resumeWeaknesses)? Keep each to 2-3 items.`
+Also analyze the candidate's resume briefly — what are its strongest points (resumeStrengths) and what could be improved (resumeWeaknesses)? Keep each to 2-3 items.`;
 }
 
-export async function evaluateInterview(interviewId: string) {
+export async function evaluateInterview(interviewId: string, retries = 1) {
   const interview = await prisma.interviewSession.findUnique({
     where: { id: interviewId },
     select: {
@@ -158,18 +162,20 @@ export async function evaluateInterview(interviewId: string) {
         },
       },
     },
-  })
+  });
 
   if (!interview) {
-    console.warn(`[evaluation] interview ${interviewId} not found`)
-    return
+    console.warn(`[evaluation] interview ${interviewId} not found`);
+    return;
   }
   if (interview.turns.length === 0) {
-    console.warn(`[evaluation] interview ${interviewId} has no turns — skipping`)
-    return
+    console.warn(
+      `[evaluation] interview ${interviewId} has no turns — skipping`,
+    );
+    return;
   }
 
-  const github = interview.user.githubProfile
+  const github = interview.user.githubProfile;
 
   const prompt = buildEvaluationPrompt({
     position: interview.position,
@@ -178,35 +184,54 @@ export async function evaluateInterview(interviewId: string) {
     githubSummary: github?.summary ?? null,
     githubLanguages: (github?.languages as string[]) ?? [],
     turns: interview.turns,
-  })
+  });
 
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) throw new Error("GEMINI_API_KEY env not set")
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY env not set");
 
-  const ai = new GoogleGenAI({ apiKey })
+  const ai = new GoogleGenAI({ apiKey });
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: EVALUATION_SCHEMA,
-    },
-  })
+  let result: EvaluationResult | null = null;
+  let lastError: Error | null = null;
 
-  const text = response.text
-  if (!text) throw new Error("No response from Gemini")
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: EVALUATION_SCHEMA,
+        },
+      });
 
-  const result = JSON.parse(text) as EvaluationResult
+      const text = response.text;
+      if (!text) throw new Error("No response from Gemini");
+
+      result = JSON.parse(text) as EvaluationResult;
+      lastError = null;
+      break;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      console.warn(
+        `[evaluate] attempt ${attempt + 1}/${retries + 1} failed: ${lastError.message}`,
+      );
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+      }
+    }
+  }
+
+  if (!result || lastError) throw lastError ?? new Error("Evaluation failed");
 
   const durationSeconds =
     interview.startedAt && interview.endedAt
       ? Math.round(
           (new Date(interview.endedAt).getTime() -
             new Date(interview.startedAt).getTime()) /
-            1000
+            1000,
         )
-      : null
+      : null;
 
   const [summary] = await Promise.all([
     prisma.interviewSummary.upsert({
@@ -242,19 +267,19 @@ export async function evaluateInterview(interviewId: string) {
       },
     }),
     ...result.turns.map((t) => {
-      const dbTurn = interview.turns[t.orderNumber - 1]
-      if (!dbTurn) return Promise.resolve()
+      const dbTurn = interview.turns[t.orderNumber - 1];
+      if (!dbTurn) return Promise.resolve();
       return prisma.interviewTurn.update({
         where: { id: dbTurn.id },
         data: { score: t.score, feedback: t.feedback },
-      })
+      });
     }),
-  ])
+  ]);
 
   // Trigger candidate profile update asynchronously
   updateCandidateProfile(interviewId).catch((err) =>
-    console.error("[evaluate] profile update failed:", err)
-  )
+    console.error("[evaluate] profile update failed:", err),
+  );
 
-  return { evaluation: result, summary }
+  return { evaluation: result, summary };
 }

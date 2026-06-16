@@ -17,5 +17,22 @@
       "cache": false,
       "persistent": true
     }
-  }
+  },
+  "globalEnv": [
+    "GEMINI_API_KEY",
+    "REDIS_HOST",
+    "S3_BUCKET_NAME",
+    "AWS_BUCKET_NAME",
+    "S3_REGION",
+    "AWS_REGION",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_ACCESS_KEY",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_SECRET_KEY",
+    "AWS_SESSION_TOKEN",
+    "ASSETS_CDN_BASE_URL",
+    "CDN_BASE_URL",
+    "DATABASE_URL",
+    "NODE_ENV"
+  ]
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion } from "motion/react";
 
 function useCountUp(target: number, duration = 1200, delay = 200) {
@@ -21,7 +21,113 @@ function useCountUp(target: number, duration = 1200, delay = 200) {
   return count;
 }
 
-function SubScoreBar({
+function useInView(threshold = 0.3) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) setVisible(true);
+      },
+      { threshold },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
+const CIRCUMFERENCE = 314; // 2 * π * 50
+
+function ScoreRing({ score }: { score: number }) {
+  const animatedScore = useCountUp(score, 1400, 400);
+  const offset = CIRCUMFERENCE - (animatedScore / 10) * CIRCUMFERENCE;
+
+  return (
+    <div className="relative size-[120px] flex-shrink-0">
+      <svg
+        width="120"
+        height="120"
+        viewBox="0 0 120 120"
+        className="rotate-[-90deg]"
+      >
+        <circle
+          cx="60"
+          cy="60"
+          r="50"
+          fill="none"
+          stroke="var(--color-border-tertiary)"
+          strokeWidth="8"
+        />
+        <circle
+          cx="60"
+          cy="60"
+          r="50"
+          fill="none"
+          stroke="var(--color-text-secondary)"
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray={CIRCUMFERENCE}
+          strokeDashoffset={offset}
+          className="transition-[stroke-dashoffset] duration-700"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span
+          className="text-[32px] font-[500] leading-none"
+          style={{
+            color: "var(--color-text)",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {animatedScore}
+        </span>
+        <span
+          className="text-[12px] leading-none mt-0.5"
+          style={{ color: "var(--color-text-muted)" }}
+        >
+          /10
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function getVerdict(score: number): { label: string; description: string } {
+  if (score <= 1)
+    return {
+      label: "Incomplete session",
+      description:
+        "No responses were recorded. The session ended before any meaningful interaction.",
+    };
+  if (score <= 3)
+    return {
+      label: "Needs development",
+      description:
+        "Significant gaps in responses. Focus on structuring answers with concrete examples.",
+    };
+  if (score <= 5)
+    return {
+      label: "Getting started",
+      description:
+        "Some foundation present but responses lacked depth and specificity.",
+    };
+  if (score <= 7)
+    return {
+      label: "Solid performance",
+      description:
+        "Good answers with relevant examples. Fine-tuning would elevate further.",
+    };
+  return {
+    label: "Strong performance",
+    description:
+      "Well-structured, specific, and confident responses throughout the session.",
+  };
+}
+
+function DimensionBar({
   label,
   score,
   delay,
@@ -30,97 +136,42 @@ function SubScoreBar({
   score: number;
   delay: number;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  const animated = useCountUp(score, 900, visible ? delay : 99999);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) setVisible(true);
-      },
-      { threshold: 0.3 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
+  const { ref, visible } = useInView();
   const pct = (score / 10) * 100;
-  const color =
-    score >= 7
-      ? "#4ade80"
-      : score >= 5
-        ? "#facc15"
-        : "var(--app-accent, #b8a88a)";
 
   return (
-    <div
-      ref={ref}
-      style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-        }}
+    <div ref={ref} className="flex items-center gap-3">
+      <span
+        className="text-[12px] tracking-[0.07em] uppercase w-[140px] flex-shrink-0"
+        style={{ color: "var(--color-text-muted)" }}
       >
-        <span
-          style={{
-            fontSize: "11px",
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "var(--color-text-muted)",
-          }}
-        >
-          {label}
-        </span>
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={visible ? { opacity: 1 } : {}}
-          transition={{ delay: delay / 1000 + 0.1 }}
-          style={{
-            fontSize: "20px",
-            fontWeight: 600,
-            color,
-            fontVariantNumeric: "tabular-nums",
-            lineHeight: 1,
-          }}
-        >
-          {animated}
-          <span
-            style={{
-              fontSize: "12px",
-              fontWeight: 400,
-              color: "var(--color-text-muted)",
-              marginLeft: "2px",
-            }}
-          >
-            /10
-          </span>
-        </motion.span>
-      </div>
+        {label}
+      </span>
       <div
-        style={{
-          height: "2px",
-          background: "var(--color-border)",
-          borderRadius: "999px",
-          overflow: "hidden",
-        }}
+        className="flex-1 h-[3px] rounded-full overflow-hidden"
+        style={{ background: "var(--color-background-secondary)" }}
       >
         <motion.div
-          initial={{ width: "0%" }}
+          initial={{ width: 0 }}
           animate={visible ? { width: `${pct}%` } : {}}
           transition={{
             duration: 1.1,
             delay: delay / 1000,
             ease: [0.22, 1, 0.36, 1],
           }}
-          style={{ height: "100%", background: color, borderRadius: "999px" }}
+          className="h-full rounded-full"
+          style={{ background: "var(--color-text-tertiary)" }}
         />
       </div>
+      <span
+        className="text-[13px] font-[500] w-10 text-right"
+        style={{
+          color: "var(--color-text-muted)",
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {score}
+      </span>
     </div>
   );
 }
@@ -138,201 +189,58 @@ export function ScoreSection({
   tech: number;
   prob: number;
 }) {
-  const animatedOverall = useCountUp(overall, 1400, 400);
+  const verdict = getVerdict(overall);
 
   return (
-    <div style={{ paddingBottom: "80px" }}>
-      {/* ── Giant score reveal ── */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          gap: "0",
-          marginBottom: "64px",
-          position: "relative",
-        }}
-      >
-        {/* Ambient glow behind the number */}
-        <div
-          style={{
-            position: "absolute",
-            top: "-40px",
-            left: "-20px",
-            width: "400px",
-            height: "400px",
-            background:
-              "radial-gradient(ellipse, var(--app-accent-glow, rgba(184,168,138,0.08)) 0%, transparent 65%)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
-
-        {/* Score label */}
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="evalio-section-label"
-          style={{ marginBottom: "16px", position: "relative", zIndex: 1 }}
-        >
-          Overall Score
-        </motion.p>
-
-        {/* Giant number */}
-        <div
-          style={{
-            position: "relative",
-            zIndex: 1,
-            display: "flex",
-            alignItems: "flex-end",
-            gap: "8px",
-            lineHeight: 1,
-          }}
-        >
-          <motion.span
-            className="evalio-score-explode"
-            style={{
-              fontFamily: '"Instrument Serif", Georgia, serif',
-              fontSize: "clamp(96px, 18vw, 200px)",
-              fontWeight: 400,
-              fontStyle: "italic",
-              lineHeight: 0.88,
-              letterSpacing: "-0.04em",
-              color: "var(--color-text)",
-              fontVariantNumeric: "tabular-nums",
-              display: "block",
-            }}
+    <div className="pb-20">
+      {/* Score ring + verdict */}
+      <div className="grid grid-cols-[auto_1fr] gap-10 items-center mb-16">
+        <ScoreRing score={overall} />
+        <div>
+          <p
+            className="text-[18px] font-[500] mb-1"
+            style={{ color: "var(--color-text)" }}
           >
-            {animatedOverall}
-          </motion.span>
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
-            style={{
-              fontFamily: '"Instrument Serif", Georgia, serif',
-              fontSize: "clamp(36px, 6vw, 72px)",
-              fontWeight: 400,
-              fontStyle: "italic",
-              color: "var(--color-text-muted)",
-              lineHeight: 1.1,
-              paddingBottom: "4px",
-            }}
+            {verdict.label}
+          </p>
+          <p
+            className="text-[13px] leading-[1.5]"
+            style={{ color: "var(--color-text-muted)" }}
           >
-            /10
-          </motion.span>
+            {verdict.description}
+          </p>
+          {delta != null && (
+            <div
+              className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-[13px] font-[500]"
+              style={{
+                background:
+                  delta >= 0 ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)",
+                border: `1px solid ${delta >= 0 ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                color: delta >= 0 ? "#4ade80" : "#f87171",
+              }}
+            >
+              <span className="text-[10px]">{delta >= 0 ? "▲" : "▼"}</span>
+              {delta >= 0 ? "+" : ""}
+              {delta} from last session
+            </div>
+          )}
         </div>
-
-        {/* Delta badge */}
-        {delta != null && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2, duration: 0.5 }}
-            style={{
-              marginTop: "20px",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "5px 14px",
-              borderRadius: "999px",
-              background:
-                delta >= 0 ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)",
-              border: `1px solid ${delta >= 0 ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
-              fontSize: "13px",
-              fontWeight: 500,
-              color: delta >= 0 ? "#4ade80" : "#f87171",
-            }}
-          >
-            <span style={{ fontSize: "10px" }}>{delta >= 0 ? "▲" : "▼"}</span>
-            {delta >= 0 ? "+" : ""}
-            {delta} from last session
-          </motion.div>
-        )}
-
-        {/* Scroll hint */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.6, duration: 0.8 }}
-          className="evalio-scroll-bob"
-          style={{
-            position: "absolute",
-            bottom: "-40px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "6px",
-            color: "var(--color-text-muted)",
-          }}
-        >
-          <span
-            style={{
-              fontSize: "9px",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-            }}
-          >
-            Scroll
-          </span>
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            aria-hidden
-          >
-            <path
-              d="M3 5l4 4 4-4"
-              stroke="currentColor"
-              strokeWidth="1.25"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </motion.div>
       </div>
 
-      {/* ── Sub-score bars ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "24px",
-          padding: "28px 32px",
-          borderRadius: "16px",
-          border: "1px solid var(--color-border)",
-          background: "var(--color-bg-card)",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Card ambient glow */}
-        <div
-          style={{
-            position: "absolute",
-            top: "-40px",
-            right: "-40px",
-            width: "200px",
-            height: "200px",
-            background:
-              "radial-gradient(ellipse, var(--app-accent-glow, rgba(184,168,138,0.06)) 0%, transparent 70%)",
-            pointerEvents: "none",
-          }}
-        />
-        <p className="evalio-section-label" style={{ marginBottom: "4px" }}>
-          Dimension Breakdown
+      {/* Dimension breakdown */}
+      <div>
+        <p
+          className="text-[11px] tracking-[0.1em] uppercase mb-4"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          DIMENSION BREAKDOWN
         </p>
-        <SubScoreBar label="Communication" score={comm} delay={0} />
-        <SubScoreBar label="Technical" score={tech} delay={120} />
-        <SubScoreBar label="Problem Solving" score={prob} delay={240} />
-      </motion.div>
+        <div className="flex flex-col gap-[10px]">
+          <DimensionBar label="Communication" score={comm} delay={0} />
+          <DimensionBar label="Technical" score={tech} delay={120} />
+          <DimensionBar label="Problem Solving" score={prob} delay={240} />
+        </div>
+      </div>
     </div>
   );
 }

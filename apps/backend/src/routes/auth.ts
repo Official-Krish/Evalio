@@ -17,8 +17,6 @@ if (!SECRET) {
 
 const OTP_RATE_PREFIX = "otp_rate:";
 const OTP_RATE_WINDOW = 30;
-const WS_TOKEN_EXPIRY = parseInt(Bun.env.WS_TOKEN_EXPIRY_SECONDS ?? "3600");
-
 const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
@@ -434,23 +432,15 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     }),
   )
   .guard({}, (app) =>
-    app.use(authGuard).post(
-      "/ws-token",
-      async ({ jwt, user, body }) => {
-        const interviewMins = body.durationMinutes ?? 15;
-        const expirySecs = interviewMins + 3;
-        const wsToken = await jwt.sign({
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          exp: Math.floor(Date.now() / 1000) + expirySecs * 60,
-        });
-        return { token: wsToken };
-      },
-      {
-        body: t.Object({
-          durationMinutes: t.Optional(t.Number()),
-        }),
-      },
-    ),
+    app.use(authGuard).post("/ws-token", async ({ jwt, user }) => {
+      const interviewMins = user.role === "FREE" ? 15 : 30;
+      const expirySecs = interviewMins + 3;
+      const wsToken = await jwt.sign({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        exp: Math.floor(Date.now() / 1000) + expirySecs * 60,
+      });
+      return { token: wsToken };
+    }),
   );

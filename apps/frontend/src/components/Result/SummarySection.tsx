@@ -27,63 +27,46 @@ export function SummarySection({ summary }: { summary: InterviewSummary }) {
   const { ref: topicsRef, visible: topicsVisible } = useInView();
 
   return (
-    <div
-      style={{
-        paddingBottom: "64px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "48px",
-      }}
-    >
-      {/* ── What happened — editorial pull quote ── */}
+    <div className="pb-16 flex flex-col gap-12">
+      {/* ── What happened ── */}
       <div ref={summaryRef}>
         <motion.p
           initial={{ opacity: 0, y: 12 }}
           animate={summaryVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="evalio-section-label"
-          style={{ marginBottom: "20px" }}
+          className="text-[11px] tracking-[0.1em] uppercase mb-5"
+          style={{ color: "var(--color-text-tertiary)" }}
         >
-          What Happened
+          WHAT HAPPENED
         </motion.p>
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={summaryVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          className="text-[clamp(15px,2vw,18px)] leading-[1.8] font-[400] tracking-[-0.01em] pl-5"
           style={{
-            fontSize: "clamp(15px, 2vw, 18px)",
-            lineHeight: 1.8,
             color: "var(--color-text-secondary)",
-            fontWeight: 400,
-            letterSpacing: "-0.01em",
             borderLeft:
               "2px solid var(--app-accent-border, rgba(184,168,138,0.3))",
-            paddingLeft: "20px",
           }}
         >
           {summary.summary}
         </motion.p>
       </div>
 
-      {/* ── Strengths & Weaknesses ── */}
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}
-        className="max-md:grid-cols-1"
-      >
-        {/* Strengths */}
+      {/* ── Performance strengths & weaknesses ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {(summary.strengths as string[]).length > 0 && (
           <div ref={strengthRef}>
             <motion.p
               initial={{ opacity: 0 }}
               animate={strengthVisible ? { opacity: 1 } : {}}
-              className="evalio-section-label"
-              style={{ marginBottom: "16px", color: "rgba(74,222,128,0.8)" }}
+              className="text-[11px] tracking-[0.1em] uppercase mb-4"
+              style={{ color: "#3B6D11" }}
             >
               What Worked
             </motion.p>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
+            <div className="flex flex-col gap-2">
               {(summary.strengths as string[]).map((s, i) => (
                 <motion.div
                   key={i}
@@ -94,29 +77,26 @@ export function SummarySection({ summary }: { summary: InterviewSummary }) {
                     delay: i * 0.08,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="evalio-strength-bar positive"
+                  className="flex items-start gap-2.5"
                 >
                   <svg
                     width="14"
                     height="14"
                     viewBox="0 0 14 14"
                     fill="none"
-                    style={{ flexShrink: 0, marginTop: "2px" }}
+                    className="flex-shrink-0 mt-[3px]"
                   >
                     <path
                       d="M2.5 7l3 3 6-6"
-                      stroke="#22c55e"
+                      stroke="#639922"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                   </svg>
                   <span
-                    style={{
-                      fontSize: "13px",
-                      lineHeight: 1.6,
-                      color: "var(--color-text-secondary)",
-                    }}
+                    className="text-[13px] leading-[1.6]"
+                    style={{ color: "var(--color-text-secondary)" }}
                   >
                     {s}
                   </span>
@@ -126,20 +106,17 @@ export function SummarySection({ summary }: { summary: InterviewSummary }) {
           </div>
         )}
 
-        {/* Weaknesses */}
         {(summary.weaknesses as string[]).length > 0 && (
           <div ref={weakRef}>
             <motion.p
               initial={{ opacity: 0 }}
               animate={weakVisible ? { opacity: 1 } : {}}
-              className="evalio-section-label-accent"
-              style={{ marginBottom: "16px" }}
+              className="text-[11px] tracking-[0.1em] uppercase mb-4"
+              style={{ color: "#854F0B" }}
             >
               What to Fix
             </motion.p>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
+            <div className="flex flex-col gap-2">
               {(summary.weaknesses as string[]).map((w, i) => (
                 <motion.div
                   key={i}
@@ -150,29 +127,26 @@ export function SummarySection({ summary }: { summary: InterviewSummary }) {
                     delay: i * 0.08,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="evalio-strength-bar negative"
+                  className="flex items-start gap-2.5"
                 >
                   <svg
                     width="14"
                     height="14"
                     viewBox="0 0 14 14"
                     fill="none"
-                    style={{ flexShrink: 0, marginTop: "2px" }}
+                    className="flex-shrink-0 mt-[3px]"
                   >
                     <path
                       d="M7 4v4M7 10h.01"
-                      stroke="var(--app-accent, #b8a88a)"
+                      stroke="#BA7517"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                   </svg>
                   <span
-                    style={{
-                      fontSize: "13px",
-                      lineHeight: 1.6,
-                      color: "var(--color-text-secondary)",
-                    }}
+                    className="text-[13px] leading-[1.6]"
+                    style={{ color: "var(--color-text-secondary)" }}
                   >
                     {w}
                   </span>
@@ -183,18 +157,18 @@ export function SummarySection({ summary }: { summary: InterviewSummary }) {
         )}
       </div>
 
-      {/* ── Recommended Topics ── */}
+      {/* ── Recommended topics ── */}
       {(summary.recommendedTopics as string[]).length > 0 && (
         <div ref={topicsRef}>
           <motion.p
             initial={{ opacity: 0 }}
             animate={topicsVisible ? { opacity: 1 } : {}}
-            className="evalio-section-label"
-            style={{ marginBottom: "16px" }}
+            className="text-[11px] tracking-[0.1em] uppercase mb-4"
+            style={{ color: "var(--color-text-tertiary)" }}
           >
-            Study These Next
+            STUDY THESE NEXT
           </motion.p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+          <div className="flex flex-wrap gap-2">
             {(summary.recommendedTopics as string[]).map((t, i) => (
               <motion.span
                 key={i}
@@ -205,17 +179,12 @@ export function SummarySection({ summary }: { summary: InterviewSummary }) {
                   delay: i * 0.05,
                   ease: [0.22, 1, 0.36, 1],
                 }}
+                className="text-[12px] font-[500] px-[14px] py-[6px] rounded-full border cursor-default tracking-[0.02em]"
                 style={{
-                  fontSize: "12px",
-                  fontWeight: 500,
-                  padding: "6px 14px",
-                  borderRadius: "999px",
-                  border:
-                    "1px solid var(--app-accent-border, rgba(184,168,138,0.25))",
+                  borderColor:
+                    "var(--app-accent-border, rgba(184,168,138,0.25))",
                   background: "var(--app-accent-bg, rgba(184,168,138,0.06))",
                   color: "var(--app-accent, #b8a88a)",
-                  letterSpacing: "0.02em",
-                  cursor: "default",
                 }}
               >
                 {t}

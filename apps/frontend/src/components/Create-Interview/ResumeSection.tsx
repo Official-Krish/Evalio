@@ -7,16 +7,31 @@ import type { Resume } from "@evalio/shared";
 import toast from "react-hot-toast";
 import { SiGithub } from "react-icons/si";
 
+interface GithubProfileData {
+  username: string;
+  summary: string;
+  languages: string[];
+  projects: {
+    name: string;
+    description?: string | null;
+    stars?: number;
+    language?: string | null;
+  }[];
+}
+
 interface ResumeSectionProps {
   resumes: Resume[];
   selectedResumeId: string | undefined;
   githubUrl: string;
   githubOpen: boolean;
+  githubProfile?: GithubProfileData | null;
+  useConnectedGithub?: boolean;
   onResumeSelect: (id: string) => void;
   onPreviewResume: (id: string) => void;
   onResumesRefetch: () => void;
   onGithubUrlChange: (url: string) => void;
   onGithubToggle: () => void;
+  onUseConnectedGithub?: () => void;
 }
 
 const btnBase: React.CSSProperties = {
@@ -39,11 +54,14 @@ export function ResumeSection({
   selectedResumeId,
   githubUrl,
   githubOpen,
+  githubProfile,
+  useConnectedGithub,
   onResumeSelect,
   onPreviewResume,
   onResumesRefetch,
   onGithubUrlChange,
   onGithubToggle,
+  onUseConnectedGithub,
 }: ResumeSectionProps) {
   const [isUploading, setIsUploading] = useState(false);
 
@@ -244,7 +262,154 @@ export function ResumeSection({
             border: "1px solid var(--color-border-light)",
           }}
         >
-          {githubOpen ? (
+          {/* Connected profile card */}
+          {githubProfile && useConnectedGithub && !githubOpen ? (
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginBottom: "12px",
+                }}
+              >
+                <span style={{ fontSize: "18px", lineHeight: 1 }}>
+                  {<SiGithub />}
+                </span>
+                <div>
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "var(--color-text)",
+                      margin: 0,
+                    }}
+                  >
+                    GitHub Profile
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--color-text-muted)",
+                      margin: "2px 0 0",
+                    }}
+                  >
+                    AI will analyze your public repos for code-specific
+                    questions
+                  </p>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "12px 16px",
+                  borderRadius: "10px",
+                  border: "1.5px solid var(--app-accent, #b8a88a)",
+                  background: "var(--app-accent-bg, rgba(184,168,138,0.06))",
+                  cursor: "default",
+                }}
+              >
+                <div
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "6px",
+                    background: "var(--app-accent-bg, rgba(184,168,138,0.08))",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    fontSize: "14px",
+                    color: "var(--color-accent)",
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M2 6l3 3 5-5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      color: "var(--color-text)",
+                      margin: 0,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {githubProfile.username}
+                    <span
+                      style={{
+                        fontSize: "10px",
+                        color: "var(--color-text-muted)",
+                        marginLeft: "8px",
+                        fontWeight: 400,
+                      }}
+                    >
+                      Connected
+                    </span>
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      color: "var(--color-text-muted)",
+                      margin: 0,
+                      lineHeight: 1.3,
+                      marginTop: "1px",
+                    }}
+                  >
+                    {githubProfile.projects.length} public repos ·{" "}
+                    {githubProfile.languages.slice(0, 3).join(", ") ||
+                      "No languages detected"}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={onGithubToggle}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 18px",
+                  marginTop: "12px",
+                  borderRadius: "10px",
+                  border: "1px solid var(--color-border-light)",
+                  background: "transparent",
+                  color: "var(--color-text-secondary)",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "var(--color-accent)";
+                  e.currentTarget.style.color = "var(--color-accent)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor =
+                    "var(--color-border-light)";
+                  e.currentTarget.style.color = "var(--color-text-secondary)";
+                }}
+              >
+                {githubProfile
+                  ? "Use a different profile"
+                  : "Add GitHub profile"}
+                <span style={{ fontSize: "11px", opacity: 0.6 }}>
+                  {"\u2192"}
+                </span>
+              </button>
+            </div>
+          ) : githubOpen ? (
             <div>
               <div
                 style={{
@@ -311,6 +476,36 @@ export function ResumeSection({
               >
                 Leave empty to skip GitHub analysis
               </p>
+              {githubProfile && (
+                <button
+                  onClick={onUseConnectedGithub}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "8px 14px",
+                    marginTop: "10px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--color-border-light)",
+                    background: "transparent",
+                    color: "var(--color-text-muted)",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--color-accent)";
+                    e.currentTarget.style.color = "var(--color-accent)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor =
+                      "var(--color-border-light)";
+                    e.currentTarget.style.color = "var(--color-text-muted)";
+                  }}
+                >
+                  ← Use connected profile ({githubProfile.username})
+                </button>
+              )}
             </div>
           ) : (
             <button
@@ -329,7 +524,9 @@ export function ResumeSection({
                 {<SiGithub />}
               </span>
               <span>
-                Add GitHub for <strong>code-specific questions</strong>
+                {githubProfile
+                  ? `Use ${githubProfile.username} for code-specific questions`
+                  : "Add GitHub for code-specific questions"}
               </span>
               <span style={{ fontSize: "11px", opacity: 0.6 }}>{"\u2192"}</span>
             </button>

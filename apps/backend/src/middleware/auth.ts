@@ -10,7 +10,7 @@ if (!SECRET) {
 export const authGuard = new Elysia({ name: "auth-guard" })
   .use(jwt({ secret: SECRET, exp: "7d" }))
   .resolve({ as: "scoped" }, async ({ jwt, cookie }) => {
-    const t = cookie.token as Cookie<any> | undefined;
+    const t = cookie.token as Cookie<unknown> | undefined;
     const tokenValue = t?.value;
     if (typeof tokenValue !== "string") {
       throw new Error("Unauthorized");
