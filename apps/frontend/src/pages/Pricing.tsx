@@ -521,7 +521,7 @@ export function PricingPage() {
                       values: [false, false, true],
                     },
                     { label: "Priority support", values: [false, true, true] },
-                  ].map((row, ri) => (
+                  ].map((row) => (
                     <tr
                       key={row.label}
                       style={{ borderTop: "1px solid var(--landing-line)" }}

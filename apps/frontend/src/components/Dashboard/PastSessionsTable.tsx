@@ -290,8 +290,6 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
           const change = computeChange(interview.overallScore, prevScore);
           const incomplete = isIncomplete(interview);
           const companyLabel = interview.companyName;
-          const styleLabel = interview.interviewStyle;
-          const depthLabel = interview.interviewDepth;
           return (
             <Link
               key={interview.id}

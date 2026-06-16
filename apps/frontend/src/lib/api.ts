@@ -145,6 +145,46 @@ export const api = {
     return data as { profile: Record<string, unknown> | null };
   },
 
+  getGithubProfile: async () => {
+    const { data, error } = await client.api.github.get();
+    if (error) throw new Error(errorMessage(error.value));
+    return data as {
+      profile: {
+        username: string;
+        summary: string;
+        languages: string[];
+        projects: {
+          name: string;
+          description?: string | null;
+          stars?: number;
+          language?: string | null;
+        }[];
+      } | null;
+    };
+  },
+
+  updateGithubProfile: async (input: {
+    username: string;
+    summary?: string;
+    languages?: string[];
+    projects?: {
+      name: string;
+      description?: string | null;
+      stars?: number;
+      language?: string | null;
+    }[];
+  }) => {
+    const { data, error } = await client.api.github.put(input);
+    if (error) throw new Error(errorMessage(error.value));
+    return data as { profile: Record<string, unknown> };
+  },
+
+  deleteGithubProfile: async () => {
+    const { data, error } = await client.api.github.delete();
+    if (error) throw new Error(errorMessage(error.value));
+    return data as { success: boolean };
+  },
+
   generateCompany: async (companyName: string, industry?: string) => {
     const { data, error } = await client.api.companies.generate.post({
       companyName,
@@ -177,10 +217,8 @@ export const api = {
     return data as { feedback: { id: string } };
   },
 
-  getWsToken: async (durationMinutes?: number) => {
-    const { data, error } = await client.api.auth["ws-token"].post({
-      durationMinutes,
-    });
+  getWsToken: async () => {
+    const { data, error } = await client.api.auth["ws-token"].post({});
     if (error) throw new Error(errorMessage(error.value));
     return data as { token: string };
   },

@@ -14,6 +14,7 @@ const result = await Bun.build({
   minify: true,
   target: "browser",
   sourcemap: "linked",
+  // @ts-expect-error - alias is supported by Bun but not in types
   alias: {
     "@": "./src",
   },

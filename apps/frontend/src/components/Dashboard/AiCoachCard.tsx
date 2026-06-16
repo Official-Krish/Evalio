@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import type { InterviewSession } from "@evalio/shared";
 import {
@@ -16,7 +15,12 @@ interface AiCoachCardProps {
 export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
   const insights = useMemo(() => {
     if (completed.length === 0) return null;
-    const items: { text: string; color: string; icon: React.ReactNode }[] = [];
+    const items: {
+      text: string;
+      color: string;
+      icon: React.ReactNode;
+      positive: boolean;
+    }[] = [];
     const commScores = completed
       .map((i) => i.communicationScore)
       .filter((s): s is number => s != null);
@@ -35,50 +39,50 @@ export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
         earlier.length > 0
           ? earlier.reduce((a, b) => a + b, 0) / earlier.length
           : avgR;
-      if (avgR >= avgE) {
-        items.push({
-          text: "Communication is improving",
-          color: "#10B981",
-          icon: <IconTrendingUp size={14} />,
-        });
-      } else {
-        items.push({
-          text: "Communication needs attention",
-          color: "#F59E0B",
-          icon: <IconAlertTriangle size={14} />,
-        });
-      }
+      const positive = avgR >= avgE;
+      items.push({
+        text: positive
+          ? "Communication is improving"
+          : "Communication needs attention",
+        color: positive ? "#4ade80" : "#facc15",
+        icon: positive ? (
+          <IconTrendingUp size={14} />
+        ) : (
+          <IconAlertTriangle size={14} />
+        ),
+        positive,
+      });
     }
     if (probScores.length > 0) {
       const avgProb = probScores.reduce((a, b) => a + b, 0) / probScores.length;
+      const positive = avgProb >= 60;
       items.push({
-        text:
-          avgProb < 60
-            ? "You avoid discussing tradeoffs"
-            : "Tradeoff discussions are solid",
-        color: avgProb < 60 ? "#F59E0B" : "#10B981",
-        icon:
-          avgProb < 60 ? (
-            <IconAlertTriangle size={14} />
-          ) : (
-            <IconTrendingUp size={14} />
-          ),
+        text: positive
+          ? "Tradeoff discussions are solid"
+          : "You avoid discussing tradeoffs",
+        color: positive ? "#4ade80" : "#facc15",
+        icon: positive ? (
+          <IconTrendingUp size={14} />
+        ) : (
+          <IconAlertTriangle size={14} />
+        ),
+        positive,
       });
     }
     if (techScores.length > 0) {
       const avgTech = techScores.reduce((a, b) => a + b, 0) / techScores.length;
+      const positive = avgTech >= 65;
       items.push({
-        text:
-          avgTech < 65
-            ? "Backend answers lack metrics"
-            : "Technical answers are well-structured",
-        color: avgTech < 65 ? "#EF4444" : "#10B981",
-        icon:
-          avgTech < 65 ? (
-            <IconChartBar size={14} />
-          ) : (
-            <IconTrendingUp size={14} />
-          ),
+        text: positive
+          ? "Technical answers are well-structured"
+          : "Backend answers lack metrics",
+        color: positive ? "#4ade80" : "#f87171",
+        icon: positive ? (
+          <IconTrendingUp size={14} />
+        ) : (
+          <IconChartBar size={14} />
+        ),
+        positive,
       });
     }
     return items;
@@ -87,93 +91,98 @@ export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
   if (!insights || completed.length === 0) return null;
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        background:
-          "linear-gradient(135deg, var(--app-accent-bg, rgba(184,168,138,0.06)) 0%, transparent 60%)",
-        border: "1px solid var(--app-accent-border, rgba(184,168,138,0.18))",
-        borderRadius: "12px",
-        padding: "20px 24px",
+        borderRadius: "16px",
+        border: "1px solid var(--app-accent-border, rgba(184,168,138,0.2))",
+        background: "var(--color-bg-card)",
+        padding: "24px 28px",
         position: "relative",
         overflow: "hidden",
       }}
     >
+      {/* Ambient glow */}
+      <div
+        style={{
+          position: "absolute",
+          top: "-20px",
+          right: "-20px",
+          width: "200px",
+          height: "200px",
+          background:
+            "radial-gradient(ellipse, var(--app-accent-glow, rgba(184,168,138,0.07)) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }}
+      />
+
       {/* Header */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: "16px",
+          marginBottom: "20px",
         }}
       >
-        <span
-          style={{
-            background: "var(--app-accent-bg, rgba(184,168,138,0.08))",
-            border: "1px solid var(--app-accent-border, rgba(184,168,138,0.2))",
-            color: "var(--app-accent, #b8a88a)",
-            fontSize: "11px",
-            fontWeight: 500,
-            borderRadius: "999px",
-            padding: "3px 10px",
-          }}
-        >
-          AI COACH
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {/* Pulsing dot */}
+          <motion.div
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+            style={{
+              width: "7px",
+              height: "7px",
+              borderRadius: "50%",
+              background: "var(--app-accent, #b8a88a)",
+              boxShadow:
+                "0 0 6px var(--app-accent-glow, rgba(184,168,138,0.4))",
+            }}
+          />
+          <span className="evalio-section-label-accent">AI Coach</span>
+        </div>
+        <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>
+          from {Math.min(totalSessions, 12)} sessions
         </span>
-        <motion.div
-          animate={{ opacity: [1, 0.3, 1] }}
-          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-          style={{
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            background: "var(--app-accent, #b8a88a)",
-          }}
-        />
       </div>
 
-      <p
-        style={{
-          fontSize: "13px",
-          color: "var(--color-text-muted)",
-          marginBottom: "12px",
-          lineHeight: 1.5,
-        }}
-      >
-        Based on your last {Math.min(totalSessions, 12)} sessions:
-      </p>
-
-      {/* Insight chips */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "6px",
-          marginBottom: "16px",
-        }}
-      >
+      {/* Insight rows */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         {insights.map((item, i) => (
-          <div
+          <motion.div
             key={i}
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 + i * 0.08 }}
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "10px",
-              padding: "10px 12px",
-              borderRadius: "6px",
-              background: "var(--color-bg-hover)",
-              borderLeft: `3px solid ${item.color}`,
+              gap: "12px",
+              padding: "12px 16px",
+              borderRadius: "10px",
+              background: item.positive
+                ? "rgba(34,197,94,0.04)"
+                : "rgba(184,168,138,0.04)",
+              borderLeft: `2px solid ${item.color}`,
             }}
           >
             <span style={{ color: item.color, display: "flex", flexShrink: 0 }}>
               {item.icon}
             </span>
-            <span style={{ fontSize: "13px", color: "var(--color-text)" }}>
+            <span
+              style={{
+                fontSize: "13px",
+                color: "var(--color-text)",
+                lineHeight: 1.4,
+              }}
+            >
               {item.text}
             </span>
-          </div>
+          </motion.div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }

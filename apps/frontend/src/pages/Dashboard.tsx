@@ -75,18 +75,19 @@ export function DashboardPage() {
   );
 
   return (
-    <div className="py-6" style={{ position: "relative" }}>
-      {/* Page background wash */}
+    <div style={{ position: "relative" }}>
+      {/* Global ambient background wash */}
       <div
         style={{
           position: "fixed",
           inset: 0,
           background:
-            "radial-gradient(ellipse at 30% 0%, var(--app-accent-glow, rgba(184,168,138,0.06)) 0%, transparent 60%)",
+            "radial-gradient(ellipse 60% 50% at 20% 0%, var(--app-accent-glow, rgba(184,168,138,0.05)) 0%, transparent 70%)",
           pointerEvents: "none",
           zIndex: 0,
         }}
       />
+
       <div style={{ position: "relative", zIndex: 1 }}>
         <UploadResumeModal
           open={showUpload}
@@ -102,8 +103,16 @@ export function DashboardPage() {
           className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-10"
           style={{ maxWidth: "960px", margin: "0 auto" }}
         >
-          {/* Main column */}
-          <div className="space-y-6 min-w-0">
+          {/* ── Main column ── */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "32px",
+              minWidth: 0,
+            }}
+          >
+            {/* Hero */}
             <ReadinessHero
               user={user}
               totalSessions={totalSessions}
@@ -111,8 +120,17 @@ export function DashboardPage() {
               interviews={interviews}
             />
 
+            {/* Horizontal rule separator */}
+            {totalSessions > 0 && (
+              <div
+                style={{ height: "1px", background: "var(--color-border)" }}
+              />
+            )}
+
+            {/* AI Coach */}
             <AiCoachCard completed={completed} totalSessions={totalSessions} />
 
+            {/* Most recent session */}
             {mostRecent && (
               <SessionStrip
                 mostRecent={mostRecent}
@@ -120,15 +138,16 @@ export function DashboardPage() {
               />
             )}
 
+            {/* Trends */}
             {completed.length > 1 && <TrendsSection completed={completed} />}
 
-            {/* Misses + Insight side by side */}
+            {/* Weaknesses + Latest Insight */}
             {completed.length > 0 && (weaknesses.length > 0 || insight) && (
               <div
                 style={{
                   display: "grid",
                   gridTemplateColumns: "1fr 1fr",
-                  gap: "12px",
+                  gap: "16px",
                 }}
                 className="max-md:grid-cols-1"
               >
@@ -140,23 +159,28 @@ export function DashboardPage() {
               </div>
             )}
 
+            {/* Interviewer Remembers */}
             <InterviewerRemembers
               data={remembers}
               totalSessions={totalSessions}
             />
 
+            {/* Role Recommendations */}
             {roleRecs.length > 0 && (
               <RoleRecommendations recommendations={roleRecs} />
             )}
 
+            {/* Past sessions */}
             {completed.length > 0 && (
               <PastSessionsTable completed={completed} />
             )}
 
+            {/* Empty state */}
             {!isLoading && interviews.length === 0 && (
               <EmptyState onUpload={() => setShowUpload(true)} />
             )}
 
+            {/* Feedback CTA */}
             {completed.length > 0 && (
               <motion.div whileHover={{ x: 2 }} transition={{ duration: 0.15 }}>
                 <Link
@@ -165,23 +189,21 @@ export function DashboardPage() {
                     display: "flex",
                     alignItems: "center",
                     gap: 12,
-                    padding: "14px 18px",
-                    borderRadius: "10px",
+                    padding: "14px 20px",
+                    borderRadius: "12px",
                     border: "1px solid var(--color-border)",
-                    background: "var(--color-bg-elevated)",
+                    background: "var(--color-bg-card)",
                     textDecoration: "none",
                     transition: "border-color 0.15s, background 0.15s",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor =
                       "var(--app-accent-border, rgba(184,168,138,0.3))";
-                    e.currentTarget.style.background =
-                      "var(--app-accent-bg, rgba(184,168,138,0.04))";
+                    e.currentTarget.style.background = "var(--color-bg-hover)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = "var(--color-border)";
-                    e.currentTarget.style.background =
-                      "var(--color-bg-elevated)";
+                    e.currentTarget.style.background = "var(--color-bg-card)";
                   }}
                 >
                   <div style={{ flex: 1 }}>
@@ -223,7 +245,7 @@ export function DashboardPage() {
             )}
           </div>
 
-          {/* Sidebar */}
+          {/* ── Sidebar ── */}
           <div className="lg:sticky lg:top-6 self-start">
             <SidebarRight
               interviews={interviews}

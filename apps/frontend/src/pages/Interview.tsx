@@ -96,9 +96,17 @@ export function InterviewPage() {
   const isUserSpeakingRef = useRef(false);
   const closingRef = useRef(false);
   const feedbackReadyRef = useRef(false);
+  const micActiveRef = useRef(micActive);
+  const startMicRef = useRef(startMic);
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+  useEffect(() => {
+    micActiveRef.current = micActive;
+  }, [micActive]);
+  useEffect(() => {
+    startMicRef.current = startMic;
+  }, [startMic]);
   useEffect(() => {
     aiSpeakingRef.current = aiPlaying;
     if (!aiPlaying && !endedRef.current && !micActive) {
@@ -136,9 +144,7 @@ export function InterviewPage() {
 
     let wsToken: string;
     try {
-      const durationMinutes =
-        user.role === "ADMIN" || user.role === "PRO" ? 30 : 15;
-      const res = await api.getWsToken(durationMinutes);
+      const res = await api.getWsToken();
       wsToken = res.token;
     } catch {
       toast.error("Authentication failed");
@@ -232,7 +238,7 @@ export function InterviewPage() {
           setAiTurnActive(false);
           // Auto-start mic when AI finishes speaking
           if (
-            !micActive &&
+            !micActiveRef.current &&
             !endedRef.current &&
             !closingRef.current &&
             !autoMicPendingRef.current
@@ -243,17 +249,19 @@ export function InterviewPage() {
               if (
                 !endedRef.current &&
                 !closingRef.current &&
-                !micActive &&
+                !micActiveRef.current &&
                 !aiSpeakingRef.current
               ) {
                 isUserSpeakingRef.current = true;
-                startMic((base64) => {
-                  if (!endedRef.current) {
-                    socketRef.current?.sendAudio(base64);
-                  }
-                }).catch(() => {
-                  isUserSpeakingRef.current = false;
-                });
+                startMicRef
+                  .current((base64) => {
+                    if (!endedRef.current) {
+                      socketRef.current?.sendAudio(base64);
+                    }
+                  })
+                  .catch(() => {
+                    isUserSpeakingRef.current = false;
+                  });
               }
             }, 300);
           }
