@@ -12,5 +12,4 @@ redisSubscriber.on("error", (err) => {
 
 export async function initRedis() {
   await redisSubscriber.connect();
-  console.log("[redis] connected to", host);
 }

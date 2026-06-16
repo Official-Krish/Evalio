@@ -18,6 +18,3 @@ const server = serve({
     console: true,
   },
 });
-
-console.log(`🚀 Frontend at http://localhost:${server.port}`);
-console.log(`🔁 Proxying /api/* -> ${BACKEND_URL}`);

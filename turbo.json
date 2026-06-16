@@ -33,6 +33,7 @@
     "ASSETS_CDN_BASE_URL",
     "CDN_BASE_URL",
     "DATABASE_URL",
+    "FRONTEND_URL",
     "NODE_ENV"
   ]
 }

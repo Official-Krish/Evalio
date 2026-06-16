@@ -1,23 +1,21 @@
-import { app } from "./src/app"
-import { startWsServer } from "./src/ws"
-import { initRedis } from "./src/lib/redis"
+import { app } from "./src/app";
+import { startWsServer } from "./src/ws";
+import { initRedis } from "./src/lib/redis";
 
 async function main() {
-  await initRedis()
+  await initRedis();
 
-  const port = parseInt(Bun.env.PORT ?? "3000")
+  const port = parseInt(Bun.env.PORT ?? "3000");
 
-  app.listen({ port }, ({ hostname, port }) => {
-    console.log(`backend running at http://${hostname}:${port}`)
-  })
+  app.listen({ port }, ({ hostname, port }) => {});
 
-  startWsServer()
+  startWsServer();
 }
 
 main().catch((err) => {
-  console.error("Failed to start:", err)
-  process.exit(1)
-})
+  console.error("Failed to start:", err);
+  process.exit(1);
+});
 
-export { app }
-export type App = typeof app
+export { app };
+export type App = typeof app;

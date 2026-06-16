@@ -112,6 +112,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
           email: true,
           name: true,
           role: true,
+          roleVersion: true,
           emailVerified: true,
           verificationOtp: true,
           verificationOtpExpiry: true,
@@ -155,6 +156,8 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
+        roleVersion: user.roleVersion,
       });
       cookie.token!.set({
         value: token,
@@ -243,6 +246,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
           email: true,
           name: true,
           role: true,
+          roleVersion: true,
           password: true,
           emailVerified: true,
         },
@@ -271,6 +275,8 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
+        roleVersion: user.roleVersion,
       });
       cookie.token!.set({
         value: token,

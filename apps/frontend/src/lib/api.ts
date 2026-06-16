@@ -39,7 +39,7 @@ export const api = {
 
   me: async () => {
     const { data, error } = await client.api.auth.me.get();
-    if (error) return { user: null } as { user: User | null };
+    if (error) throw new Error(errorMessage(error.value));
     return data as { user: User } | { user: null };
   },
 
