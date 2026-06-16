@@ -1,12 +1,10 @@
 export interface CandidateHistoryEntry {
-  interviewId?: string;
-  date?: string;
-  dimensions?: { name: string; score: number; label: string }[];
-  overallScore?: number;
-  strengths?: string[];
-  weaknesses?: string[];
-  commonPatterns?: string[];
-  summary?: string;
+  date: string;
+  role: string | null;
+  overallScore: number | null;
+  strengths: string[];
+  weaknesses: string[];
+  summary: string | null;
 }
 
 export interface PromptInput {
@@ -34,7 +32,11 @@ export interface PromptInput {
   roleEvaluationCriteria: string[] | null;
   roleMustProbe: string[] | null;
   interviewRound: string | null;
-  candidateHistory: CandidateHistoryEntry | null;
+  candidateHistory: CandidateHistoryEntry[];
+  overallMostImproved: string | null;
+  overallWeakest: string | null;
+  overallPatterns: string[];
+  scoreTrendLast5: "improving" | "stable" | "declining" | null;
 }
 
 function buildStyleDirective(style: string): string {
@@ -162,48 +164,76 @@ function buildRoleContext(
   return lines.join("\n");
 }
 
-function buildCandidateHistory(history: CandidateHistoryEntry | null): string {
-  if (!history) return "";
+function buildCandidateHistory(
+  history: CandidateHistoryEntry[],
+  overallMostImproved: string | null,
+  overallWeakest: string | null,
+  overallPatterns: string[],
+  scoreTrendLast5: "improving" | "stable" | "declining" | null,
+): string {
+  if (history.length === 0 && overallPatterns.length === 0) return "";
 
-  const lines: string[] = ["## Candidate History"];
+  const lines: string[] = ["## Previous Interview History"];
 
-  if (history.overallScore != null) {
-    lines.push(`Prior Score: ${Math.round(history.overallScore)}%`);
-  }
-
-  if (history.strengths && history.strengths.length > 0) {
-    lines.push("", "Strengths:", ...history.strengths.map((s) => `- ${s}`));
-  }
-
-  if (history.weaknesses && history.weaknesses.length > 0) {
-    lines.push("", "Weaknesses:", ...history.weaknesses.map((w) => `- ${w}`));
-  }
-
-  if (history.commonPatterns && history.commonPatterns.length > 0) {
-    lines.push(
-      "",
-      "Common Patterns:",
-      ...history.commonPatterns.map((p) => `- ${p}`),
-    );
-  }
-
-  if (history.dimensions && history.dimensions.length > 0) {
-    lines.push("", "Dimension Scores:");
-    for (const d of history.dimensions) {
-      lines.push(`- ${d.name}: ${d.label} (${d.score})`);
+  if (
+    overallPatterns.length > 0 ||
+    overallMostImproved ||
+    overallWeakest ||
+    scoreTrendLast5
+  ) {
+    lines.push("");
+    if (scoreTrendLast5) {
+      const trendMap = {
+        improving: "Improving",
+        stable: "Stable",
+        declining: "Declining",
+      };
+      lines.push(`Overall trajectory: ${trendMap[scoreTrendLast5]}`);
+    }
+    if (overallMostImproved)
+      lines.push(`Most improved area: ${overallMostImproved}`);
+    if (overallWeakest) lines.push(`Weakest area: ${overallWeakest}`);
+    if (overallPatterns.length > 0) {
+      lines.push("Common patterns:", ...overallPatterns.map((p) => `- ${p}`));
     }
   }
 
-  if (history.summary) {
-    lines.push("", `Summary: ${history.summary}`);
+  if (history.length > 0) {
+    lines.push("", `Recent sessions (last ${history.length}):`);
+    for (const [i, h] of history.entries()) {
+      const scoreStr =
+        h.overallScore != null
+          ? ` — Score: ${Math.round(h.overallScore)}/100`
+          : "";
+      lines.push(
+        "",
+        `${i + 1}. ${h.date}${h.role ? ` — ${h.role}` : ""}${scoreStr}`,
+      );
+      if (h.strengths.length > 0)
+        lines.push(`   Strengths: ${h.strengths.join(", ")}`);
+      if (h.weaknesses.length > 0)
+        lines.push(`   Weak areas: ${h.weaknesses.join(", ")}`);
+    }
   }
 
   lines.push(
     "",
-    "Instructions:",
-    "- Reference prior interviews when relevant.",
-    "- Focus on weak areas. Probe for improvement.",
-    "- Acknowledge growth if the candidate has improved since last session.",
+    "## How to use this history",
+    "",
+    "Use historical performance to personalize the interview, not to rehash it.",
+    "",
+    "Priority order:",
+    "1. Current interview requirements (role, resume, job description)",
+    "2. Aggregate skill profile trends (most improved, weakest, patterns)",
+    "3. Recent interview history (last session context only)",
+    "",
+    "Guidelines:",
+    "- Target areas that appear consistently weak across multiple sessions",
+    "- Acknowledge demonstrated improvement when trends show upward movement",
+    "- Do NOT repeatedly revisit weaknesses that have already improved significantly",
+    '- Keep references high-level ("System design has been an area of focus — let\'s push deeper") — never quote specific past answers',
+    "- If the candidate is improving, increase difficulty in that area",
+    "- If the candidate is declining, check for fundamentals before advancing",
   );
 
   return lines.join("\n");
@@ -314,7 +344,15 @@ Keep your responses concise and spoken-word friendly (no markdown, no bullet poi
     sections.push(`## Candidate\nName: ${input.candidateName}`);
   }
 
-  sections.push(buildCandidateHistory(input.candidateHistory));
+  sections.push(
+    buildCandidateHistory(
+      input.candidateHistory,
+      input.overallMostImproved,
+      input.overallWeakest,
+      input.overallPatterns,
+      input.scoreTrendLast5,
+    ),
+  );
   sections.push(
     buildCompanyContext(
       input.companyName,
