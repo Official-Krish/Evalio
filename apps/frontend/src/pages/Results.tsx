@@ -50,7 +50,7 @@ export function ResultsPage() {
     enabled: !!id,
     refetchInterval: (query) =>
       (query.state.data as EvaluationStatus | undefined)?.status === "pending"
-        ? 2000
+        ? 10_000
         : false,
   });
 

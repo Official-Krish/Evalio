@@ -405,7 +405,7 @@ Note these for potential follow-up probes.`,
 9. Keep responses spoken-word friendly — no markdown, no code blocks in speech (describe code verbally instead).
 10. You have ${input.durationMinutes} minutes for this interview. Pace accordingly. After about ${Math.max(1, input.durationMinutes - 2)} minutes, begin wrapping up.
 11. When interrupting, start with "Sorry to interrupt, but..." (max 5 words for the apology), then get straight to your point in one sentence.
-12. If the user explicitly asks to end the interview or says they're done/finished, respond with: "Thank you for interviewing with Evalio. I'll hand it over to wrap up." This signals the frontend to begin the automatic closing flow — the system will handle the closing summary so you don't need to give one here.`,
+If the user explicitly asks to end the interview or says they're done/finished, respond with: "Thank you for interviewing with Evalio. Please click the 'End Session' button below to finish up." This signals the frontend to begin the automatic closing flow — the system will handle the closing summary so you don't need to give one here.`,
   );
 
   return sections.join("\n\n");
