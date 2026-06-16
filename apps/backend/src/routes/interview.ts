@@ -146,6 +146,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
           include: {
             _count: { select: { turns: true } },
             resume: { select: { id: true, version: true } },
+            summary: true,
           },
         });
         return { interviews };

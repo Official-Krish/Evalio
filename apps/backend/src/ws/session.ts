@@ -223,6 +223,7 @@ export class InterviewConnection {
           this.interviewDepth === "CHALLENGE" ||
           this.interviewDepth === "BAR_RAISER";
 
+        // Always attempt flush — don't rely on turnComplete having fired
         if (isChallengeMode && this.currentTurnId) {
           await this.flushChallengeTurn();
         } else if (this.questionBuf) {
@@ -437,10 +438,22 @@ export class InterviewConnection {
       }
     });
 
-    this.gemini.on("close", () => {
-      console.log("[gemini] connection closed");
-      this.cleanup();
-      this.client.close();
+    this.gemini.on("close", (...args: unknown[]) => {
+      const code = args[0] as number | undefined;
+      const reason = args[1] as string | undefined;
+      if (!this.finalized) {
+        if (code === 1011 && !this.closingMode) {
+          this.safeSend({
+            type: "error",
+            code: "gemini_timeout",
+            message: "AI session expired - please try again.",
+          });
+        }
+        console.log(
+          `[gemini] connection closed code=${code} reason="${reason}" - triggering cleanup`,
+        );
+        this.cleanup("gemini_close");
+      }
     });
 
     this.gemini.on("error", (err) => {

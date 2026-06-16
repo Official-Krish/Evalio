@@ -126,7 +126,7 @@ export async function createGeminiSession(systemPrompt: string) {
         console.log(
           `[gemini SDK] closed code=${event.code} reason="${event.reason}"`,
         );
-        bus.emit("close");
+        bus.emit("close", event.code, event.reason);
       },
     },
   });

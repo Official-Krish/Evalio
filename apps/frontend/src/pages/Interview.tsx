@@ -177,9 +177,6 @@ export function InterviewPage() {
 
     socket.on("transcript:assistant", () => {
       if (endedRef.current) return;
-      aiSpeakingRef.current = true;
-      // Don't re-set aiTurnActive if the turn already completed
-      // (transcript:assistant fires AFTER message, can undo setAiTurnActive(false))
       if (!turnCompletedRef.current) {
         turnCompletedRef.current = false;
         setAiTurnActive(true);
@@ -248,7 +245,7 @@ export function InterviewPage() {
               socketRef.current?.sendEndInterview();
             }
           }, 800);
-        } else if (!audioBase64 && !aiSpeakingRef.current) {
+        } else if (!audioBase64) {
           setAiTurnActive(false);
         }
       }
@@ -369,7 +366,7 @@ export function InterviewPage() {
       return;
     }
 
-    if (aiSpeakingRef.current || aiPlaying) {
+    if (aiPlaying || aiTurnActive) {
       toast.error("Wait for the interviewer to finish");
       return;
     }

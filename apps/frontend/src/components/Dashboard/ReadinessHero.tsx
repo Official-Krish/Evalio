@@ -32,14 +32,6 @@ function useCountUp(target: number, duration = 1400, delay = 200) {
   return count;
 }
 
-function getReadinessLabel(score: number) {
-  if (score >= 80) return { label: "Interview Ready", color: "#4ade80" };
-  if (score >= 60)
-    return { label: "Getting There", color: "var(--app-accent, #b8a88a)" };
-  if (score >= 40) return { label: "Keep Practicing", color: "#facc15" };
-  return { label: "Just Starting", color: "var(--color-text-muted)" };
-}
-
 export function ReadinessHero({
   user,
   totalSessions,

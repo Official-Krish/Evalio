@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect, useRef, startTransition } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
 import { api } from "../lib/api";
+import { useSession } from "../lib/auth";
 import { ResumePreview } from "../components/ResumePreview";
 import { ProgressStepper } from "../components/Create-Interview/ProgressStepper";
 import { CompanyGrid } from "../components/Create-Interview/CompanyGrid";
@@ -58,6 +59,8 @@ const btnBack: React.CSSProperties = {
 export function NewInterviewPage() {
   usePageTitle("New Interview");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const retryId = searchParams.get("retry");
   const [step, setStep] = useState(0);
 
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
@@ -105,6 +108,44 @@ export function NewInterviewPage() {
   const [useConnectedGithub, setUseConnectedGithub] = useState(true);
   const [jobDescription, setJobDescription] = useState("");
 
+  const { data: retryInterview } = useQuery({
+    queryKey: ["interview", retryId],
+    queryFn: () => api.getInterview(retryId!),
+    enabled: !!retryId,
+    select: (d) => d.interview,
+  });
+
+  // Pre-fill form from retry interview
+  const retryPrefilled = useRef(false);
+  useEffect(() => {
+    if (!retryInterview || retryPrefilled.current) return;
+    retryPrefilled.current = true;
+    startTransition(() => {
+      const iv = retryInterview;
+      if (iv.companyId && iv.roleTitle) {
+        setSelectedCompanyId(iv.companyId);
+        setSelectedRoleTitle(iv.roleTitle);
+      } else if (iv.companyName) {
+        const match = COMPANIES.find((c) => c.name === iv.companyName);
+        if (match) {
+          setSelectedCompanyId(match.id);
+          if (iv.position) {
+            const roleMatch = match.roles.find((r) => r.title === iv.position);
+            if (roleMatch) setSelectedRoleTitle(roleMatch.title);
+          }
+        }
+      }
+      if (iv.position && !iv.roleTitle) setCustomRole(iv.position);
+      if (iv.interviewRound) setSelectedRound(iv.interviewRound);
+      if (iv.interviewStyle)
+        setInterviewStyle(iv.interviewStyle as InterviewStyle);
+      if (iv.interviewDepth)
+        setInterviewDepth(iv.interviewDepth as InterviewDepth);
+      if (iv.resume?.id) setSelectedResumeId(iv.resume.id);
+      if (iv.jobDescription) setJobDescription(iv.jobDescription);
+    });
+  }, [retryInterview]);
+
   const { data: resumes, refetch: refetchResumes } = useQuery({
     queryKey: ["resumes"],
     queryFn: () => api.listResumes(),
@@ -118,6 +159,11 @@ export function NewInterviewPage() {
     retry: 1,
     staleTime: 60_000,
   });
+
+  const { data: session } = useSession();
+  const currentRole = session?.user?.role;
+  const isPro = currentRole === "PRO" || currentRole === "ADMIN";
+  const userLimit = currentRole === "ADMIN" ? Infinity : isPro ? 6 : 3;
 
   const effectiveGithubUrl = useMemo(() => {
     if (useConnectedGithub && githubProfile?.username) {
@@ -152,6 +198,7 @@ export function NewInterviewPage() {
 
   const daysUntilSlot = useMemo(() => {
     if (!interviews) return null;
+    if (userLimit === Infinity) return null;
     const since = new Date(now - 7 * 24 * 60 * 60 * 1000);
     const recent = interviews
       .filter((i) => new Date(i.createdAt) >= since)
@@ -159,11 +206,11 @@ export function NewInterviewPage() {
         (a, b) =>
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
-    if (recent.length < 3) return null;
+    if (recent.length < userLimit) return null;
     const oldest = new Date(recent[0]!.createdAt);
     const expiresAt = new Date(oldest.getTime() + 7 * 24 * 60 * 60 * 1000);
     return Math.ceil((expiresAt.getTime() - now) / (24 * 60 * 60 * 1000));
-  }, [interviews, now]);
+  }, [interviews, now, userLimit]);
 
   const selectedCompany =
     selectedCompanyId && selectedCompanyId !== "__custom__"
@@ -192,68 +239,69 @@ export function NewInterviewPage() {
     },
     onError: (err: Error) => {
       const msg = err.message ?? "";
-      if (
-        msg.toLowerCase().includes("rate limit") ||
-        msg.includes("3 interviews")
-      ) {
-        const dayMsg =
-          daysUntilSlot != null && daysUntilSlot > 0
-            ? ` Your next slot opens in ${daysUntilSlot} day${daysUntilSlot === 1 ? "" : "s"}.`
-            : "";
-        toast(
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 12,
-              padding: "4px 0",
-            }}
-          >
-            <div>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "var(--color-text)",
-                }}
-              >
-                Free tier limit reached
-              </p>
-              <p
-                style={{
-                  margin: "4px 0 0",
-                  fontSize: 12,
-                  color: "var(--color-text-muted)",
-                  lineHeight: 1.4,
-                }}
-              >
-                You've used all 3 free interviews this 7-day period.{dayMsg}
-              </p>
-            </div>
-            <Link
-              to="/contact?subject=Pro+upgrade"
-              onClick={() => toast.dismiss()}
+      if (msg.toLowerCase().includes("rate limit")) {
+        if (isPro) {
+          toast.error(msg);
+        } else {
+          const dayMsg =
+            daysUntilSlot != null && daysUntilSlot > 0
+              ? ` Your next slot opens in ${daysUntilSlot} day${daysUntilSlot === 1 ? "" : "s"}.`
+              : "";
+          toast(
+            <div
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "8px 16px",
-                borderRadius: 6,
-                background: "var(--landing-accent, #b8a88a)",
-                color: "#080808",
-                fontSize: 12,
-                fontWeight: 600,
-                textDecoration: "none",
-                transition: "opacity 0.15s",
-                alignSelf: "flex-start",
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                padding: "4px 0",
               }}
             >
-              Contact for upgrade
-            </Link>
-          </div>,
-          { duration: 10_000 },
-        );
+              <div>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--color-text)",
+                  }}
+                >
+                  Free tier limit reached
+                </p>
+                <p
+                  style={{
+                    margin: "4px 0 0",
+                    fontSize: 12,
+                    color: "var(--color-text-muted)",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  You've used all 3 free interviews this 7-day period.{dayMsg}
+                </p>
+              </div>
+              <Link
+                to="/contact?subject=Pro+upgrade"
+                onClick={() => toast.dismiss()}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "8px 16px",
+                  borderRadius: 6,
+                  background: "var(--landing-accent, #b8a88a)",
+                  color: "#080808",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  transition: "opacity 0.15s",
+                  alignSelf: "flex-start",
+                }}
+              >
+                Contact for upgrade
+              </Link>
+            </div>,
+            { duration: 10_000 },
+          );
+        }
       } else {
         const cleanMsg = msg
           .replace(/^Error:\s*/i, "")

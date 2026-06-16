@@ -139,7 +139,8 @@ function HeatmapCard({ interviews }: { interviews: InterviewSession[] }) {
   const activityMap = useMemo(() => {
     const map = new Map<string, number>();
     for (const iv of interviews) {
-      const key = new Date(iv.createdAt).toISOString().slice(0, 10);
+      const d = new Date(iv.createdAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       map.set(key, (map.get(key) ?? 0) + 1);
     }
     return map;
@@ -196,6 +197,7 @@ function HeatmapCard({ interviews }: { interviews: InterviewSession[] }) {
       </div>
 
       <Calendar
+        weekStartsOn={0}
         numberOfMonths={1}
         modifiers={modifiers}
         modifiersClassNames={{
@@ -205,7 +207,7 @@ function HeatmapCard({ interviews }: { interviews: InterviewSession[] }) {
             "!bg-[color:var(--app-accent)] !text-white rounded-sm font-medium",
         }}
         onDayMouseEnter={(date, _m, e) => {
-          const key = date.toISOString().slice(0, 10);
+          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
           const count = activityMap.get(key) ?? 0;
           if (count > 0) {
             const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -224,16 +226,16 @@ function HeatmapCard({ interviews }: { interviews: InterviewSession[] }) {
           month: "w-full",
           month_caption: "hidden",
           nav: "hidden",
-          weekdays: "flex justify-between w-full mb-0.5",
+          weekdays: "grid grid-cols-7 w-full mb-0.5",
           weekday:
-            "w-7 shrink-0 text-[9px] font-normal text-[var(--color-text-muted)] pb-0.5 text-center",
-          week: "mt-px flex justify-between w-full",
-          day: "w-7 shrink-0 aspect-square p-0 text-center text-[10px] text-[var(--color-text-muted)] flex items-center justify-center",
+            "text-[9px] font-normal text-[var(--color-text-muted)] pb-0.5 text-center",
+          week: "mt-px grid grid-cols-7 w-full",
+          day: "aspect-square p-0 text-center text-[10px] text-[var(--color-text-muted)] flex items-center justify-center",
           day_button:
             "size-full rounded-sm hover:bg-[var(--color-bg-hover)] data-[selected=true]:!bg-transparent data-[selected=true]:!text-inherit",
           outside: "opacity-0 pointer-events-none",
           disabled: "opacity-0 pointer-events-none",
-          hidden: "hidden",
+          hidden: "invisible",
           today: "",
         }}
       />

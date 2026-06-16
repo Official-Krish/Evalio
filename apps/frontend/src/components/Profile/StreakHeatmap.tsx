@@ -30,7 +30,8 @@ export function StreakHeatmap({ interviews }: StreakHeatmapProps) {
   const activityMap = useMemo(() => {
     const map = new Map<string, number>();
     for (const iv of interviews) {
-      const key = new Date(iv.createdAt).toISOString().slice(0, 10);
+      const d = new Date(iv.createdAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       map.set(key, (map.get(key) ?? 0) + 1);
     }
     return map;
@@ -42,7 +43,7 @@ export function StreakHeatmap({ interviews }: StreakHeatmapProps) {
     for (let i = 0; i < 365; i++) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       if ((activityMap.get(key) ?? 0) > 0) count++;
       else break;
     }
@@ -67,7 +68,7 @@ export function StreakHeatmap({ interviews }: StreakHeatmapProps) {
     _modifiers: Record<string, boolean>,
     e: React.MouseEvent,
   ) {
-    const key = date.toISOString().slice(0, 10);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     const count = activityMap.get(key) ?? 0;
     if (count > 0) {
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -126,6 +127,7 @@ export function StreakHeatmap({ interviews }: StreakHeatmapProps) {
       {/* Calendar */}
       <div style={{ padding: "12px 16px", overflowX: "auto" }}>
         <Calendar
+          weekStartsOn={0}
           numberOfMonths={1}
           modifiers={modifiers}
           modifiersClassNames={{
@@ -145,16 +147,16 @@ export function StreakHeatmap({ interviews }: StreakHeatmapProps) {
             month_caption:
               "text-xs font-semibold text-[var(--color-text)] px-2 py-2 mb-2 border-b border-dashed border-[var(--color-border-light)]",
             nav: "hidden",
-            weekdays: "flex justify-between w-full mb-1",
+            weekdays: "grid grid-cols-7 w-full mb-1",
             weekday:
-              "w-8 shrink-0 text-[10px] font-medium text-[var(--color-text-muted)] pb-1 text-center",
-            week: "mt-1 flex justify-between w-full",
-            day: "w-8 shrink-0 aspect-square p-0 text-center text-[11px] text-[var(--color-text-muted)] flex items-center justify-center",
+              "text-[10px] font-medium text-[var(--color-text-muted)] pb-1 text-center",
+            week: "mt-1 grid grid-cols-7 w-full",
+            day: "aspect-square p-0 text-center text-[11px] text-[var(--color-text-muted)] flex items-center justify-center",
             day_button:
               "size-full rounded-sm hover:bg-[var(--color-bg-hover)] data-[selected=true]:!bg-transparent data-[selected=true]:!text-inherit transition-colors duration-150",
             outside: "opacity-0 pointer-events-none",
             disabled: "opacity-0 pointer-events-none",
-            hidden: "hidden",
+            hidden: "invisible",
             today: "ring-1 ring-[var(--app-accent-border)] rounded-sm",
           }}
         />

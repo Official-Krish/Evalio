@@ -155,7 +155,6 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
       });
       cookie.token!.set({
         value: token,
@@ -272,7 +271,6 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
       });
       cookie.token!.set({
         value: token,
@@ -438,7 +436,6 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       const wsToken = await jwt.sign({
         id: user.id,
         email: user.email,
-        role: user.role,
         exp: Math.floor(Date.now() / 1000) + expirySecs * 60,
       });
       return { token: wsToken };

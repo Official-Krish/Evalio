@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect } from "react";
-import { motion } from "motion/react";
 
 function useCountUp(target: number, duration = 1200, delay = 200) {
   const [count, setCount] = useState(0);
@@ -39,7 +38,8 @@ function useInView(threshold = 0.3) {
   return { ref, visible };
 }
 
-const CIRCUMFERENCE = 314; // 2 * π * 50
+const RADIUS = 48;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 function ScoreRing({ score }: { score: number }) {
   const animatedScore = useCountUp(score, 1400, 400);
@@ -51,32 +51,32 @@ function ScoreRing({ score }: { score: number }) {
         width="120"
         height="120"
         viewBox="0 0 120 120"
-        className="rotate-[-90deg]"
+        style={{ display: "block" }}
       >
         <circle
           cx="60"
           cy="60"
-          r="50"
+          r={RADIUS}
           fill="none"
-          stroke="var(--color-border-tertiary)"
-          strokeWidth="8"
+          stroke="var(--ring-track)"
+          strokeWidth="7"
         />
         <circle
           cx="60"
           cy="60"
-          r="50"
+          r={RADIUS}
           fill="none"
-          stroke="var(--color-text-secondary)"
-          strokeWidth="8"
+          stroke="#5DCAA5"
+          strokeWidth="7"
           strokeLinecap="round"
           strokeDasharray={CIRCUMFERENCE}
           strokeDashoffset={offset}
-          className="transition-[stroke-dashoffset] duration-700"
+          transform="rotate(-90 60 60)"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span
-          className="text-[32px] font-[500] leading-none"
+          className="text-[34px] font-[500] leading-none"
           style={{
             color: "var(--color-text)",
             fontVariantNumeric: "tabular-nums",
@@ -127,17 +127,16 @@ function getVerdict(score: number): { label: string; description: string } {
   };
 }
 
-function DimensionBar({
-  label,
-  score,
-  delay,
-}: {
-  label: string;
-  score: number;
-  delay: number;
-}) {
+const DIMENSION_COLORS: Record<string, string> = {
+  Communication: "#5DCAA5",
+  Technical: "#7F77DD",
+  "Problem Solving": "#EF9F27",
+};
+
+function DimensionBar({ label, score }: { label: string; score: number }) {
   const { ref, visible } = useInView();
   const pct = (score / 10) * 100;
+  const color = DIMENSION_COLORS[label] ?? "var(--color-text-secondary)";
 
   return (
     <div ref={ref} className="flex items-center gap-3">
@@ -149,19 +148,14 @@ function DimensionBar({
       </span>
       <div
         className="flex-1 h-[3px] rounded-full overflow-hidden"
-        style={{ background: "var(--color-background-secondary)" }}
+        style={{ background: "var(--ring-track)" }}
       >
-        <motion.div
-          initial={{ width: 0 }}
-          animate={visible ? { width: `${pct}%` } : {}}
-          transition={{
-            duration: 1.1,
-            delay: delay / 1000,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="h-full rounded-full"
-          style={{ background: "var(--color-text-tertiary)" }}
-        />
+        {visible && (
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${pct}%`, background: color }}
+          />
+        )}
       </div>
       <span
         className="text-[13px] font-[500] w-10 text-right"
@@ -194,7 +188,7 @@ export function ScoreSection({
   return (
     <div className="pb-20">
       {/* Score ring + verdict */}
-      <div className="grid grid-cols-[auto_1fr] gap-10 items-center mb-16">
+      <div className="grid grid-cols-[auto_1fr] gap-10 items-center mb-16 max-md:grid-cols-1 max-md:justify-items-center max-md:text-center">
         <ScoreRing score={overall} />
         <div>
           <p
@@ -235,10 +229,10 @@ export function ScoreSection({
         >
           DIMENSION BREAKDOWN
         </p>
-        <div className="flex flex-col gap-[10px]">
-          <DimensionBar label="Communication" score={comm} delay={0} />
-          <DimensionBar label="Technical" score={tech} delay={120} />
-          <DimensionBar label="Problem Solving" score={prob} delay={240} />
+        <div className="flex flex-col gap-[14px]">
+          <DimensionBar label="Communication" score={comm} />
+          <DimensionBar label="Technical" score={tech} />
+          <DimensionBar label="Problem Solving" score={prob} />
         </div>
       </div>
     </div>

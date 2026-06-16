@@ -200,7 +200,7 @@ export function ResultsPage() {
             Dashboard
           </Link>
           <button
-            onClick={() => navigate("/interview/new")}
+            onClick={() => navigate(`/interview/new?retry=${id}`)}
             className="text-[12px] px-4 py-[6px] rounded-full border cursor-pointer transition-all duration-200 tracking-[0.02em]"
             style={{
               borderColor: "var(--color-border)",
@@ -274,7 +274,7 @@ export function ResultsPage() {
               className="text-[11px] tracking-[0.06em] px-[10px] py-[3px] rounded-full border-[0.5px]"
               style={{
                 borderColor: "var(--color-border-secondary)",
-                color: "var(--color-text-secondary)",
+                color: "#5DCAA5",
               }}
             >
               {STYLE_LABELS[interview.interviewStyle] ??
@@ -286,7 +286,7 @@ export function ResultsPage() {
               className="text-[11px] tracking-[0.06em] px-[10px] py-[3px] rounded-full border-[0.5px]"
               style={{
                 borderColor: "var(--color-border-secondary)",
-                color: "var(--color-text-secondary)",
+                color: "#7F77DD",
               }}
             >
               {DEPTH_LABELS[interview.interviewDepth] ??

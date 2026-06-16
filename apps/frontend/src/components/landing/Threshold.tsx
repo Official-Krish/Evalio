@@ -1,45 +1,48 @@
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import { motion, AnimatePresence } from "motion/react"
-import { useInViewOnce } from "./hooks"
-import { useSession } from "@/lib/auth"
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
+import { useInViewOnce } from "./hooks";
+import { useSession } from "@/lib/auth";
 
 const questions = [
   "Tell me about yourself.",
   "Describe a project that failed.",
   "Walk me through a decision you reversed.",
   "What's something you changed your mind about?",
-]
+];
 
 export function Threshold() {
-  const { ref, visible } = useInViewOnce<HTMLElement>(0.3)
-  const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0)
-  const [qIndex, setQIndex] = useState(0)
+  const { ref, visible } = useInViewOnce<HTMLElement>(0.3);
+  const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
+  const [qIndex, setQIndex] = useState(0);
   const { data: session } = useSession();
   const user = session?.user ?? null;
 
   useEffect(() => {
-    if (!visible) return
-    const t1 = setTimeout(() => setPhase(1), 1200)
-    const t2 = setTimeout(() => setPhase(2), 4200)
-    const t3 = setTimeout(() => setPhase(3), 5800)
+    if (!visible) return;
+    const t1 = setTimeout(() => setPhase(1), 1200);
+    const t2 = setTimeout(() => setPhase(2), 2200);
+    const t3 = setTimeout(() => setPhase(3), 3200);
     return () => {
-      clearTimeout(t1)
-      clearTimeout(t2)
-      clearTimeout(t3)
-    }
-  }, [visible])
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [visible]);
 
   useEffect(() => {
-    if (phase < 3) return
+    if (phase < 3) return;
     const interval = setInterval(() => {
-      setQIndex((i) => (i + 1) % questions.length)
-    }, 5500)
-    return () => clearInterval(interval)
-  }, [phase])
+      setQIndex((i) => (i + 1) % questions.length);
+    }, 5500);
+    return () => clearInterval(interval);
+  }, [phase]);
 
   return (
-    <section ref={ref} className="landing-container relative pt-[16vh] pb-[10vh] min-h-150">
+    <section
+      ref={ref}
+      className="landing-container relative pt-[16vh] pb-[10vh] min-h-150"
+    >
       <div className="relative flex flex-col items-center text-center">
         <motion.p
           initial={{ opacity: 0 }}
@@ -116,12 +119,21 @@ export function Threshold() {
             className="inline-flex items-center gap-2 text-sm font-medium text-[var(--landing-fg-muted)] hover:text-[var(--landing-fg)] transition-colors border border-[var(--landing-border)] hover:border-[var(--landing-fg-faint)] rounded-lg px-5 py-2.5"
           >
             I'm ready
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M5 3l4 4-4 4" />
             </svg>
           </Link>
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

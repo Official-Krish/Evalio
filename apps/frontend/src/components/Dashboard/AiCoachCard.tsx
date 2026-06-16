@@ -1,94 +1,41 @@
-import { useMemo } from "react";
 import { motion } from "motion/react";
-import type { InterviewSession } from "@evalio/shared";
-import {
-  IconTrendingUp,
-  IconAlertTriangle,
-  IconChartBar,
-} from "@tabler/icons-react";
+import { IconTrendingUp, IconAlertTriangle } from "@tabler/icons-react";
+import type { InterviewSummary } from "@evalio/shared";
 
 interface AiCoachCardProps {
-  completed: InterviewSession[];
+  summary: InterviewSummary | null;
   totalSessions: number;
 }
 
-export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
-  const insights = useMemo(() => {
-    if (completed.length === 0) return null;
-    const items: {
-      text: string;
-      color: string;
-      icon: React.ReactNode;
-      positive: boolean;
-    }[] = [];
-    const commScores = completed
-      .map((i) => i.communicationScore)
-      .filter((s): s is number => s != null);
-    const techScores = completed
-      .map((i) => i.technicalScore)
-      .filter((s): s is number => s != null);
-    const probScores = completed
-      .map((i) => i.problemSolvingScore)
-      .filter((s): s is number => s != null);
+export function AiCoachCard({ summary, totalSessions }: AiCoachCardProps) {
+  if (!summary || totalSessions === 0) return null;
 
-    if (commScores.length > 0) {
-      const recent = commScores.slice(0, Math.min(3, commScores.length));
-      const earlier = commScores.slice(Math.min(3, commScores.length));
-      const avgR = recent.reduce((a, b) => a + b, 0) / recent.length;
-      const avgE =
-        earlier.length > 0
-          ? earlier.reduce((a, b) => a + b, 0) / earlier.length
-          : avgR;
-      const positive = avgR >= avgE;
-      items.push({
-        text: positive
-          ? "Communication is improving"
-          : "Communication needs attention",
-        color: positive ? "#4ade80" : "#facc15",
-        icon: positive ? (
-          <IconTrendingUp size={14} />
-        ) : (
-          <IconAlertTriangle size={14} />
-        ),
-        positive,
-      });
-    }
-    if (probScores.length > 0) {
-      const avgProb = probScores.reduce((a, b) => a + b, 0) / probScores.length;
-      const positive = avgProb >= 60;
-      items.push({
-        text: positive
-          ? "Tradeoff discussions are solid"
-          : "You avoid discussing tradeoffs",
-        color: positive ? "#4ade80" : "#facc15",
-        icon: positive ? (
-          <IconTrendingUp size={14} />
-        ) : (
-          <IconAlertTriangle size={14} />
-        ),
-        positive,
-      });
-    }
-    if (techScores.length > 0) {
-      const avgTech = techScores.reduce((a, b) => a + b, 0) / techScores.length;
-      const positive = avgTech >= 65;
-      items.push({
-        text: positive
-          ? "Technical answers are well-structured"
-          : "Backend answers lack metrics",
-        color: positive ? "#4ade80" : "#f87171",
-        icon: positive ? (
-          <IconTrendingUp size={14} />
-        ) : (
-          <IconChartBar size={14} />
-        ),
-        positive,
-      });
-    }
-    return items;
-  }, [completed]);
+  const insights: {
+    text: string;
+    color: string;
+    icon: React.ReactNode;
+    positive: boolean;
+  }[] = [];
 
-  if (!insights || completed.length === 0) return null;
+  for (const s of (summary.strengths as string[]) ?? []) {
+    insights.push({
+      text: s,
+      color: "#4ade80",
+      icon: <IconTrendingUp size={14} />,
+      positive: true,
+    });
+  }
+
+  for (const w of (summary.improvementAreas as string[]) ?? []) {
+    insights.push({
+      text: w,
+      color: "#facc15",
+      icon: <IconAlertTriangle size={14} />,
+      positive: false,
+    });
+  }
+
+  if (insights.length === 0) return null;
 
   return (
     <motion.div
@@ -104,7 +51,6 @@ export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
         overflow: "hidden",
       }}
     >
-      {/* Ambient glow */}
       <div
         style={{
           position: "absolute",
@@ -118,7 +64,6 @@ export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
         }}
       />
 
-      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -128,7 +73,6 @@ export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          {/* Pulsing dot */}
           <motion.div
             animate={{ opacity: [1, 0.3, 1] }}
             transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
@@ -148,7 +92,6 @@ export function AiCoachCard({ completed, totalSessions }: AiCoachCardProps) {
         </span>
       </div>
 
-      {/* Insight rows */}
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         {insights.map((item, i) => (
           <motion.div

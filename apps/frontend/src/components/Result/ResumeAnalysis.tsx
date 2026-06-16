@@ -17,15 +17,16 @@ export function ResumeAnalysis({ summary }: { summary: InterviewSummary }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {strengths.length > 0 && (
           <div
-            className="rounded-xl p-4 pl-5 border-[0.5px] flex flex-col gap-2"
+            className="rounded-xl border-[0.5px] flex flex-col gap-2"
             style={{
-              borderColor: "var(--color-border-tertiary)",
-              background: "#EAF3DE22",
+              borderColor: "var(--color-border-secondary)",
+              background: "rgba(93, 202, 165, 0.06)",
+              padding: "1.25rem",
             }}
           >
             <p
-              className="text-[11px] tracking-[0.08em] uppercase font-[500] mb-1"
-              style={{ color: "#3B6D11" }}
+              className="text-[11px] tracking-[0.09em] uppercase font-[500] mb-1"
+              style={{ color: "#5DCAA5" }}
             >
               What works
             </p>
@@ -33,7 +34,7 @@ export function ResumeAnalysis({ summary }: { summary: InterviewSummary }) {
               <div key={i} className="flex items-start gap-2.5">
                 <span
                   className="w-1 h-1 rounded-full mt-[7px] flex-shrink-0"
-                  style={{ background: "#639922" }}
+                  style={{ background: "#5DCAA5" }}
                 />
                 <p
                   className="text-[13px] leading-[1.55] m-0"
@@ -48,15 +49,16 @@ export function ResumeAnalysis({ summary }: { summary: InterviewSummary }) {
 
         {weaknesses.length > 0 && (
           <div
-            className="rounded-xl p-4 pl-5 border-[0.5px] flex flex-col gap-2"
+            className="rounded-xl border-[0.5px] flex flex-col gap-2"
             style={{
-              borderColor: "var(--color-border-tertiary)",
-              background: "#FAEEDA22",
+              borderColor: "var(--color-border-secondary)",
+              background: "rgba(239, 159, 39, 0.06)",
+              padding: "1.25rem",
             }}
           >
             <p
-              className="text-[11px] tracking-[0.08em] uppercase font-[500] mb-1"
-              style={{ color: "#854F0B" }}
+              className="text-[11px] tracking-[0.09em] uppercase font-[500] mb-1"
+              style={{ color: "#EF9F27" }}
             >
               What to improve
             </p>
@@ -64,7 +66,7 @@ export function ResumeAnalysis({ summary }: { summary: InterviewSummary }) {
               <div key={i} className="flex items-start gap-2.5">
                 <span
                   className="w-1 h-1 rounded-full mt-[7px] flex-shrink-0"
-                  style={{ background: "#BA7517" }}
+                  style={{ background: "#EF9F27" }}
                 />
                 <p
                   className="text-[13px] leading-[1.55] m-0"

@@ -169,6 +169,7 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
                 }}
               >
                 <Calendar
+                  weekStartsOn={0}
                   numberOfMonths={1}
                   onDayClick={handleDayClick}
                   showOutsideDays={false}
@@ -183,16 +184,16 @@ export function PastSessionsTable({ completed }: PastSessionsTableProps) {
                       "size-7 flex items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)]",
                     button_next:
                       "size-7 flex items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)]",
-                    weekdays: "flex",
+                    weekdays: "grid grid-cols-7 w-full",
                     weekday:
-                      "flex-1 text-[10px] font-normal text-[var(--color-text-muted)] pb-1 text-center",
-                    week: "mt-0.5 flex w-full",
-                    day: "flex-1 aspect-square p-0 text-center text-[11px] text-[var(--color-text-muted)]",
+                      "text-[10px] font-normal text-[var(--color-text-muted)] pb-1 text-center",
+                    week: "mt-0.5 grid grid-cols-7 w-full",
+                    day: "aspect-square p-0 text-center text-[11px] text-[var(--color-text-muted)]",
                     day_button:
                       "size-full rounded-sm hover:bg-[var(--color-bg-hover)] data-[selected=true]:!bg-[var(--app-accent)] data-[selected=true]:!text-[#080808]",
                     outside: "opacity-0",
                     disabled: "opacity-0",
-                    hidden: "hidden",
+                    hidden: "invisible",
                     today: "ring-1 ring-[var(--color-border)] rounded-sm",
                   }}
                   components={{

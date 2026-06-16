@@ -13,18 +13,13 @@ import { ReadinessHero } from "../components/Dashboard/ReadinessHero";
 import { AiCoachCard } from "../components/Dashboard/AiCoachCard";
 import { TrendsSection } from "../components/Dashboard/TrendsSection";
 import { WeaknessDetection } from "../components/Dashboard/WeaknessDetection";
-import { LatestInsight } from "../components/Dashboard/LatestInsight";
 import { InterviewerRemembers } from "../components/Dashboard/InterviewerRemembers";
 import { RoleRecommendations } from "../components/Dashboard/RoleRecommendations";
 import { SidebarRight } from "../components/Dashboard/SidebarRight";
 import {
   computeReadiness,
-  detectWeaknesses,
-  getLatestInsight,
-  analyzeAcrossSessions,
   computeComparison30Days,
   computeMilestones,
-  computeRoleRecommendations,
 } from "../components/Dashboard/helpers";
 import { usePageTitle } from "@/lib/usePageTitle";
 import type { InterviewSession } from "@evalio/shared";
@@ -58,37 +53,20 @@ export function DashboardPage() {
     () => computeReadiness(completed),
     [completed],
   );
-  const weaknesses = useMemo(() => detectWeaknesses(completed), [completed]);
-  const insight = useMemo(() => getLatestInsight(completed), [completed]);
-  const remembers = useMemo(
-    () => analyzeAcrossSessions(completed),
-    [completed],
-  );
   const comparison = useMemo(
     () => computeComparison30Days(completed),
     [completed],
   );
   const milestones = useMemo(() => computeMilestones(completed), [completed]);
-  const roleRecs = useMemo(
-    () => computeRoleRecommendations(completed),
-    [completed],
-  );
+
+  // Derive dashboard insights from the latest evaluated interview
+  const latestSummary = useMemo(() => {
+    return completed.find((i) => i.summary)?.summary ?? null;
+  }, [completed]);
 
   return (
     <div style={{ position: "relative" }}>
-      {/* Global ambient background wash */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse 60% 50% at 20% 0%, var(--app-accent-glow, rgba(184,168,138,0.05)) 0%, transparent 70%)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
-
-      <div style={{ position: "relative", zIndex: 1 }}>
+      <div style={{ position: "relative" }}>
         <UploadResumeModal
           open={showUpload}
           onClose={() => setShowUpload(false)}
@@ -103,7 +81,6 @@ export function DashboardPage() {
           className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-10"
           style={{ maxWidth: "960px", margin: "0 auto" }}
         >
-          {/* ── Main column ── */}
           <div
             style={{
               display: "flex",
@@ -112,7 +89,6 @@ export function DashboardPage() {
               minWidth: 0,
             }}
           >
-            {/* Hero */}
             <ReadinessHero
               user={user}
               totalSessions={totalSessions}
@@ -120,17 +96,17 @@ export function DashboardPage() {
               interviews={interviews}
             />
 
-            {/* Horizontal rule separator */}
             {totalSessions > 0 && (
               <div
                 style={{ height: "1px", background: "var(--color-border)" }}
               />
             )}
 
-            {/* AI Coach */}
-            <AiCoachCard completed={completed} totalSessions={totalSessions} />
+            <AiCoachCard
+              summary={latestSummary}
+              totalSessions={totalSessions}
+            />
 
-            {/* Most recent session */}
             {mostRecent && (
               <SessionStrip
                 mostRecent={mostRecent}
@@ -138,11 +114,9 @@ export function DashboardPage() {
               />
             )}
 
-            {/* Trends */}
             {completed.length > 1 && <TrendsSection completed={completed} />}
 
-            {/* Weaknesses + Latest Insight */}
-            {completed.length > 0 && (weaknesses.length > 0 || insight) && (
+            {completed.length > 0 && latestSummary && (
               <div
                 style={{
                   display: "grid",
@@ -151,36 +125,24 @@ export function DashboardPage() {
                 }}
                 className="max-md:grid-cols-1"
               >
-                <WeaknessDetection weaknesses={weaknesses} />
-                <LatestInsight
-                  insight={insight}
-                  hasData={completed.length > 0}
+                <WeaknessDetection summary={latestSummary} />
+                <InterviewerRemembers
+                  summary={latestSummary}
+                  totalSessions={totalSessions}
                 />
               </div>
             )}
 
-            {/* Interviewer Remembers */}
-            <InterviewerRemembers
-              data={remembers}
-              totalSessions={totalSessions}
-            />
+            {latestSummary && <RoleRecommendations summary={latestSummary} />}
 
-            {/* Role Recommendations */}
-            {roleRecs.length > 0 && (
-              <RoleRecommendations recommendations={roleRecs} />
-            )}
-
-            {/* Past sessions */}
             {completed.length > 0 && (
               <PastSessionsTable completed={completed} />
             )}
 
-            {/* Empty state */}
             {!isLoading && interviews.length === 0 && (
               <EmptyState onUpload={() => setShowUpload(true)} />
             )}
 
-            {/* Feedback CTA */}
             {completed.length > 0 && (
               <motion.div whileHover={{ x: 2 }} transition={{ duration: 0.15 }}>
                 <Link
@@ -245,7 +207,6 @@ export function DashboardPage() {
             )}
           </div>
 
-          {/* ── Sidebar ── */}
           <div className="lg:sticky lg:top-6 self-start">
             <SidebarRight
               interviews={interviews}

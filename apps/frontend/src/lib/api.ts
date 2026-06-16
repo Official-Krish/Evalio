@@ -18,8 +18,8 @@ function errorMessage(err: unknown): string {
   if (typeof err === "string") return err;
   if (err && typeof err === "object") {
     const e = err as Record<string, unknown>;
-    if (typeof e.value === "string") return e.value;
-    if (e.message) return String(e.message);
+    if (typeof e.error === "string") return e.error;
+    if (typeof e.message === "string") return e.message;
   }
   return "Request failed";
 }
