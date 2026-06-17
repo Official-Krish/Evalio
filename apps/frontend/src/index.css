@@ -802,6 +802,167 @@ html.landing-active {
   }
 }
 
+/* ─── IdentityEmergence ──────────────────────────────────────── */
+
+.identity-stat {
+  padding-left: 16px;
+  border-left: 1px solid var(--landing-line);
+}
+
+.identity-stat-value {
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  color: var(--landing-fg);
+  line-height: 1;
+  tabular-nums: true;
+}
+
+.identity-before-after {
+  font-size: 13px;
+  font-family: ui-monospace, "SF Mono", monospace;
+  letter-spacing: 0.04em;
+}
+
+.identity-stat-label {
+  font-size: 11px;
+  color: var(--landing-fg-faint);
+  margin-top: 4px;
+}
+
+/* ─── MemoryTimeline ─────────────────────────────────────────── */
+
+.timeline-spine-col {
+  /* Fixed-width column that sits on the central spine */
+  width: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 6px;
+}
+
+.timeline-spine-node {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--landing-fg-faint);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.timeline-content {
+  min-height: 56px;
+}
+
+/* ─── DSACoding editor ───────────────────────────────────────── */
+
+.dsa-editor {
+  background: #0d0d0f;
+  border: 1px solid var(--landing-line);
+  border-radius: 4px;
+  overflow: hidden;
+  font-family: ui-monospace, "SF Mono", "Fira Code", monospace;
+}
+
+[data-theme="light"] .dsa-editor {
+  background: #111116;
+}
+
+.dsa-editor-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--landing-line);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dsa-phase-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--landing-line);
+  overflow: hidden;
+}
+
+.dsa-phase-pill {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-right: 1px solid var(--landing-line);
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.dsa-code-area {
+  padding: 12px 0;
+  min-height: 200px;
+}
+
+.dsa-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  padding: 1.5px 0;
+  transition: background 0.4s ease;
+  position: relative;
+}
+
+.dsa-gutter {
+  width: 32px;
+  text-align: right;
+  padding-right: 12px;
+  font-size: 10px;
+  color: var(--landing-fg-faint);
+  opacity: 0.4;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.dsa-code-text {
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--landing-fg-muted);
+  flex: 1;
+  padding-right: 8px;
+}
+
+.dsa-annotation {
+  font-size: 10px;
+  padding-right: 12px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
+/* Token colours */
+.dsa-kw   { color: #c792ea; }
+.dsa-fn   { color: #82aaff; }
+.dsa-param { color: var(--landing-fg-muted); }
+.dsa-punct { color: var(--landing-fg-faint); }
+.dsa-name  { color: #efc090; }
+.dsa-bracket { color: #89ddff; }
+.dsa-plain { color: var(--landing-fg-muted); }
+
+.dsa-test-output {
+  padding: 10px 14px;
+  border-top: 1px solid var(--landing-line);
+  background: rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.dsa-ai-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-top: 1px solid var(--landing-line);
+  background: rgba(184, 168, 138, 0.04);
+}
+
 /* ─── Static pages ───────────────────────────────────────────── */
 
 .static-badge {
