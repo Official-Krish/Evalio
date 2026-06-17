@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useNavigate } from "react-router-dom";
 import { SIGNAL_LABELS } from "../../constants/signals";
 import type { FailurePattern } from "../../constants/signals";
 import { api } from "../../lib/api";
@@ -37,7 +36,6 @@ function PatternEvidence({
 }: {
   evidence: FailurePattern["evidence"];
 }) {
-  const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const resolvedTurnIds = new Set(evidence.flatMap((e) => e.turnIds));
 

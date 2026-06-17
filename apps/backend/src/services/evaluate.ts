@@ -250,7 +250,7 @@ async function writeEvaluation(
   }
 }
 
-export async function evaluateInterview(interviewId: string, retries = 1) {
+export async function evaluateInterview(interviewId: string, _retries = 1) {
   const interview = await prisma.interviewSession.findUnique({
     where: { id: interviewId },
     select: {

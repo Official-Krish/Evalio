@@ -7,7 +7,7 @@ await rm(outdir, { recursive: true, force: true });
 
 const entrypoints = [...new Bun.Glob("src/**/*.html").scanSync()];
 
-const result = await Bun.build({
+await Bun.build({
   entrypoints,
   outdir,
   plugins: [tailwind],

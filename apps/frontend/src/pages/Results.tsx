@@ -79,6 +79,13 @@ export function ResultsPage() {
     }
   };
 
+  const { data: allInterviews } = useQuery({
+    queryKey: ["interviews"],
+    queryFn: () => api.listInterviews(),
+    select: (d) =>
+      d.interviews as (InterviewSession & { _count?: { turns: number } })[],
+  });
+
   if (evalStatus?.status === "failed") {
     return (
       <div className="text-center py-20 px-6">
@@ -115,13 +122,6 @@ export function ResultsPage() {
       </div>
     );
   }
-
-  const { data: allInterviews } = useQuery({
-    queryKey: ["interviews"],
-    queryFn: () => api.listInterviews(),
-    select: (d) =>
-      d.interviews as (InterviewSession & { _count?: { turns: number } })[],
-  });
 
   if (isLoading) return <ResultsSkeleton />;
 

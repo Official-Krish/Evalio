@@ -8,8 +8,6 @@ const TRAIT_KEYS = [
   "decisionMaking",
   "influence",
 ] as const;
-type TraitKey = (typeof TRAIT_KEYS)[number];
-
 interface TraitScore {
   score: number;
   description: string;

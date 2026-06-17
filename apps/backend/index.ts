@@ -7,7 +7,7 @@ async function main() {
 
   const port = parseInt(Bun.env.PORT ?? "3000");
 
-  app.listen({ port }, ({ hostname, port }) => {});
+  app.listen({ port }, () => {});
 
   startWsServer();
 }
