@@ -67,3 +67,51 @@ export interface FailurePattern {
     reason: string;
   }[];
 }
+
+export interface IdentityTrait {
+  level: "high" | "medium" | "developing";
+  score: number;
+  trend: "improving" | "worsening" | "stable";
+  description: string;
+}
+
+export type IdentityTraits = Record<string, IdentityTrait>;
+
+export const TRAIT_LABELS: Record<
+  string,
+  { label: string; description: string }
+> = {
+  analytical: {
+    label: "Analytical",
+    description: "Problem decomposition, tradeoffs, root cause, depth",
+  },
+  communication: {
+    label: "Communication",
+    description: "Clarity, structure, brevity, audience awareness",
+  },
+  ownership: {
+    label: "Ownership",
+    description: "Accountability, initiative, follow-through, outcome focus",
+  },
+  adaptability: {
+    label: "Adaptability",
+    description: "Response to ambiguity, changing constraints, pushback",
+  },
+  decisionMaking: {
+    label: "Decision Making",
+    description: "Making choices, defending choices, handling uncertainty",
+  },
+  influence: {
+    label: "Influence",
+    description: "Persuasion, stakeholder alignment, buy-in",
+  },
+};
+
+export const TRAIT_ORDER = [
+  "analytical",
+  "communication",
+  "ownership",
+  "adaptability",
+  "decisionMaking",
+  "influence",
+];

@@ -1,12 +1,10 @@
 import { Elysia, t } from "elysia";
 import { GoogleGenAI } from "@google/genai";
-import { strictRateLimit } from "../middleware/rateLimit";
 import { authGuard } from "../middleware/auth";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 export const companyRoutes = new Elysia({ prefix: "/companies" })
-  .use(strictRateLimit)
   .use(authGuard)
   .post(
     "/generate",

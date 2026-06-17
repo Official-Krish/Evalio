@@ -79,6 +79,10 @@ export const FileUpload = ({
           <p className="relative z-20 mt-2 font-sans text-base font-normal text-neutral-400 dark:text-neutral-400">
             Drag or drop your files here or click to upload
           </p>
+          <p className="relative z-20 mt-2 text-xs text-amber-500/70 dark:text-amber-400/60">
+            Your resume will be parsed by AI. Remove any sensitive personal data
+            before uploading.
+          </p>
           <div className="relative mx-auto mt-10 w-full max-w-xl">
             {files.length > 0 &&
               (disabled ? (

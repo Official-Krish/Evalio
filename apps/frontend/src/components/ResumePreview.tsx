@@ -55,9 +55,9 @@ export function ResumePreview({ resumeId, open, onClose }: ResumePreviewProps) {
         </div>
 
         <div className="flex-1 min-h-0">
-          {resume?.originalUrl ? (
+          {resume?.url ? (
             <iframe
-              src={resume.originalUrl}
+              src={resume.url}
               className="w-full h-full"
               style={{ minHeight: "70vh" }}
               title="Resume PDF"
@@ -71,14 +71,14 @@ export function ResumePreview({ resumeId, open, onClose }: ResumePreviewProps) {
           )}
         </div>
 
-        {resume?.originalUrl && (
+        {resume?.url && (
           <div className="flex items-center justify-between px-6 py-3 border-t border-[var(--landing-line)]">
             <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>
               v{resume.version}{" "}
               {new Date(resume.uploadedAt).toLocaleDateString()}
             </span>
             <a
-              href={resume.originalUrl}
+              href={resume.url}
               target="_blank"
               rel="noopener noreferrer"
               style={{

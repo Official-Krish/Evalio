@@ -14,6 +14,7 @@ import { AiCoachCard } from "../components/Dashboard/AiCoachCard";
 import { TrendsSection } from "../components/Dashboard/TrendsSection";
 import { WeaknessDetection } from "../components/Dashboard/WeaknessDetection";
 import { FailurePatternCard } from "../components/Dashboard/FailurePatternCard";
+import { IdentityProfileCard } from "../components/Dashboard/IdentityProfileCard";
 import { InterviewerRemembers } from "../components/Dashboard/InterviewerRemembers";
 import { RoleRecommendations } from "../components/Dashboard/RoleRecommendations";
 import { SidebarRight } from "../components/Dashboard/SidebarRight";
@@ -73,6 +74,10 @@ export function DashboardPage() {
     ? failurePatterns
     : [];
 
+  const identityTraits =
+    (skillProfile?.profile as { identityTraits?: unknown } | null)
+      ?.identityTraits ?? null;
+
   // Derive dashboard insights from the latest evaluated interview
   const latestSummary = useMemo(() => {
     return completed.find((i) => i.summary)?.summary ?? null;
@@ -103,6 +108,17 @@ export function DashboardPage() {
               minWidth: 0,
             }}
           >
+            {completed.length >= 4 && (
+              <IdentityProfileCard
+                traits={
+                  identityTraits as
+                    | import("../constants/signals").IdentityTraits
+                    | null
+                }
+                completedCount={completed.length}
+              />
+            )}
+
             <ReadinessHero
               user={user}
               totalSessions={totalSessions}
@@ -138,6 +154,8 @@ export function DashboardPage() {
                 completedCount={completed.length}
               />
             )}
+
+            {latestSummary && <WeaknessDetection summary={latestSummary} />}
 
             {completed.length > 0 && latestSummary && (
               <InterviewerRemembers

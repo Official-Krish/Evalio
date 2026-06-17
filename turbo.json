@@ -34,6 +34,8 @@
     "CDN_BASE_URL",
     "DATABASE_URL",
     "FRONTEND_URL",
-    "NODE_ENV"
+    "NODE_ENV",
+    "CLOUDFRONT_KEY_PAIR_ID",
+    "CLOUDFRONT_PRIVATE_KEY"
   ]
 }

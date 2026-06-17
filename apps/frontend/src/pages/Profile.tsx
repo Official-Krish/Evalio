@@ -4,6 +4,7 @@ import { IdentityCard } from "../components/Profile/IdentityCard";
 import { ResumeVault } from "../components/Profile/ResumeVault";
 import { StreakHeatmap } from "../components/Profile/StreakHeatmap";
 import { SkillProfileCard } from "../components/Profile/SkillProfileCard";
+import { IdentityProfileCard } from "../components/Dashboard/IdentityProfileCard";
 import { FailurePatternDetailCard } from "../components/Profile/FailurePatternDetailCard";
 import { GithubIntegrationCard } from "../components/Profile/GithubIntegrationCard";
 import { api } from "../lib/api";
@@ -49,6 +50,10 @@ export function ProfilePage() {
   const normalizedPatterns = Array.isArray(failurePatterns)
     ? failurePatterns
     : [];
+
+  const identityTraits =
+    (skillsData?.profile as { identityTraits?: unknown } | null)
+      ?.identityTraits ?? null;
 
   // Fetch Github details
   const { data: githubProfileData } = useQuery({
@@ -109,6 +114,14 @@ export function ProfilePage() {
           className="lg:col-span-7"
           style={{ display: "flex", flexDirection: "column", gap: "20px" }}
         >
+          <IdentityProfileCard
+            traits={
+              identityTraits as
+                | import("../constants/signals").IdentityTraits
+                | null
+            }
+            completedCount={completedCount}
+          />
           <SkillProfileCard
             profile={skillsData?.profile}
             loading={skillsLoading}

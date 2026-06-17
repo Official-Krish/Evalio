@@ -1,22 +1,33 @@
-import { fileNameFromUrl } from "./helpers"
-import type { Resume } from "@evalio/shared"
+import { fileNameFromUrl } from "./helpers";
+import type { Resume } from "@evalio/shared";
 
 interface SessionCardProps {
-  position: string
-  customPosition: string
-  selectedResumeId: string | undefined
-  resumes: Resume[]
-  isPending: boolean
-  onCreate: () => void
+  position: string;
+  customPosition: string;
+  selectedResumeId: string | undefined;
+  resumes: Resume[];
+  isPending: boolean;
+  onCreate: () => void;
 }
 
-export function SessionCard({ position, customPosition, selectedResumeId, resumes, isPending, onCreate }: SessionCardProps) {
-  const selectedResume = selectedResumeId ? resumes.find((r) => r.id === selectedResumeId) ?? null : null
-  const resumeLabel = selectedResume ? (fileNameFromUrl(selectedResume.originalUrl) ?? "Resume") : null
-  const roleLabel = position || customPosition || "Position"
-  const ready = !!position && !!selectedResumeId
+export function SessionCard({
+  position,
+  customPosition,
+  selectedResumeId,
+  resumes,
+  isPending,
+  onCreate,
+}: SessionCardProps) {
+  const selectedResume = selectedResumeId
+    ? (resumes.find((r) => r.id === selectedResumeId) ?? null)
+    : null;
+  const resumeLabel = selectedResume
+    ? (fileNameFromUrl(selectedResume.objectKey) ?? "Resume")
+    : null;
+  const roleLabel = position || customPosition || "Position";
+  const ready = !!position && !!selectedResumeId;
 
-  if (!ready) return null
+  if (!ready) return null;
 
   return (
     <div
@@ -31,12 +42,40 @@ export function SessionCard({ position, customPosition, selectedResumeId, resume
         padding: "20px 24px",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "16px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: "14px", fontWeight: 500, color: "var(--color-text)", lineHeight: 1.2 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "14px",
+          marginBottom: "16px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "2px",
+            flex: 1,
+            minWidth: 0,
+          }}
+        >
+          <span
+            style={{
+              fontSize: "14px",
+              fontWeight: 500,
+              color: "var(--color-text)",
+              lineHeight: 1.2,
+            }}
+          >
             {roleLabel}
           </span>
-          <span style={{ fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.2 }}>
+          <span
+            style={{
+              fontSize: "12px",
+              color: "var(--color-text-muted)",
+              lineHeight: 1.2,
+            }}
+          >
             {resumeLabel}
           </span>
         </div>
@@ -63,5 +102,5 @@ export function SessionCard({ position, customPosition, selectedResumeId, resume
         {isPending ? "Starting..." : `Start Interview \u2192`}
       </button>
     </div>
-  )
+  );
 }

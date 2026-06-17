@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { prisma } from "../lib/prisma";
 import { updateCandidateProfile } from "./profile";
 import { aggregateFailurePatterns } from "./failurePatterns";
+import { aggregateIdentityTraits } from "./identityTraits";
 
 interface TurnEvaluation {
   orderNumber: number;
@@ -285,6 +286,10 @@ export async function evaluateInterview(interviewId: string, retries = 1) {
 
   aggregateFailurePatterns(interview.user.id).catch((err) =>
     console.error("[evaluate] pattern aggregation failed:", err),
+  );
+
+  aggregateIdentityTraits(interview.user.id).catch((err) =>
+    console.error("[evaluate] identity trait aggregation failed:", err),
   );
 
   return { evaluation: result, summary };

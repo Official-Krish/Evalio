@@ -81,10 +81,20 @@ Based on the scores above, generate a JSON object:
       "turnIds": [3],
       "reason": "1-sentence why"
     }
-  ]
+  ],
+  "traits": {
+    "analytical": { "score": number, "description": "1-sentence assessment" },
+    "communication": { "score": number, "description": "1-sentence assessment" },
+    "ownership": { "score": number, "description": "1-sentence assessment" },
+    "adaptability": { "score": number, "description": "1-sentence assessment" },
+    "decisionMaking": { "score": number, "description": "1-sentence assessment" },
+    "influence": { "score": number, "description": "1-sentence assessment" }
+  }
 }
 
 Select 0-N signals from the predefined taxonomy only (${signalCodes}). Use turnIds to reference turn orderNumbers (1-based). If none of the codes fit, use otherSignals with a descriptive label.
+
+Assess the candidate's stable identity traits based on this session. Score each 0-100 and write a 1-sentence description for each.
 
 Return ONLY valid JSON.`;
 
@@ -152,6 +162,27 @@ Return ONLY valid JSON.`;
 
     const updatedSignals = [...prevSignals, signalEntry];
 
+    const rawTraits = parsed.traits as
+      | Record<string, { score?: number; description?: string }>
+      | undefined;
+    const traitEntry = rawTraits
+      ? {
+          interviewId,
+          date: new Date().toISOString(),
+          traits: Object.fromEntries(
+            Object.entries(rawTraits).map(([k, v]) => [
+              k,
+              { score: v?.score ?? 0, description: v?.description ?? "" },
+            ]),
+          ),
+        }
+      : null;
+
+    const prevTraitHistory = await readJson<Json>(existing?.traitHistory);
+    const updatedTraitHistory = traitEntry
+      ? [...prevTraitHistory, traitEntry]
+      : prevTraitHistory;
+
     await prisma.candidateSkillProfile.upsert({
       where: { userId: interview.userId },
       create: {
@@ -174,6 +205,7 @@ Return ONLY valid JSON.`;
         ]),
         commonPatterns: JSON.stringify(newPatterns),
         patternSignals: JSON.stringify(updatedSignals),
+        traitHistory: JSON.stringify(updatedTraitHistory),
         mostImprovedSkill: parsed.mostImprovedSkill ?? null,
         weakestSkill: parsed.weakestSkill ?? null,
       },
@@ -196,6 +228,7 @@ Return ONLY valid JSON.`;
         ]),
         commonPatterns: JSON.stringify(newPatterns),
         patternSignals: JSON.stringify(updatedSignals),
+        traitHistory: JSON.stringify(updatedTraitHistory),
         mostImprovedSkill: parsed.mostImprovedSkill ?? undefined,
         weakestSkill: parsed.weakestSkill ?? undefined,
       },

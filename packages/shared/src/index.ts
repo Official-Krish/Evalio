@@ -100,7 +100,7 @@ export const resumeSchema = z.object({
   id: z.string(),
   userId: z.string(),
   version: z.number(),
-  originalUrl: z.string().nullable(),
+  objectKey: z.string().nullable(),
   extractedText: z.string().nullable(),
   uploadedAt: z.date(),
 });
@@ -178,9 +178,10 @@ export interface Resume {
   id: string;
   userId: string;
   version: number;
-  originalUrl: string | null;
+  objectKey: string | null;
   extractedText: string | null;
   uploadedAt: Date;
+  url?: string | null;
 }
 
 export interface EvaluationResult {

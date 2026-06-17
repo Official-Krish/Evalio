@@ -298,7 +298,7 @@ export function ResumeVault({ resumes }: ResumeVaultProps) {
 function ResumeRow({ resume, isLast }: { resume: Resume; isLast: boolean }) {
   const [hovered, setHovered] = useState(false);
   const label =
-    fileNameFromUrl(resume.originalUrl) || `Resume v${resume.version}`;
+    fileNameFromUrl(resume.objectKey) || `Resume v${resume.version}`;
   const uploaded = new Date(resume.uploadedAt).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -379,7 +379,7 @@ function ResumeRow({ resume, isLast }: { resume: Resume; isLast: boolean }) {
 
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <a
-          href={resume.originalUrl ?? undefined}
+          href={resume.url ?? undefined}
           target="_blank"
           rel="noopener noreferrer"
           style={{
