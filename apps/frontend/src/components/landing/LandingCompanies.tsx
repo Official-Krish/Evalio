@@ -45,7 +45,7 @@ export function LandingCompanies() {
             className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-faint)] mb-8"
           >
             <span className="w-8 h-px bg-[var(--landing-line)]" aria-hidden />
-            Chapter II · The room
+            Chapter III · The room
           </motion.span>
 
           <motion.h2

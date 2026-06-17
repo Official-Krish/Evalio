@@ -1,4 +1,5 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/cloudfront-signer";
 
 const bucketName = process.env.S3_BUCKET_NAME || process.env.AWS_BUCKET_NAME;
 const region = process.env.S3_REGION || process.env.AWS_REGION;
@@ -15,6 +16,15 @@ if (!bucketName || !region || !CDN_BASE_URL) {
   );
 }
 
+if (
+  !process.env.CLOUDFRONT_KEY_PAIR_ID ||
+  !process.env.CLOUDFRONT_PRIVATE_KEY
+) {
+  throw new Error(
+    "CLOUDFRONT_KEY_PAIR_ID and CLOUDFRONT_PRIVATE_KEY must be configured for signed URLs.",
+  );
+}
+
 const s3 = new S3Client({
   region,
   ...(accessKeyId && secretAccessKey
@@ -27,10 +37,6 @@ const s3 = new S3Client({
       }
     : {}),
 });
-
-function keyToCdnUrl(key: string): string {
-  return `${CDN_BASE_URL!.replace(/\/$/, "")}/${key}`;
-}
 
 async function putObjectToS3(input: {
   key: string;
@@ -49,7 +55,7 @@ async function putObjectToS3(input: {
 }
 
 type UploadSuccess = {
-  url: string;
+  key: string;
   error?: never;
 };
 
@@ -70,12 +76,14 @@ function sanitizeFileName(name: string): string {
 
 export async function uploadResumeToS3({
   userId,
+  resumeUuid,
   version,
   fileName,
   fileBuffer,
   mimeType,
 }: {
   userId: string;
+  resumeUuid: string;
   version: number;
   fileName: string;
   fileBuffer: Buffer;
@@ -83,7 +91,7 @@ export async function uploadResumeToS3({
 }): Promise<UploadResponse> {
   try {
     const safeName = sanitizeFileName(fileName);
-    const objectKey = `evalio/${userId}/v${version}/${safeName}`;
+    const objectKey = `evalio/resume/${userId}/${resumeUuid}/v${version}/${safeName}`;
 
     await putObjectToS3({
       key: objectKey,
@@ -91,11 +99,35 @@ export async function uploadResumeToS3({
       contentType: mimeType,
     });
 
-    return { url: keyToCdnUrl(objectKey) };
+    return { key: objectKey };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown upload error";
     console.error("Resume upload error:", message);
     return { error: "Error uploading file" };
+  }
+}
+
+export function generateResumeUrl(objectKey: string) {
+  try {
+    const url = `https://cdn.krishlabs.tech/${objectKey}`;
+
+    let privateKey = process.env.CLOUDFRONT_PRIVATE_KEY!;
+    if (privateKey.includes("\\n")) {
+      privateKey = privateKey.replace(/\\n/g, "\n");
+    }
+    privateKey = privateKey.replace(/\r/g, "");
+
+    return getSignedUrl({
+      url,
+      keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID!,
+      privateKey,
+      dateLessThan: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown URL generation error";
+    console.error("Resume URL generation error:", message);
+    return null;
   }
 }

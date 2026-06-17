@@ -3,7 +3,7 @@ import index from "./index.html";
 
 const BACKEND_URL = process.env.VITE_BACKEND_URL || "http://localhost:3000";
 
-const server = serve({
+serve({
   port: 5173,
   routes: {
     "/api/*": async (req) => {
@@ -18,6 +18,3 @@ const server = serve({
     console: true,
   },
 });
-
-console.log(`🚀 Frontend at http://localhost:${server.port}`);
-console.log(`🔁 Proxying /api/* -> ${BACKEND_URL}`);

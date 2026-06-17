@@ -19,6 +19,7 @@ model User {
   name                String?
   password            String
   role                UserRole   @default(FREE)
+  roleVersion         Int        @default(0)
   emailVerified       Boolean    @default(false)
   verificationOtp     String?
   verificationOtpExpiry DateTime?
@@ -45,7 +46,7 @@ model Resume {
   id                String   @id @default(cuid())
   userId            String
   version           Int      @default(1)
-  originalUrl       String
+  objectKey         String
   extractedText     String   @db.Text
   uploadedAt        DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -75,6 +76,10 @@ model CandidateSkillProfile {
   problemSolving    Json     @default("[]")
   leadership        Json     @default("[]")
   commonPatterns    Json     @default("[]")
+  patternSignals    Json     @default("[]")
+  failurePatterns   Json     @default("[]")
+  traitHistory      Json     @default("[]")
+  identityTraits    Json     @default("{}")
   mostImprovedSkill String?
   weakestSkill      String?
   generatedAt       DateTime @default(now())

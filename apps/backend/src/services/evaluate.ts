@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { prisma } from "../lib/prisma";
 import { updateCandidateProfile } from "./profile";
+import { aggregateFailurePatterns } from "./failurePatterns";
+import { aggregateIdentityTraits } from "./identityTraits";
 
 interface TurnEvaluation {
   orderNumber: number;
@@ -136,104 +138,66 @@ List key strengths, areas for improvement, and recommended topics for further st
 Also analyze the candidate's resume briefly — what are its strongest points (resumeStrengths) and what could be improved (resumeWeaknesses)? Keep each to 2-3 items.`;
 }
 
-export async function evaluateInterview(interviewId: string, retries = 1) {
-  const interview = await prisma.interviewSession.findUnique({
-    where: { id: interviewId },
-    select: {
-      position: true,
-      startedAt: true,
-      endedAt: true,
-      resume: { select: { extractedText: true } },
-      user: {
-        select: {
-          name: true,
-          githubProfile: {
-            select: { summary: true, languages: true },
-          },
-        },
-      },
-      turns: {
-        orderBy: { orderNumber: "asc" },
-        select: {
-          id: true,
-          orderNumber: true,
-          questionText: true,
-          answerText: true,
-        },
-      },
-    },
-  });
-
-  if (!interview) {
-    console.warn(`[evaluation] interview ${interviewId} not found`);
-    return;
-  }
-  if (interview.turns.length === 0) {
-    console.warn(
-      `[evaluation] interview ${interviewId} has no turns — skipping`,
-    );
-    return;
-  }
-
-  const github = interview.user.githubProfile;
-
-  const prompt = buildEvaluationPrompt({
-    position: interview.position,
-    candidateName: interview.user.name,
-    resumeText: interview.resume?.extractedText ?? null,
-    githubSummary: github?.summary ?? null,
-    githubLanguages: (github?.languages as string[]) ?? [],
-    turns: interview.turns,
-  });
-
+async function generateEvaluation(
+  prompt: string,
+): Promise<EvaluationResult | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY env not set");
 
   const ai = new GoogleGenAI({ apiKey });
 
-  let result: EvaluationResult | null = null;
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
           responseMimeType: "application/json",
-          responseSchema: EVALUATION_SCHEMA,
+          responseJsonSchema: EVALUATION_SCHEMA,
         },
       });
 
       const text = response.text;
-      if (!text) throw new Error("No response from Gemini");
+      if (!text) {
+        console.warn(
+          `[evaluate] empty response, raw:`,
+          JSON.stringify(response).slice(0, 500),
+        );
+        throw new Error("No response from Gemini");
+      }
 
-      result = JSON.parse(text) as EvaluationResult;
-      lastError = null;
-      break;
+      return JSON.parse(text) as EvaluationResult;
     } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      console.warn(
-        `[evaluate] attempt ${attempt + 1}/${retries + 1} failed: ${lastError.message}`,
-      );
-      if (attempt < retries) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(`[evaluate] attempt ${attempt + 1}/2 failed: ${message}`);
+      if (attempt < 1) {
         await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
       }
     }
   }
 
-  if (!result || lastError) throw lastError ?? new Error("Evaluation failed");
+  return null;
+}
 
+async function writeEvaluation(
+  interviewId: string,
+  interviewData: {
+    startedAt: Date | null;
+    endedAt: Date | null;
+  } | null,
+  turns: { id: string; orderNumber: number }[],
+  result: EvaluationResult,
+) {
   const durationSeconds =
-    interview.startedAt && interview.endedAt
+    interviewData?.startedAt && interviewData?.endedAt
       ? Math.round(
-          (new Date(interview.endedAt).getTime() -
-            new Date(interview.startedAt).getTime()) /
+          (new Date(interviewData.endedAt).getTime() -
+            new Date(interviewData.startedAt).getTime()) /
             1000,
         )
       : null;
 
-  const [summary] = await Promise.all([
+  await Promise.all([
     prisma.interviewSummary.upsert({
       where: { interviewId },
       create: {
@@ -267,7 +231,7 @@ export async function evaluateInterview(interviewId: string, retries = 1) {
       },
     }),
     ...result.turns.map((t) => {
-      const dbTurn = interview.turns[t.orderNumber - 1];
+      const dbTurn = turns[t.orderNumber - 1];
       if (!dbTurn) return Promise.resolve();
       return prisma.interviewTurn.update({
         where: { id: dbTurn.id },
@@ -277,9 +241,99 @@ export async function evaluateInterview(interviewId: string, retries = 1) {
   ]);
 
   // Trigger candidate profile update asynchronously
-  updateCandidateProfile(interviewId).catch((err) =>
-    console.error("[evaluate] profile update failed:", err),
+  try {
+    await updateCandidateProfile(interviewId);
+    await aggregateFailurePatterns(interviewId);
+    await aggregateIdentityTraits(interviewId);
+  } catch (err) {
+    console.error("[evaluate] post-evaluation updates failed:", err);
+  }
+}
+
+export async function evaluateInterview(interviewId: string, _retries = 1) {
+  const interview = await prisma.interviewSession.findUnique({
+    where: { id: interviewId },
+    select: {
+      position: true,
+      startedAt: true,
+      endedAt: true,
+      resume: { select: { extractedText: true } },
+      user: {
+        select: {
+          id: true,
+          name: true,
+          githubProfile: {
+            select: { summary: true, languages: true },
+          },
+        },
+      },
+      turns: {
+        orderBy: { orderNumber: "asc" },
+        select: {
+          id: true,
+          orderNumber: true,
+          questionText: true,
+          answerText: true,
+        },
+      },
+    },
+  });
+
+  if (!interview) {
+    console.warn(`[evaluation] interview ${interviewId} not found`);
+    return { error: "Interview not found" };
+  }
+  if (interview.turns.length === 0) {
+    console.warn(
+      `[evaluation] interview ${interviewId} has no turns — skipping`,
+    );
+    const prompt = buildEvaluationPrompt({
+      position: interview.position,
+      candidateName: interview.user.name,
+      resumeText: interview.resume?.extractedText ?? null,
+      githubSummary: null,
+      githubLanguages: [],
+      turns: [],
+    });
+    // Still generate a basic evaluation even with no turns
+    const result = await generateEvaluation(prompt);
+    if (result) {
+      await writeEvaluation(
+        interviewId,
+        {
+          startedAt: interview.startedAt,
+          endedAt: interview.endedAt,
+        },
+        interview.turns,
+        result,
+      );
+    }
+    return { evaluation: result, summary: null };
+  }
+
+  const github = interview.user.githubProfile;
+
+  const prompt = buildEvaluationPrompt({
+    position: interview.position,
+    candidateName: interview.user.name,
+    resumeText: interview.resume?.extractedText ?? null,
+    githubSummary: github?.summary ?? null,
+    githubLanguages: (github?.languages as string[]) ?? [],
+    turns: interview.turns,
+  });
+
+  const result = await generateEvaluation(prompt);
+  if (!result) throw new Error("Evaluation failed — no response from Gemini");
+
+  await writeEvaluation(
+    interviewId,
+    {
+      startedAt: interview.startedAt,
+      endedAt: interview.endedAt,
+    },
+    interview.turns,
+    result,
   );
 
-  return { evaluation: result, summary };
+  return { evaluation: result, summary: null };
 }

@@ -340,6 +340,12 @@ export class InterviewConnection {
     }
 
     console.log("[ws] sending initial clientContent to start interview...");
+    // pick a random greeting instruction so the AI varies its opening
+    const greetings = [
+      "Start the interview. Greet the candidate naturally — vary your opening based on their background. Introduce yourself as an Evalio interviewer, then ask your first question.",
+      "Begin the interview. Welcome the candidate with a varied opening — reference something about their experience if available. Keep the intro brief under 30 seconds, then move to questions.",
+      "Start the session. Greet the candidate conversationally — don't use a scripted opening. Introduce yourself and the structure briefly, then lead into the first question.",
+    ];
     this.gemini.send(
       JSON.stringify({
         clientContent: {
@@ -348,7 +354,7 @@ export class InterviewConnection {
               role: "user",
               parts: [
                 {
-                  text: "Start the interview with a greeting and some instructions.",
+                  text: greetings[0],
                 },
               ],
             },
@@ -553,6 +559,41 @@ export class InterviewConnection {
           companyConfig?.roles.find((r) => r.title === interview.roleTitle) ??
           null;
 
+        const pastInterviews = await prisma.interviewSession.findMany({
+          where: {
+            userId: interview.userId,
+            status: "COMPLETED",
+            id: { not: interview.id },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          include: { summary: true },
+        });
+
+        const skillProfile = await prisma.candidateSkillProfile.findUnique({
+          where: { userId: interview.userId },
+        });
+
+        const scoredInterviews = await prisma.interviewSession.findMany({
+          where: {
+            userId: interview.userId,
+            status: "COMPLETED",
+            overallScore: { not: null },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { overallScore: true },
+        });
+        const scores = scoredInterviews.map((i) => i.overallScore!).reverse();
+        const scoreTrendLast5: "improving" | "stable" | "declining" | null =
+          scores.length < 2
+            ? null
+            : scores[scores.length - 1]! > scores[0]! + 5
+              ? "improving"
+              : scores[scores.length - 1]! < scores[0]! - 5
+                ? "declining"
+                : "stable";
+
         const promptInput = {
           position: interview.position,
           candidateName: interview.user.name,
@@ -585,7 +626,18 @@ export class InterviewConnection {
           interviewRound:
             (interview as { interviewRound?: string | null }).interviewRound ??
             null,
-          candidateHistory: null,
+          candidateHistory: pastInterviews.map((iv) => ({
+            date: iv.createdAt.toISOString(),
+            role: iv.roleTitle ?? iv.position,
+            overallScore: iv.overallScore,
+            strengths: (iv.summary?.strengths as string[]) ?? [],
+            weaknesses: (iv.summary?.weaknesses as string[]) ?? [],
+            summary: iv.summary?.summary ?? null,
+          })),
+          overallMostImproved: skillProfile?.mostImprovedSkill ?? null,
+          overallWeakest: skillProfile?.weakestSkill ?? null,
+          overallPatterns: (skillProfile?.commonPatterns as string[]) ?? [],
+          scoreTrendLast5,
         };
 
         const systemPrompt = buildInterviewPrompt(promptInput);

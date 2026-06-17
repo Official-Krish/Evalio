@@ -16,6 +16,10 @@ export const globalRateLimit = rateLimit({
   ),
 });
 
+/**
+ * Strict rate limit — for sensitive operations.
+ * 10 requests per 60 seconds per IP.
+ */
 export const strictRateLimit = rateLimit({
   duration: 60_000,
   max: 10,
@@ -23,6 +27,22 @@ export const strictRateLimit = rateLimit({
   errorResponse: new Response(
     JSON.stringify({
       error: "Too many requests. Please wait a moment before trying again.",
+    }),
+    { status: 429, headers: { "Content-Type": "application/json" } },
+  ),
+});
+
+/**
+ * Auth rate limit — for login and OTP-heavy endpoints.
+ * 5 requests per 60 seconds per IP.
+ */
+export const authRateLimit = rateLimit({
+  duration: 60_000,
+  max: 5,
+  generator: (req, server) => server?.requestIP(req)?.address ?? "unknown",
+  errorResponse: new Response(
+    JSON.stringify({
+      error: "Too many attempts. Please wait a moment before trying again.",
     }),
     { status: 429, headers: { "Content-Type": "application/json" } },
   ),

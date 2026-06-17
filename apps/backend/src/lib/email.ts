@@ -2,7 +2,9 @@ import { Resend } from "resend";
 
 const resend = new Resend(Bun.env.RESEND_API_KEY!);
 const EMAIL_FROM = Bun.env.EMAIL_FROM ?? "Evalio <noreply@krishlabs.tech>";
-const BRAND_ACCENT = "#b8a88a";
+const FRONTEND_URL =
+  Bun.env.FRONTEND_URL ?? Bun.env.CORS_ORIGIN ?? "http://localhost:5173";
+const BRAND_ACCENT = "#7C5CFF";
 const BRAND_BG = "#080808";
 const BRAND_CARD = "#111116";
 const BRAND_BORDER = "#1e1e2a";
@@ -11,9 +13,9 @@ const BRAND_TEXT_MUTED = "#8a8884";
 const BRAND_TEXT_FAINT = "#5c5a56";
 
 const LOGO_SVG = `<svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="6" y="9" width="18" height="2.5" rx="1.25" fill="${BRAND_ACCENT}" opacity="0.9"/>
-  <rect x="6" y="13.5" width="14" height="2.5" rx="1.25" fill="${BRAND_ACCENT}" opacity="0.7"/>
-  <rect x="6" y="18" width="10" height="2.5" rx="1.25" fill="${BRAND_ACCENT}" opacity="0.5"/>
+  <rect x="6" y="9" width="18" height="2.5" rx="1.25" fill="${BRAND_TEXT}" opacity="0.9"/>
+  <rect x="6" y="13.5" width="14" height="2.5" rx="1.25" fill="${BRAND_TEXT}" opacity="0.7"/>
+  <rect x="6" y="18" width="10" height="2.5" rx="1.25" fill="${BRAND_TEXT}" opacity="0.5"/>
   <rect x="6" y="22.5" width="6" height="2.5" rx="1.25" fill="${BRAND_ACCENT}"/>
 </svg>`;
 
@@ -129,10 +131,9 @@ function buildResetOtpEmail(otp: string): string {
 }
 
 function buildWelcomeEmail(name: string): string {
-  const dashboardUrl = Bun.env.CORS_ORIGIN ?? "http://localhost:5173";
   return template(`
     <tr>
-      <td style="padding:40px 36px 16px;text-align:center">
+      <td style="padding:40px 36px 8px;text-align:center">
         <h1 style="color:${BRAND_TEXT};font-size:22px;font-weight:600;margin:0 0 4px;letter-spacing:-0.3px">Welcome, ${name}</h1>
         <p style="color:${BRAND_TEXT_MUTED};font-size:14px;line-height:1.6;margin:0">
           Your email has been verified. You're all set to start practicing interviews with AI-powered feedback.
@@ -140,18 +141,77 @@ function buildWelcomeEmail(name: string): string {
       </td>
     </tr>
     <tr>
-      <td style="padding:16px 36px 20px;text-align:center">
+      <td style="padding:12px 36px 20px;text-align:center">
         <table cellpadding="0" cellspacing="0" style="display:inline-block">
           <tr>
             <td style="background:${BRAND_ACCENT};border-radius:6px;padding:0">
-              <a href="${dashboardUrl}/dashboard" style="display:inline-block;color:${BRAND_BG};text-decoration:none;font-size:14px;font-weight:600;padding:12px 32px;line-height:1">Go to Dashboard</a>
+              <a href="${FRONTEND_URL}/dashboard" style="display:inline-block;color:#FAFAFA;text-decoration:none;font-size:14px;font-weight:600;padding:12px 32px;line-height:1">Go to Dashboard</a>
             </td>
           </tr>
         </table>
       </td>
     </tr>
     <tr>
-      <td style="padding:8px 36px 32px">
+      <td style="padding:0 36px 24px">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND_BG};border:1px solid ${BRAND_BORDER};border-radius:6px;padding:20px">
+          <tr>
+            <td style="padding-bottom:8px">
+              <p style="color:${BRAND_ACCENT};font-size:14px;font-weight:600;margin:0;letter-spacing:-0.02em">What you can do with Evalio</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0">
+              <table cellpadding="0" cellspacing="0" style="width:100%">
+                <tr>
+                  <td style="width:20px;vertical-align:top;padding-top:1px;color:${BRAND_ACCENT};font-size:14px;font-weight:600">&#10003;</td>
+                  <td style="padding-bottom:10px">
+                    <p style="color:${BRAND_TEXT};font-size:13px;font-weight:500;margin:0 0 2px">Live AI-powered mock interviews</p>
+                    <p style="color:${BRAND_TEXT_MUTED};font-size:12px;margin:0;line-height:1.5">Practice with Gemini-powered voice interviews tailored to your target role. Get real-time responses and adapt mid-conversation.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width:20px;vertical-align:top;padding-top:1px;color:${BRAND_ACCENT};font-size:14px;font-weight:600">&#10003;</td>
+                  <td style="padding-bottom:10px">
+                    <p style="color:${BRAND_TEXT};font-size:13px;font-weight:500;margin:0 0 2px">Detailed scoring & feedback</p>
+                    <p style="color:${BRAND_TEXT_MUTED};font-size:12px;margin:0;line-height:1.5">Receive scores across communication, technical skill, and problem-solving. Get a full transcript of your interview for self-review.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width:20px;vertical-align:top;padding-top:1px;color:${BRAND_ACCENT};font-size:14px;font-weight:600">&#10003;</td>
+                  <td style="padding-bottom:10px">
+                    <p style="color:${BRAND_TEXT};font-size:13px;font-weight:500;margin:0 0 2px">Resume-aware questioning</p>
+                    <p style="color:${BRAND_TEXT_MUTED};font-size:12px;margin:0;line-height:1.5">Upload your resume and the AI will tailor questions around your experience, projects, and skills — not generic ones.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width:20px;vertical-align:top;padding-top:1px;color:${BRAND_ACCENT};font-size:14px;font-weight:600">&#10003;</td>
+                  <td style="padding-bottom:10px">
+                    <p style="color:${BRAND_TEXT};font-size:13px;font-weight:500;margin:0 0 2px">Company-specific practice</p>
+                    <p style="color:${BRAND_TEXT_MUTED};font-size:12px;margin:0;line-height:1.5">Choose from real company profiles (Google, Stripe, Meta, Amazon, etc.) or create a custom role. Each company has tailored interview styles and round types.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width:20px;vertical-align:top;padding-top:1px;color:${BRAND_ACCENT};font-size:14px;font-weight:600">&#10003;</td>
+                  <td style="padding-bottom:10px">
+                    <p style="color:${BRAND_TEXT};font-size:13px;font-weight:500;margin:0 0 2px">GitHub skill profiling</p>
+                    <p style="color:${BRAND_TEXT_MUTED};font-size:12px;margin:0;line-height:1.5">Connect your GitHub profile and the AI will incorporate your open-source work into the conversation, asking about your actual code.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width:20px;vertical-align:top;padding-top:1px;color:${BRAND_ACCENT};font-size:14px;font-weight:600">&#10003;</td>
+                  <td>
+                    <p style="color:${BRAND_TEXT};font-size:13px;font-weight:500;margin:0 0 2px">Track progress over time</p>
+                    <p style="color:${BRAND_TEXT_MUTED};font-size:12px;margin:0;line-height:1.5">Review your past interviews, see your score trends, and identify areas to improve before the real interview.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:0 36px 28px">
         <table width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND_BG};border:1px solid ${BRAND_BORDER};border-radius:6px;padding:16px 20px">
           <tr>
             <td style="padding-bottom:8px">
@@ -160,12 +220,17 @@ function buildWelcomeEmail(name: string): string {
           </tr>
           <tr>
             <td style="padding:3px 0">
-              <a href="${dashboardUrl}/dashboard" style="color:${BRAND_ACCENT};font-size:13px;text-decoration:none">Schedule your first interview &rarr;</a>
+              <a href="${FRONTEND_URL}/dashboard" style="color:${BRAND_ACCENT};font-size:13px;text-decoration:none">Go to Dashboard &rarr;</a>
             </td>
           </tr>
           <tr>
             <td style="padding:3px 0">
-              <a href="${dashboardUrl}/dashboard" style="color:${BRAND_ACCENT};font-size:13px;text-decoration:none">Browse practice sessions &rarr;</a>
+              <a href="${FRONTEND_URL}/new-interview" style="color:${BRAND_ACCENT};font-size:13px;text-decoration:none">Start your first interview &rarr;</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:3px 0">
+              <a href="${FRONTEND_URL}/pricing" style="color:${BRAND_ACCENT};font-size:13px;text-decoration:none">Learn about Pro features &rarr;</a>
             </td>
           </tr>
         </table>
@@ -271,7 +336,6 @@ export async function sendResetOtpEmail(
 }
 
 function buildFeedbackThankYouEmail(name: string): string {
-  const dashboardUrl = Bun.env.CORS_ORIGIN ?? "http://localhost:5173";
   return template(`
     <tr>
       <td style="padding:40px 36px 16px;text-align:center">
@@ -286,7 +350,7 @@ function buildFeedbackThankYouEmail(name: string): string {
         <table cellpadding="0" cellspacing="0" style="display:inline-block">
           <tr>
             <td style="background:${BRAND_ACCENT};border-radius:6px;padding:0">
-              <a href="${dashboardUrl}/dashboard" style="display:inline-block;color:${BRAND_BG};text-decoration:none;font-size:14px;font-weight:600;padding:12px 32px;line-height:1">Back to Dashboard</a>
+              <a href="${FRONTEND_URL}/dashboard" style="display:inline-block;color:#FAFAFA;text-decoration:none;font-size:14px;font-weight:600;padding:12px 32px;line-height:1">Back to Dashboard</a>
             </td>
           </tr>
         </table>
@@ -313,7 +377,6 @@ export async function sendFeedbackThankYouEmail(
       subject: "Thank you for your feedback — Evalio",
       html: buildFeedbackThankYouEmail(name),
     });
-    console.log(`[email] Feedback thank-you sent to ${email}`);
     return true;
   } catch (err) {
     console.error("[email] feedback thank-you send failed:", err);
@@ -332,7 +395,6 @@ export async function sendWelcomeEmail(
       subject: "Welcome to Evalio — email verified",
       html: buildWelcomeEmail(name),
     });
-    console.log(`[email] Welcome email sent to ${email}`);
     return true;
   } catch (err) {
     console.error("[email] send failed:", err);

@@ -116,7 +116,7 @@ export function ResumeSection({
           {resumes.map((r) => {
             const active = selectedResumeId === r.id;
             const label =
-              fileNameFromUrl(r.originalUrl) ?? `Resume v${r.version}`;
+              fileNameFromUrl(r.objectKey) ?? `Resume v${r.version}`;
             return (
               <motion.div
                 key={r.id}

@@ -27,9 +27,15 @@ export async function finalizeInterview(interviewId: string) {
     console.log(
       `[ws] finalizing interview ${interviewId}, triggering evaluation`,
     );
-    evaluateInterview(interviewId).catch((err) =>
-      console.error("Evaluation failed:", err),
-    );
+    evaluateInterview(interviewId).catch((err) => {
+      console.error("Evaluation failed:", err);
+      prisma.interviewSession
+        .update({
+          where: { id: interviewId },
+          data: { status: "FAILED" },
+        })
+        .catch((e) => console.error("Failed to set FAILED status:", e));
+    });
   } catch (err) {
     console.error("finalizeInterview error:", err);
   }

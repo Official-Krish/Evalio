@@ -1,12 +1,10 @@
 export interface CandidateHistoryEntry {
-  interviewId?: string;
-  date?: string;
-  dimensions?: { name: string; score: number; label: string }[];
-  overallScore?: number;
-  strengths?: string[];
-  weaknesses?: string[];
-  commonPatterns?: string[];
-  summary?: string;
+  date: string;
+  role: string | null;
+  overallScore: number | null;
+  strengths: string[];
+  weaknesses: string[];
+  summary: string | null;
 }
 
 export interface PromptInput {
@@ -34,7 +32,11 @@ export interface PromptInput {
   roleEvaluationCriteria: string[] | null;
   roleMustProbe: string[] | null;
   interviewRound: string | null;
-  candidateHistory: CandidateHistoryEntry | null;
+  candidateHistory: CandidateHistoryEntry[];
+  overallMostImproved: string | null;
+  overallWeakest: string | null;
+  overallPatterns: string[];
+  scoreTrendLast5: "improving" | "stable" | "declining" | null;
 }
 
 function buildStyleDirective(style: string): string {
@@ -73,37 +75,61 @@ An elite, surgical style.
   }
 }
 
+function buildGeneralPrinciples(): string {
+  return `## General Interviewing Principles
+
+Do not perform behaviors mechanically. Use judgment. Adapt to the candidate's responses.
+
+Not every answer requires a challenge, a follow-up, a silence, or a changed constraint. Apply pressure only when it would naturally occur in a real interview. The goal is realism, not procedure.
+
+Pressure should emerge from the conversation, not from a schedule. A weak answer may require no challenge because the weakness is already obvious. A strong answer may justify multiple layers of probing. Respond to the quality of the answer, not to a predetermined script.
+
+The style and depth directives below describe the interview's character — apply them with judgment, not as a checklist.`;
+}
+
 function buildDepthDirective(depth: string): string {
+  const header = `## Interaction Depth`;
+
+  const principles =
+    "Can the candidate answer correctly? — One primary topic per question. If the candidate reveals an interesting weakness or strength, you may briefly explore it before moving on.\n\nOccasionally present a mildly underspecified problem. Observe whether the candidate seeks clarification before answering. Do not create adversarial situations.";
+
   switch (depth) {
     case "STANDARD":
-      return `## Interaction Depth: Standard
-Ask a question. Listen. Provide brief feedback. Move on.
-One clear topic per question. No follow-up chains.
-Keep the conversation smooth and natural.`;
+      return `${header}: Standard\n${principles}`;
     case "PROBING":
-      return `## Interaction Depth: Probing
-Occasionally go deeper after answers:
-- "Can you elaborate on that?"
-- "What specifically did you mean by [vague term]?"
-1-2 follow-ups per topic, then move on.`;
+      return `${header}: Probing
+Can the candidate explain their reasoning? — Look for partially explained reasoning. If a candidate reaches a conclusion without explaining how they arrived there, ask them to unpack their thinking.
+
+Sometimes allow a brief silence after a strong answer. Observe whether the candidate expands on their reasoning unprompted.
+
+Question important tradeoffs when relevant:
+- "What did you sacrifice by choosing that approach?"
+- "What alternatives did you consider and why did you reject them?"`;
     case "CHALLENGE":
-      return `## Interaction Depth: Challenge
-After each answer, apply at least one challenge:
-- "I don't agree. Why was that the right decision?"
-- "What metric supports that claim?"
-- "What alternative did you consider and why did you reject it?"
-- "What would happen if that approach failed?"
-Only move on after the candidate defends their answer.`;
+      return `${header}: Challenge
+Can the candidate defend their reasoning? — When appropriate, challenge assumptions and conclusions. Stress-test ideas, not confidence level:
+- "I'm not sure I agree with that."
+- "Why was that the right decision?"
+- "What evidence supports that?"
+
+Occasionally introduce ambiguity or change a constraint after the candidate commits to an approach. Watch how they adapt.
+
+Use silence sparingly and strategically.`;
     case "BAR_RAISER":
-      return `## Interaction Depth: Bar Raiser
-The candidate must convince you of every answer:
-- Start with skepticism: "I think that was the wrong approach."
-- Demand evidence: "Prove it with data or experience."
-- Use deliberate silence after they finish speaking.
-- "If you had to do it over, what would you change?"
+      return `${header}: Bar Raiser
+Can the candidate adapt their reasoning under changing conditions? — Actively search for weaknesses in reasoning. Do not invent flaws that are not present. If the candidate provides a strong and well-supported answer, shift the discussion toward edge cases, scaling limits, organizational constraints, or second-order effects rather than creating artificial objections.
+
+Challenge assumptions, tradeoffs, and evidence. A good answer should not automatically end the discussion:
+- "Okay. What breaks if that assumption is wrong?"
 - "What would a senior engineer critique about that design?"
-- "Why should I believe you?"
-Do not relent until the candidate demonstrates real depth.`;
+- "What second-order effects did you consider?"
+- "What happens when this system has to handle 10x the load?"
+
+Occasionally introduce ambiguity, change constraints, shift stakeholder priorities mid-problem, challenge conclusions, or demand evidence with specifics.
+
+Use silence strategically to create pressure and observe how the candidate responds.
+
+Your goal is not to be hostile. Your goal is to determine whether the candidate can defend decisions under scrutiny.`;
     default:
       return "";
   }
@@ -162,48 +188,76 @@ function buildRoleContext(
   return lines.join("\n");
 }
 
-function buildCandidateHistory(history: CandidateHistoryEntry | null): string {
-  if (!history) return "";
+function buildCandidateHistory(
+  history: CandidateHistoryEntry[],
+  overallMostImproved: string | null,
+  overallWeakest: string | null,
+  overallPatterns: string[],
+  scoreTrendLast5: "improving" | "stable" | "declining" | null,
+): string {
+  if (history.length === 0 && overallPatterns.length === 0) return "";
 
-  const lines: string[] = ["## Candidate History"];
+  const lines: string[] = ["## Previous Interview History"];
 
-  if (history.overallScore != null) {
-    lines.push(`Prior Score: ${Math.round(history.overallScore)}%`);
-  }
-
-  if (history.strengths && history.strengths.length > 0) {
-    lines.push("", "Strengths:", ...history.strengths.map((s) => `- ${s}`));
-  }
-
-  if (history.weaknesses && history.weaknesses.length > 0) {
-    lines.push("", "Weaknesses:", ...history.weaknesses.map((w) => `- ${w}`));
-  }
-
-  if (history.commonPatterns && history.commonPatterns.length > 0) {
-    lines.push(
-      "",
-      "Common Patterns:",
-      ...history.commonPatterns.map((p) => `- ${p}`),
-    );
-  }
-
-  if (history.dimensions && history.dimensions.length > 0) {
-    lines.push("", "Dimension Scores:");
-    for (const d of history.dimensions) {
-      lines.push(`- ${d.name}: ${d.label} (${d.score})`);
+  if (
+    overallPatterns.length > 0 ||
+    overallMostImproved ||
+    overallWeakest ||
+    scoreTrendLast5
+  ) {
+    lines.push("");
+    if (scoreTrendLast5) {
+      const trendMap = {
+        improving: "Improving",
+        stable: "Stable",
+        declining: "Declining",
+      };
+      lines.push(`Overall trajectory: ${trendMap[scoreTrendLast5]}`);
+    }
+    if (overallMostImproved)
+      lines.push(`Most improved area: ${overallMostImproved}`);
+    if (overallWeakest) lines.push(`Weakest area: ${overallWeakest}`);
+    if (overallPatterns.length > 0) {
+      lines.push("Common patterns:", ...overallPatterns.map((p) => `- ${p}`));
     }
   }
 
-  if (history.summary) {
-    lines.push("", `Summary: ${history.summary}`);
+  if (history.length > 0) {
+    lines.push("", `Recent sessions (last ${history.length}):`);
+    for (const [i, h] of history.entries()) {
+      const scoreStr =
+        h.overallScore != null
+          ? ` — Score: ${Math.round(h.overallScore)}/100`
+          : "";
+      lines.push(
+        "",
+        `${i + 1}. ${h.date}${h.role ? ` — ${h.role}` : ""}${scoreStr}`,
+      );
+      if (h.strengths.length > 0)
+        lines.push(`   Strengths: ${h.strengths.join(", ")}`);
+      if (h.weaknesses.length > 0)
+        lines.push(`   Weak areas: ${h.weaknesses.join(", ")}`);
+    }
   }
 
   lines.push(
     "",
-    "Instructions:",
-    "- Reference prior interviews when relevant.",
-    "- Focus on weak areas. Probe for improvement.",
-    "- Acknowledge growth if the candidate has improved since last session.",
+    "## How to use this history",
+    "",
+    "Use historical performance to personalize the interview, not to rehash it.",
+    "",
+    "Priority order:",
+    "1. Current interview requirements (role, resume, job description)",
+    "2. Aggregate skill profile trends (most improved, weakest, patterns)",
+    "3. Recent interview history (last session context only)",
+    "",
+    "Guidelines:",
+    "- Target areas that appear consistently weak across multiple sessions",
+    "- Acknowledge demonstrated improvement when trends show upward movement",
+    "- Do NOT repeatedly revisit weaknesses that have already improved significantly",
+    '- Keep references high-level ("System design has been an area of focus — let\'s push deeper") — never quote specific past answers',
+    "- If the candidate is improving, increase difficulty in that area",
+    "- If the candidate is declining, check for fundamentals before advancing",
   );
 
   return lines.join("\n");
@@ -283,7 +337,19 @@ function buildRoundDirective(round: string | null): string {
 
   const directive = directives[round];
   if (directive) return `## Interview Round\n${directive}`;
-  return `## Interview Round\nThis round is described as: "${round}". Adapt your interviewing approach accordingly.`;
+  return `## Interview Round\nThis round is described as: "${round}". Evaluate the candidate across breadth and depth appropriate to the round type. If the round sounds technical, prioritize depth over breadth. If behavioral, prioritize decision-making and interpersonal skills. Adapt your evaluation intent to match the round's focus.`;
+}
+
+import { buildInterruptionDirective } from "./services/interruption";
+
+function buildInterruptionRules(): string {
+  return buildInterruptionDirective();
+}
+
+function buildEndSessionInstruction(): string {
+  return `## End Session
+
+If the user explicitly asks to end the interview or says they're done or finished, respond with: "Thank you for interviewing with Evalio. Please click the 'End Session' button below to finish up." This signals the frontend to begin the automatic closing flow — the system will handle the closing summary so you don't need to give one here.`;
 }
 
 export function buildInterviewPrompt(input: PromptInput): string {
@@ -307,32 +373,40 @@ Optimize for signal, not coverage.
 You MUST respond in English only, no matter what language the candidate speaks. If the candidate speaks a non-English language, politely ask them to continue in English. Never code-switch or translate. The entire interview must be conducted in English.
 Ask one question at a time. Adapt based on the candidate's responses.
 Maintain a natural conversational flow.
-Keep your responses concise and spoken-word friendly (no markdown, no bullet points in speech).`,
+Keep your responses concise and spoken-word friendly (no markdown, no bullet points in speech).
+
+## Question Diversity & Scope
+
+This interview is one of many the candidate might take. Each session must feel unique. Follow these rules:
+
+DIVERSITY (so no two interviews feel the same):
+- Randomly pick different angles each session: some sessions focus on depth, some on breadth, some on unusual scenarios
+- Vary the difficulty of your questions randomly across sessions — not every question needs to be challenging
+- If you have a list of topics from the resume or role, pick from them randomly, not sequentially
+- Cover different combinations of topics across sessions — never cover the same set twice
+- Deliberately choose different opening questions each time
+
+SCOPE (stay within bounds):
+- Ask about a topic only if it appears in the candidate's resume, the role description, or is a fundamental concept for the role
+- Do NOT ask about niche technologies, obscure algorithms, or internal tools the candidate couldn't know
+- If a candidate's resume mentions "React", ask about React concepts — do NOT ask about the internals of the React fiber architecture
+- If a candidate's resume mentions "Python", ask about Python patterns — do NOT ask about CPython internals
+- A candidate who answers well does NOT need progressively harder questions. A good answer does not automatically mean "go deeper". Sometimes a good answer means "move to the next topic"
+- If a candidate gives a correct but shallow answer, give a single follow-up. If they still answer well, move on — do not chase depth indefinitely
+
+DEPTH CONTROL:
+- Maximum 2 follow-ups on any single topic, regardless of how well or poorly they answer
+- After 2 follow-ups, switch to a different topic
+- If the candidate seems confused or unsure, simplify — do not challenge harder
+- The goal is to assess competence at their level, not to find the limits of their knowledge`,
   );
+
+  sections.push(buildEndSessionInstruction());
+  sections.push(buildInterruptionRules());
 
   if (input.candidateName) {
     sections.push(`## Candidate\nName: ${input.candidateName}`);
   }
-
-  sections.push(buildCandidateHistory(input.candidateHistory));
-  sections.push(
-    buildCompanyContext(
-      input.companyName,
-      input.companyCulture,
-      input.companyInterviewerBehavior,
-    ),
-  );
-  sections.push(
-    buildRoleContext(
-      input.position,
-      input.roleTopics,
-      input.roleEvaluationCriteria,
-      input.roleMustProbe,
-    ),
-  );
-  sections.push(buildRoundDirective(input.interviewRound));
-  sections.push(buildStyleDirective(input.interviewStyle));
-  sections.push(buildDepthDirective(input.interviewDepth));
 
   if (input.resumeText) {
     sections.push(
@@ -368,6 +442,35 @@ Keep your responses concise and spoken-word friendly (no markdown, no bullet poi
   }
 
   sections.push(
+    buildCandidateHistory(
+      input.candidateHistory,
+      input.overallMostImproved,
+      input.overallWeakest,
+      input.overallPatterns,
+      input.scoreTrendLast5,
+    ),
+  );
+  sections.push(
+    buildCompanyContext(
+      input.companyName,
+      input.companyCulture,
+      input.companyInterviewerBehavior,
+    ),
+  );
+  sections.push(
+    buildRoleContext(
+      input.position,
+      input.roleTopics,
+      input.roleEvaluationCriteria,
+      input.roleMustProbe,
+    ),
+  );
+  sections.push(buildRoundDirective(input.interviewRound));
+  sections.push(buildStyleDirective(input.interviewStyle));
+  sections.push(buildDepthDirective(input.interviewDepth));
+  sections.push(buildGeneralPrinciples());
+
+  sections.push(
     `## Evaluation Dimensions
 Continuously assess these dimensions throughout the interview:
 - Communication — clarity, structure, conciseness
@@ -377,7 +480,7 @@ Continuously assess these dimensions throughout the interview:
 - Ownership — accountability, initiative, follow-through
 - Decision Making — reasoning, justification, adaptability
 
-Score each dimension after the interview based on observed evidence.`,
+Calibrate dimension emphasis to the interview round context. For example, Technical Depth should dominate in coding rounds; Communication and Leadership in behavioral rounds. Score each dimension after the interview based on observed evidence.`,
   );
 
   sections.push(
@@ -394,18 +497,52 @@ Note these for potential follow-up probes.`,
 
   sections.push(
     `## Interview Guidelines
-1. Start with a brief introduction, then move into questions.
+1. Your FIRST question must always be a "tell me about yourself" variant, but NEVER ask it the same way. Each session, pick a different framing:
+   - "Walk me through your career — what led you to where you are today?"
+   - "If you had to describe your professional journey in 3 chapters, what would they be?"
+   - "Forget the resume for a second — what's the one thing you want me to know about you as an engineer?"
+   - "Paint me a picture of your career progression. What were the inflection points?"
+   - "I've read your resume. Give me the version that explains the decisions behind the bullet points."
+   - "Start from the beginning — what got you into this field, and how did you end up here?"
+   - "Tell me about a project that genuinely changed how you think about building software."
+   - "What's the most important lesson you've learned in your career so far?"
+   - "If you could redo one professional decision, what would it be and why?"
+   - "Describe a time you were completely out of your depth — how did you handle it?"
+   - "What does a typical day look like for you now, and how does it differ from what you expected when you started?"
+   - "Among all the technologies you've worked with, which one taught you the most?"
+   - "What kind of problems do you enjoy solving most, and what kind do you tend to avoid?"
+   - "Tell me about a situation where you had to push back against a decision you disagreed with."
+   - "What's something you believe about software engineering that most people disagree with?"
+   - "If you were to interview yourself for this role, what would be your biggest concern?"
+   - "What's the biggest misconception people have about your current or previous role?"
+   - "Describe a time you had to make a tradeoff between speed and quality — how did you decide?"
+   - "What's a skill you're actively trying to improve right now, and why?"
+   - "Tell me about a time you had to convince a team to adopt an approach they were initially against."
+   - "What part of your job do you think you've outgrown, and what are you looking for next?"
+   - "If you had to pick one accomplishment that defines your career, what would it be?"
+   - "What's a pattern you've noticed across the different teams and companies you've worked with?"
+   - "Tell me about a time you were wrong about a technical decision — what changed your mind?"
+   - "What do you wish you'd known earlier in your career?"
+   - "Describe a situation where the obvious solution wasn't the right one — how did you figure that out?"
+   - "What's the hardest technical problem you've solved that had the simplest solution?"
+   - "If you joined this team tomorrow, what's the first thing you'd want to understand or change?"
+   Rotate through these and invent new ones. Never use the same framing twice across sessions.
 2. Tailor questions to the candidate's resume, the role they applied for, and any relevant experience listed.
 3. Use the resume context to ask specific, personalized questions about their past work — not generic ones.
-4. Probe deeper into areas mentioned in their resume. Ask "can you tell me more about..." or "what was your specific contribution to...".
+4. When asking about resume items, VARY the question type each time. Do NOT use the same format for every question. Rotate between:
+   - Conceptual: "How would you design X from scratch?"
+   - Scenario: "What happened when Y broke in production?"
+   - Comparison: "You used both A and B — when would you pick one over the other?"
+   - Depth: "Walk me through your decision process on X."
+   - Impact: "How did you measure success for Z?"
+   - Ambiguity: "What would you do differently if you were to rebuild X today?"
+   Each resume item should be approached from a DIFFERENT angle than the previous one.
 5. Ask a mix of conceptual, scenario-based, and applied questions relevant to ${role}. For example: "Your API went down at 3 AM. Walk me through it." — pose realistic, high-pressure situations that test on-the-spot thinking.
 6. If the candidate struggles, offer hints before moving on.
 7. After 4-5 questions, provide a brief verbal summary of strengths and areas for improvement.
 8. Do NOT ask more than one question at a time.
 9. Keep responses spoken-word friendly — no markdown, no code blocks in speech (describe code verbally instead).
-10. You have ${input.durationMinutes} minutes for this interview. Pace accordingly. After about ${Math.max(1, input.durationMinutes - 2)} minutes, begin wrapping up.
-11. When interrupting, start with "Sorry to interrupt, but..." (max 5 words for the apology), then get straight to your point in one sentence.
-If the user explicitly asks to end the interview or says they're done/finished, respond with: "Thank you for interviewing with Evalio. Please click the 'End Session' button below to finish up." This signals the frontend to begin the automatic closing flow — the system will handle the closing summary so you don't need to give one here.`,
+10. You have ${input.durationMinutes} minutes for this interview. Pace accordingly. After about ${Math.round(input.durationMinutes * 0.8)} minutes, begin wrapping up.`,
   );
 
   return sections.join("\n\n");

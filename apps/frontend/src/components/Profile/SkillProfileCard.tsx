@@ -6,7 +6,6 @@ import {
   IconMinus,
   IconAward,
   IconAlertTriangle,
-  IconSparkles,
 } from "@tabler/icons-react";
 
 interface SkillEntry {
@@ -141,23 +140,6 @@ export function SkillProfileCard({ profile, loading }: SkillProfileCardProps) {
         <div
           style={{ position: "relative", maxWidth: "420px", margin: "0 auto" }}
         >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "48px",
-              height: "48px",
-              borderRadius: "50%",
-              background: "var(--app-accent-bg, rgba(184,168,138,0.06))",
-              border:
-                "1px solid var(--app-accent-border, rgba(184,168,138,0.15))",
-              color: "var(--app-accent, #b8a88a)",
-              marginBottom: "16px",
-            }}
-          >
-            <IconSparkles size={20} />
-          </div>
           <h3
             style={{
               fontFamily: "var(--font-sans)",
