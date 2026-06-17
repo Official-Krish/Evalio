@@ -79,6 +79,43 @@ export function ResultsPage() {
     }
   };
 
+  if (evalStatus?.status === "failed") {
+    return (
+      <div className="text-center py-20 px-6">
+        <p className="text-[15px] font-[500] text-[var(--color-text)] mb-2">
+          Evaluation failed
+        </p>
+        <p className="text-[13px] text-[var(--color-text-muted)] mb-6">
+          Something went wrong while evaluating your session. You can retry or
+          go back to the dashboard.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={handleRetryEval}
+            disabled={retryingEval}
+            className="px-5 py-[8px] rounded-full text-[13px] font-[500] cursor-pointer transition-opacity disabled:opacity-50"
+            style={{
+              background: "var(--color-text)",
+              color: "var(--color-bg)",
+            }}
+          >
+            {retryingEval ? "Retrying…" : "Retry evaluation"}
+          </button>
+          <Link
+            to="/dashboard"
+            className="px-5 py-[8px] rounded-full text-[13px] font-[500] no-underline border cursor-pointer"
+            style={{
+              borderColor: "var(--color-border)",
+              color: "var(--color-text-secondary)",
+            }}
+          >
+            Back to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const { data: allInterviews } = useQuery({
     queryKey: ["interviews"],
     queryFn: () => api.listInterviews(),

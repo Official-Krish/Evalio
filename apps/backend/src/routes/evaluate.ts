@@ -13,6 +13,7 @@ export const evaluateRoutes = new Elysia().guard({}, (app) =>
           where: { id },
           select: {
             userId: true,
+            status: true,
             overallScore: true,
             communicationScore: true,
             technicalScore: true,
@@ -23,6 +24,10 @@ export const evaluateRoutes = new Elysia().guard({}, (app) =>
         if (!interview || interview.userId !== user.id) {
           set.status = 404;
           return { error: "Interview not found" };
+        }
+
+        if (interview.status === "FAILED") {
+          return { status: "failed" as const };
         }
 
         const scored =
@@ -55,6 +60,10 @@ export const evaluateRoutes = new Elysia().guard({}, (app) =>
         return result;
       } catch (err) {
         console.error("[evaluate] failed:", err);
+        await prisma.interviewSession.update({
+          where: { id },
+          data: { status: "FAILED" },
+        });
         set.status = 500;
         return { error: "Evaluation failed. Please try again." };
       }

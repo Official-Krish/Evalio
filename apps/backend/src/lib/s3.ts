@@ -109,12 +109,25 @@ export async function uploadResumeToS3({
 }
 
 export function generateResumeUrl(objectKey: string) {
-  const url = `https://cdn.krishlabs.tech/${objectKey}`;
+  try {
+    const url = `https://cdn.krishlabs.tech/${objectKey}`;
 
-  return getSignedUrl({
-    url,
-    keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID!,
-    privateKey: process.env.CLOUDFRONT_PRIVATE_KEY!,
-    dateLessThan: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-  });
+    let privateKey = process.env.CLOUDFRONT_PRIVATE_KEY!;
+    if (privateKey.includes("\\n")) {
+      privateKey = privateKey.replace(/\\n/g, "\n");
+    }
+    privateKey = privateKey.replace(/\r/g, "");
+
+    return getSignedUrl({
+      url,
+      keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID!,
+      privateKey,
+      dateLessThan: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown URL generation error";
+    console.error("Resume URL generation error:", message);
+    return null;
+  }
 }

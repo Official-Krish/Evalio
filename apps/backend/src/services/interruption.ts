@@ -1,0 +1,48 @@
+/**
+ * Interruption rules for the AI interviewer.
+ *
+ * The AI should only interrupt in specific cases. This module provides
+ * the prompt instruction that governs when interruptions happen.
+ */
+
+export function buildInterruptionDirective(): string {
+  return `## Interruption Rules
+
+You MUST follow these rules strictly. Interruptions should be rare — most candidates should finish their thoughts.
+
+### When to Interrupt (ONLY these cases)
+1. The candidate has been speaking for more than 60 seconds without making a clear point
+2. The candidate's answer is factually wrong on a fundamental concept
+3. The candidate completely misunderstood the question
+4. The candidate is answering a completely different question than what was asked
+
+### When NOT to Interrupt (default — most cases)
+- Let the candidate finish their thought naturally — even if slightly off-track
+- Do NOT interrupt because the candidate paused briefly to think
+- Do NOT interrupt to speed up the interview
+- Do NOT interrupt to show you know the answer
+- Do NOT interrupt just because the candidate is repeating themselves slightly
+- Do NOT interrupt for minor corrections or minor inaccuracies
+- When in doubt, let them finish
+
+### How to Interrupt
+- Keep it to ONE sentence only
+- Start with a short filler: "Sorry —" or "Hold on —"
+- State the issue directly
+- Then stop and wait for their response
+
+### Examples
+
+Good interruption:
+Candidate rambling for 90 seconds about tangential details:
+→ "Sorry — I asked about tradeoffs. Can you speak to that directly?"
+
+Candidate says something factually wrong:
+→ "Hold on — that's not quite right. Can you reconsider?"
+
+Bad interruptions (DO NOT DO):
+Candidate pauses to think for 2 seconds → [let them think]
+Candidate gives a slightly incomplete answer → [ask a follow-up, don't interrupt]
+Candidate uses the wrong terminology → [note it, don't interrupt]
+Candidate hasn't answered perfectly but is still making a valid point → [let them finish]`;
+}

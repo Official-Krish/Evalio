@@ -340,6 +340,12 @@ export class InterviewConnection {
     }
 
     console.log("[ws] sending initial clientContent to start interview...");
+    // pick a random greeting instruction so the AI varies its opening
+    const greetings = [
+      "Start the interview. Greet the candidate naturally — vary your opening based on their background. Introduce yourself as an Evalio interviewer, then ask your first question.",
+      "Begin the interview. Welcome the candidate with a varied opening — reference something about their experience if available. Keep the intro brief under 30 seconds, then move to questions.",
+      "Start the session. Greet the candidate conversationally — don't use a scripted opening. Introduce yourself and the structure briefly, then lead into the first question.",
+    ];
     this.gemini.send(
       JSON.stringify({
         clientContent: {
@@ -348,7 +354,7 @@ export class InterviewConnection {
               role: "user",
               parts: [
                 {
-                  text: "Start the interview with a greeting and some instructions.",
+                  text: greetings[0],
                 },
               ],
             },

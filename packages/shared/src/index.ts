@@ -197,8 +197,8 @@ export interface EvaluationResult {
 }
 
 export interface EvaluationStatus {
-  status: "pending" | "completed";
-  scores: {
+  status: "pending" | "completed" | "failed";
+  scores?: {
     overall: number;
     communication: number;
     technical: number;
