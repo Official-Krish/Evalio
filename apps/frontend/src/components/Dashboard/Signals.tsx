@@ -33,7 +33,6 @@ interface SignalsProps {
   failurePatterns: FailurePatternData[];
   mostImproved: string | null;
   weakest: string | null;
-  commonPatterns?: string[];
 }
 
 function TrendIcon({ trend }: { trend: string }) {
@@ -96,7 +95,6 @@ export function Signals({
   failurePatterns,
   mostImproved,
   weakest,
-  commonPatterns,
 }: SignalsProps) {
   return (
     <div className="db-col-block">
@@ -343,32 +341,6 @@ export function Signals({
           </p>
         )}
       </div>
-
-      {commonPatterns && commonPatterns.length > 0 && (
-        <div className="db-signals-card">
-          <h3 className="db-section-label" style={{ marginBottom: "12px" }}>
-            Behavioral Patterns
-          </h3>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-            {commonPatterns.slice(0, 4).map((pattern, idx) => (
-              <span
-                key={idx}
-                style={{
-                  fontSize: "11.5px",
-                  color: "var(--color-text)",
-                  background: "rgba(184,168,138,0.06)",
-                  border: "1px solid rgba(184,168,138,0.12)",
-                  padding: "5px 10px",
-                  borderRadius: "6px",
-                  lineHeight: 1.4,
-                }}
-              >
-                {pattern}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -166,6 +166,9 @@ export interface InterviewTurn {
   score: number | null;
   feedback: string | null;
   createdAt: Date;
+  questionStartMs?: number | null;
+  answerStartMs?: number | null;
+  answerEndMs?: number | null;
 }
 
 export interface InterviewSummary {

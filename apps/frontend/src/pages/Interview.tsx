@@ -130,6 +130,25 @@ export function InterviewPage() {
     loadDsa();
   }, [isDsa, id]);
 
+  // Debounced DSA code snapshot sync
+  const codeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!isDsa || !dsaCode || !socketRef.current || !dsaSessionData) return;
+    if (codeTimerRef.current) clearTimeout(codeTimerRef.current);
+    codeTimerRef.current = setTimeout(() => {
+      socketRef.current?.sendCodeSnapshot(
+        dsaCode,
+        dsaSessionData.language,
+        dsaSessionData.currentIndex,
+        dsaSessionData.attempts[dsaSessionData.currentIndex]?.currentPhase ??
+          "implementation",
+      );
+    }, 2000);
+    return () => {
+      if (codeTimerRef.current) clearTimeout(codeTimerRef.current);
+    };
+  }, [dsaCode, isDsa, dsaSessionData]);
+
   const phase = useMemo((): Phase => {
     if (feedbackReady) return "ended";
     if (isConnecting && queuedPosition !== null) return "queued";

@@ -216,9 +216,12 @@ export function DashboardPage() {
               failurePatterns={failurePatterns}
               mostImproved={mostImproved}
               weakest={weakest}
+            />
+            <Coach
+              latestSummary={latestSummary}
+              funnelSteps={funnelSteps}
               commonPatterns={commonPatterns}
             />
-            <Coach latestSummary={latestSummary} funnelSteps={funnelSteps} />
           </div>
 
           <History completed={completed} />

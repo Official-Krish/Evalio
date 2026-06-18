@@ -96,16 +96,11 @@ export function Hero({ completed, interviews }: HeroProps) {
         </span>
       </div>
 
-      <div className="db-canvas-hero-body">
+      <div className="db-canvas-hero-body py-8">
         <div
           className="db-canvas-hero-score"
           style={{ display: "flex", alignItems: "center", gap: "20px" }}
         >
-          <ConfidenceOrb
-            score={readinessScore}
-            size={80}
-            className="text-[var(--color-accent)] shrink-0"
-          />
           <div>
             <p className="db-canvas-hero-score-val">
               {readinessScore > 0 ? `${readinessScore}%` : "0%"}

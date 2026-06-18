@@ -169,6 +169,11 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
             turns: { orderBy: { createdAt: "asc" } },
             summary: true,
             resume: { select: { id: true, version: true, objectKey: true } },
+            dsaSession: {
+              include: {
+                attempts: { orderBy: { index: "asc" } },
+              },
+            },
           },
         });
         if (!interview || interview.userId !== user.id) {

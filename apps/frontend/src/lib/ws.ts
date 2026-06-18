@@ -98,13 +98,18 @@ export class InterviewSocket {
     this.send({ type: "end_interview" });
   }
 
-  sendCodeSnapshot(code: string, language: string, questionIndex: number) {
+  sendCodeSnapshot(
+    code: string,
+    language: string,
+    questionIndex: number,
+    phase = "implementation",
+  ) {
     this.send({
       type: "code_snapshot",
       code,
       language,
       questionIndex,
-      phase: "implementation",
+      phase,
     });
   }
 

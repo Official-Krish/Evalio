@@ -191,6 +191,13 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
 
           if (code !== undefined) {
             updateData.code = code;
+            const currentSnapshots = (attempt.codeSnapshots ?? {}) as Record<
+              string,
+              string
+            >;
+            const currentPhase = phase ?? attempt.currentPhase;
+            currentSnapshots[currentPhase] = code;
+            updateData.codeSnapshots = currentSnapshots;
           }
 
           if (phase) {

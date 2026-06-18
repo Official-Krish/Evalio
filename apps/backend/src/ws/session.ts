@@ -867,6 +867,34 @@ export class InterviewConnection {
             },
           }),
         );
+
+        // Persist code snapshot to the DSA attempt
+        if (this.interviewId && codeMsg.code !== undefined) {
+          try {
+            const dsaSession = await prisma.dsaSession.findUnique({
+              where: { interviewId: this.interviewId },
+              include: { attempts: { orderBy: { index: "asc" } } },
+            });
+            if (dsaSession) {
+              const attempt = dsaSession.attempts[codeMsg.questionIndex ?? 0];
+              if (attempt) {
+                const phase = codeMsg.phase ?? "implementation";
+                const currentSnapshots = (attempt.codeSnapshots ??
+                  {}) as Record<string, string>;
+                currentSnapshots[phase] = codeMsg.code ?? "";
+                await prisma.dsaQuestionAttempt.update({
+                  where: { id: attempt.id },
+                  data: {
+                    code: codeMsg.code,
+                    codeSnapshots: currentSnapshots,
+                  },
+                });
+              }
+            }
+          } catch {
+            // Silently fail — code snapshot persistence is non-critical
+          }
+        }
         break;
       }
 

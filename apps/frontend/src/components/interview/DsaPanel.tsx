@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "motion/react";
 import { CodeEditor } from "./CodeEditor";
 
 interface TestCase {
@@ -63,13 +64,16 @@ function PhaseStepper({
     <div
       style={{
         display: "flex",
-        gap: "4px",
-        padding: "10px 14px",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "16px 20px",
         borderBottom: "1px solid var(--color-border-light)",
+        background: "rgba(255, 255, 255, 0.01)",
         overflowX: "auto",
+        scrollbarWidth: "none",
       }}
     >
-      {PHASES.map((p) => {
+      {PHASES.map((p, idx) => {
         const done = phasesCompleted.includes(p.id);
         const active = currentPhase === p.id;
         return (
@@ -78,47 +82,92 @@ function PhaseStepper({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "4px",
-              padding: "4px 8px",
-              borderRadius: "6px",
-              fontSize: "11px",
-              fontWeight: active ? 600 : 400,
-              color: done
-                ? "var(--color-text)"
-                : active
-                  ? "var(--color-text)"
-                  : "var(--color-text-muted)",
-              background: active
-                ? "var(--color-accent-bg, rgba(184,168,138,0.12))"
-                : done
-                  ? "var(--color-bg-hover)"
-                  : "transparent",
-              whiteSpace: "nowrap",
-              transition: "all 0.15s ease",
+              position: "relative",
+              flex: idx === PHASES.length - 1 ? "none" : 1,
             }}
           >
-            <span
+            <div
               style={{
-                width: "14px",
-                height: "14px",
-                borderRadius: "50%",
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "center",
-                fontSize: "9px",
-                fontWeight: 700,
-                background: done
-                  ? "var(--color-accent, #b8a88a)"
-                  : active
-                    ? "var(--color-border)"
-                    : "var(--color-border-light)",
-                color: done ? "#080808" : "var(--color-text-muted)",
-                flexShrink: 0,
+                gap: "6px",
+                cursor: "default",
+                zIndex: 2,
               }}
             >
-              {done ? "\u2713" : PHASES.indexOf(p) + 1}
-            </span>
-            {p.short}
+              <motion.div
+                animate={{
+                  scale: active ? 1.15 : 1,
+                  backgroundColor: done
+                    ? "var(--app-accent, #b8a88a)"
+                    : active
+                      ? "var(--color-text)"
+                      : "var(--color-bg-hover)",
+                  borderColor: active
+                    ? "var(--app-accent, #b8a88a)"
+                    : done
+                      ? "var(--app-accent, #b8a88a)"
+                      : "var(--color-border)",
+                  boxShadow: active
+                    ? "0 0 10px var(--app-accent-glow)"
+                    : "none",
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                style={{
+                  width: "18px",
+                  height: "18px",
+                  borderRadius: "50%",
+                  border: "1px solid",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "9px",
+                  fontWeight: 700,
+                  color: done
+                    ? "#080808"
+                    : active
+                      ? "var(--color-bg)"
+                      : "var(--color-text-muted)",
+                }}
+              >
+                {done ? "✓" : idx + 1}
+              </motion.div>
+
+              <span
+                style={{
+                  fontSize: "9px",
+                  fontWeight: active ? 600 : 400,
+                  letterSpacing: "0.03em",
+                  color: active
+                    ? "var(--color-text)"
+                    : done
+                      ? "var(--color-text-secondary)"
+                      : "var(--color-text-tertiary)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {p.short}
+              </span>
+            </div>
+
+            {idx < PHASES.length - 1 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "9px",
+                  left: "18px",
+                  right: "0",
+                  height: "1px",
+                  background: done
+                    ? "var(--app-accent, #b8a88a)"
+                    : "var(--color-border-light)",
+                  opacity: done ? 0.8 : 0.4,
+                  zIndex: 1,
+                  transform: "translateY(-50%)",
+                }}
+              />
+            )}
           </div>
         );
       })}
@@ -138,20 +187,16 @@ function TestCaseCard({
   return (
     <div
       style={{
-        borderRadius: "8px",
-        border: "1px solid var(--color-border-light)",
-        overflow: "hidden",
         fontSize: "12px",
+        marginBottom: "16px",
       }}
     >
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
-          padding: "6px 10px",
-          background: "var(--color-bg-hover)",
-          borderBottom: "1px solid var(--color-border-light)",
+          gap: "8px",
+          marginBottom: "6px",
         }}
       >
         <span
@@ -159,113 +204,164 @@ function TestCaseCard({
             fontWeight: 600,
             color: "var(--color-text)",
             fontSize: "11px",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
           }}
         >
           Example {index + 1}
         </span>
       </div>
+
       <div
         style={{
-          padding: "8px 10px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "4px",
+          background: "#0d0d0d",
+          border: "1px solid var(--color-border-light)",
+          borderRadius: "8px",
+          overflow: "hidden",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
         }}
       >
-        <div>
-          <span
-            style={{
-              color: "var(--color-text-muted)",
-              fontSize: "10px",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-            }}
-          >
-            Input
-          </span>
-          <div
-            style={{
-              marginTop: "2px",
-              padding: "6px 8px",
-              borderRadius: "4px",
-              background: "rgba(255,255,255,0.03)",
-              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-              fontSize: "11px",
-              color: "#e2e8f0",
-              lineHeight: 1.5,
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-all",
-            }}
-          >
-            {testCase.input}
-          </div>
-        </div>
-        <div>
-          <span
-            style={{
-              color: "var(--color-text-muted)",
-              fontSize: "10px",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-            }}
-          >
-            Output
-          </span>
-          <div
-            style={{
-              marginTop: "2px",
-              padding: "6px 8px",
-              borderRadius: "4px",
-              background: "rgba(34,197,94,0.06)",
-              border: "1px solid rgba(34,197,94,0.15)",
-              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-              fontSize: "11px",
-              color: "#4ade80",
-              lineHeight: 1.5,
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-all",
-            }}
-          >
-            {testCase.output}
-          </div>
-        </div>
-        {testCase.explanation && (
-          <>
-            <button
-              onClick={() => setShowExplanation(!showExplanation)}
+        <div
+          style={{
+            background: "#141414",
+            borderBottom: "1px solid var(--color-border-light)",
+            padding: "6px 12px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", gap: "5px" }}>
+            <span
               style={{
-                background: "none",
-                border: "none",
-                color: "var(--color-text-muted)",
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#ff5f56",
+              }}
+            />
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#ffbd2e",
+              }}
+            />
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#27c93f",
+              }}
+            />
+          </div>
+          <span
+            style={{ fontFamily: "monospace", fontSize: "9px", color: "#666" }}
+          >
+            console
+          </span>
+        </div>
+
+        <div
+          style={{
+            padding: "12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontFamily: "monospace",
                 fontSize: "10px",
-                cursor: "pointer",
-                padding: 0,
-                textAlign: "left",
-                marginTop: "2px",
+                color: "#777",
+                marginBottom: "2px",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
               }}
             >
-              {showExplanation
-                ? "Hide explanation \u25B2"
-                : "Show explanation \u25BC"}
-            </button>
-            {showExplanation && (
-              <div
+              $ Input
+            </div>
+            <pre
+              style={{
+                margin: 0,
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                fontSize: "11px",
+                color: "#e2e8f0",
+                lineHeight: 1.4,
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
+              }}
+            >
+              {testCase.input}
+            </pre>
+          </div>
+
+          <div style={{ borderTop: "1px solid #1c1c1c", paddingTop: "8px" }}>
+            <div
+              style={{
+                fontFamily: "monospace",
+                fontSize: "10px",
+                color: "#5dcaa5",
+                marginBottom: "2px",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              $ Expected Output
+            </div>
+            <pre
+              style={{
+                margin: 0,
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                fontSize: "11px",
+                color: "#4ade80",
+                lineHeight: 1.4,
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
+              }}
+            >
+              {testCase.output}
+            </pre>
+          </div>
+
+          {testCase.explanation && (
+            <div style={{ borderTop: "1px solid #1c1c1c", paddingTop: "8px" }}>
+              <button
+                onClick={() => setShowExplanation(!showExplanation)}
                 style={{
-                  padding: "6px 8px",
-                  borderRadius: "4px",
-                  background: "rgba(255,255,255,0.03)",
-                  fontSize: "11px",
-                  color: "var(--color-text-secondary)",
-                  lineHeight: 1.5,
+                  background: "none",
+                  border: "none",
+                  color: "var(--app-accent, #b8a88a)",
+                  fontSize: "10px",
+                  cursor: "pointer",
+                  padding: 0,
+                  textAlign: "left",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
-                {testCase.explanation}
-              </div>
-            )}
-          </>
-        )}
+                <span>{showExplanation ? "▼" : "▶"}</span> Explanation
+              </button>
+              {showExplanation && (
+                <div
+                  style={{
+                    marginTop: "6px",
+                    fontSize: "11px",
+                    color: "#a0aec0",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {testCase.explanation}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -441,9 +537,11 @@ export function DsaPanel({
         zIndex: 50,
         display: "flex",
         flexDirection: "column",
-        background: "var(--color-bg-elevated)",
-        borderLeft: "1px solid var(--color-border-light)",
-        backdropFilter: "blur(16px)",
+        background: "var(--db-card-bg)",
+        borderLeft: "1px solid var(--app-accent-border)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        boxShadow: "var(--db-card-shadow)",
       }}
     >
       {/* Phase stepper */}
