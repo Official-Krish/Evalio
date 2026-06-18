@@ -90,6 +90,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
               data: {
                 userId: user.id,
                 status: "CREATED",
+                mode: (body.mode as "VOICE" | "DSA") ?? "VOICE",
                 position: body.position,
                 jobDescription: body.jobDescription,
                 resumeId: resume.id,
@@ -136,6 +137,13 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
                   BAR_RAISER: "BAR_RAISER",
                 }),
               ),
+              mode: t.Optional(
+                t.Enum({
+                  VOICE: "VOICE",
+                  DSA: "DSA",
+                }),
+              ),
+              language: t.Optional(t.String()),
             }),
           },
         ),
