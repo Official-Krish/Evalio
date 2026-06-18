@@ -1,14 +1,12 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/cloudfront-signer";
 
-const bucketName = process.env.S3_BUCKET_NAME || process.env.AWS_BUCKET_NAME;
-const region = process.env.S3_REGION || process.env.AWS_REGION;
-const accessKeyId = process.env.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY;
-const secretAccessKey =
-  process.env.AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_KEY;
-const sessionToken = process.env.AWS_SESSION_TOKEN;
-const CDN_BASE_URL =
-  process.env.ASSETS_CDN_BASE_URL || process.env.CDN_BASE_URL;
+const bucketName = Bun.env.S3_BUCKET_NAME || Bun.env.AWS_BUCKET_NAME;
+const region = Bun.env.S3_REGION || Bun.env.AWS_REGION;
+const accessKeyId = Bun.env.AWS_ACCESS_KEY_ID || Bun.env.AWS_ACCESS_KEY;
+const secretAccessKey = Bun.env.AWS_SECRET_ACCESS_KEY || Bun.env.AWS_SECRET_KEY;
+const sessionToken = Bun.env.AWS_SESSION_TOKEN;
+const CDN_BASE_URL = Bun.env.ASSETS_CDN_BASE_URL || Bun.env.CDN_BASE_URL;
 
 if (!bucketName || !region || !CDN_BASE_URL) {
   throw new Error(
@@ -16,10 +14,7 @@ if (!bucketName || !region || !CDN_BASE_URL) {
   );
 }
 
-if (
-  !process.env.CLOUDFRONT_KEY_PAIR_ID ||
-  !process.env.CLOUDFRONT_PRIVATE_KEY
-) {
+if (!Bun.env.CLOUDFRONT_KEY_PAIR_ID || !Bun.env.CLOUDFRONT_PRIVATE_KEY) {
   throw new Error(
     "CLOUDFRONT_KEY_PAIR_ID and CLOUDFRONT_PRIVATE_KEY must be configured for signed URLs.",
   );
@@ -112,7 +107,7 @@ export function generateResumeUrl(objectKey: string) {
   try {
     const url = `https://cdn.krishlabs.tech/${objectKey}`;
 
-    let privateKey = process.env.CLOUDFRONT_PRIVATE_KEY!;
+    let privateKey = Bun.env.CLOUDFRONT_PRIVATE_KEY!;
     if (privateKey.includes("\\n")) {
       privateKey = privateKey.replace(/\\n/g, "\n");
     }
@@ -120,7 +115,7 @@ export function generateResumeUrl(objectKey: string) {
 
     return getSignedUrl({
       url,
-      keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID!,
+      keyPairId: Bun.env.CLOUDFRONT_KEY_PAIR_ID!,
       privateKey,
       dateLessThan: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
     });
