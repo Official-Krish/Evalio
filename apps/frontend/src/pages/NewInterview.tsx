@@ -1,17 +1,16 @@
 import { useState, useMemo, useEffect, useRef, startTransition } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { api } from "../lib/api";
 import { useSession } from "../lib/auth";
 import { ResumePreview } from "../components/ResumePreview";
 import { ProgressStepper } from "../components/Create-Interview/ProgressStepper";
-import { CompanyGrid } from "../components/Create-Interview/CompanyGrid";
-import { RolePicker } from "../components/Create-Interview/RolePicker";
-import { RoundPicker } from "../components/Create-Interview/RoundPicker";
-import { StyleDepthPicker } from "../components/Create-Interview/StyleDepthPicker";
-import { ResumeSection } from "../components/Create-Interview/ResumeSection";
-import { SessionCard } from "../components/Create-Interview/SessionCard";
+import { StepCompany } from "../components/Create-Interview/StepCompany";
+import { StepRole } from "../components/Create-Interview/StepRole";
+import { StepRound } from "../components/Create-Interview/StepRound";
+import { StepStyle } from "../components/Create-Interview/StepStyle";
+import { StepResume } from "../components/Create-Interview/StepResume";
 import { COMPANIES, getDefaultStyleDepth } from "@evalio/shared";
 import { usePageTitle } from "@/lib/usePageTitle";
 import type {
@@ -19,42 +18,10 @@ import type {
   InterviewSession,
   InterviewStyle,
   InterviewDepth,
+  InterviewMode,
 } from "@evalio/shared";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
-
-const stepVariants = {
-  enter: { opacity: 0, x: 20 },
-  center: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -20 },
-};
-
-// Reusable button styles
-const btnNext = (enabled: boolean): React.CSSProperties => ({
-  padding: "10px 24px",
-  borderRadius: "8px",
-  border: "none",
-  background: enabled ? "var(--landing-fg, #eceae6)" : "var(--color-border)",
-  color: enabled ? "var(--landing-bg, #080808)" : "var(--color-text-muted)",
-  fontSize: "13px",
-  fontWeight: 500,
-  cursor: enabled ? "pointer" : "default",
-  transition: "all 0.18s ease",
-  letterSpacing: "-0.01em",
-  opacity: enabled ? 1 : 0.55,
-});
-
-const btnBack: React.CSSProperties = {
-  padding: "10px 24px",
-  borderRadius: "8px",
-  border: "1px solid var(--color-border)",
-  background: "transparent",
-  color: "var(--color-text-muted)",
-  fontSize: "13px",
-  fontWeight: 400,
-  cursor: "pointer",
-  transition: "all 0.15s",
-};
 
 export function NewInterviewPage() {
   usePageTitle("New Interview");
@@ -66,6 +33,7 @@ export function NewInterviewPage() {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
     null,
   );
+  const [customCompanyName, setCustomCompanyName] = useState("");
   const [selectedRoleTitle, setSelectedRoleTitle] = useState<string | null>(
     null,
   );
@@ -76,6 +44,26 @@ export function NewInterviewPage() {
     useState<InterviewStyle>("PROFESSIONAL");
   const [interviewDepth, setInterviewDepth] =
     useState<InterviewDepth>("STANDARD");
+  const [dsaLanguage, setDsaLanguage] = useState("cpp");
+
+  const interviewMode = useMemo((): InterviewMode => {
+    return selectedRound === "Coding Round (DSA)" ? "DSA" : "VOICE";
+  }, [selectedRound]);
+
+  // Auto-map custom company name to known company when typed
+  useEffect(() => {
+    if (selectedCompanyId !== "__custom__" || !customCompanyName.trim()) return;
+    const name = customCompanyName.trim().toLowerCase();
+    const match = COMPANIES.find(
+      (c) => c.name.toLowerCase() === name || c.id.toLowerCase() === name,
+    );
+    if (match) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedCompanyId(match.id);
+      setCustomCompanyName("");
+      setStep(1);
+    }
+  }, [customCompanyName, selectedCompanyId]);
 
   // Auto-set style/depth to company defaults when switching to a custom role
   const prevRoleTitle = useRef(selectedRoleTitle);
@@ -189,11 +177,6 @@ export function NewInterviewPage() {
       d.interviews as (InterviewSession & { _count?: { turns: number } })[],
   });
 
-  const lastCompleted =
-    (interviews ?? []).filter(
-      (i) => i.status === "COMPLETED" && i.overallScore != null,
-    )[0] ?? null;
-
   const [now] = useState(Date.now);
 
   const daysUntilSlot = useMemo(() => {
@@ -223,9 +206,15 @@ export function NewInterviewPage() {
         null)
       : null;
 
-  const effectivePosition = selectedRole?.title ?? customRole;
+  const effectivePosition =
+    selectedRole?.title ??
+    (selectedRoleTitle === "__ai_decide__" ? "General Interview" : customRole);
   const effectiveRound = selectedRound ?? (customRound || undefined);
-  const effectiveCompanyName = selectedCompany?.name ?? null;
+  const effectiveCompanyName =
+    selectedCompany?.name ??
+    (selectedCompanyId === "__custom__" && customCompanyName.trim()
+      ? customCompanyName.trim()
+      : null);
   const effectiveCompanyId =
     selectedCompanyId && selectedCompanyId !== "__custom__"
       ? selectedCompanyId
@@ -292,7 +281,6 @@ export function NewInterviewPage() {
                   fontSize: 12,
                   fontWeight: 600,
                   textDecoration: "none",
-                  transition: "opacity 0.15s",
                   alignSelf: "flex-start",
                 }}
               >
@@ -332,6 +320,8 @@ export function NewInterviewPage() {
       interviewRound: effectiveRound,
       interviewStyle,
       interviewDepth,
+      mode: interviewMode,
+      language: interviewMode === "DSA" ? dsaLanguage : undefined,
     });
   };
 
@@ -353,506 +343,108 @@ export function NewInterviewPage() {
 
       <AnimatePresence mode="wait">
         {step === 0 && (
-          <motion.div
-            key="step-0"
-            variants={stepVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.15 }}
-          >
-            <div style={{ marginBottom: "28px" }}>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                style={{
-                  fontSize: "11px",
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "var(--color-text-muted)",
-                  margin: "0 0 6px",
-                }}
-              >
-                Step 1 of 5
-              </motion.p>
-              <motion.h1
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                style={{
-                  fontSize: "clamp(1.25rem, 3vw, 1.6rem)",
-                  fontWeight: 500,
-                  letterSpacing: "-0.025em",
-                  color: "var(--color-text)",
-                  lineHeight: 1.2,
-                  margin: 0,
-                }}
-              >
-                Select a company
-              </motion.h1>
-              {lastCompleted && !selectedCompanyId && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.15 }}
-                  style={{
-                    fontSize: "13px",
-                    color: "var(--color-text-muted)",
-                    marginTop: "6px",
-                    margin: "6px 0 0",
-                  }}
-                >
-                  Last session: {lastCompleted.position}
-                  {lastCompleted.overallScore != null
-                    ? ` · ${Math.round(lastCompleted.overallScore)}%`
-                    : ""}
-                </motion.p>
-              )}
-            </div>
-            <CompanyGrid
-              selectedCompanyId={selectedCompanyId}
-              onSelect={(id) => {
-                setSelectedCompanyId(id);
-                if (id) setStep(1);
-              }}
-            />
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                marginTop: "24px",
-              }}
-            >
-              <motion.button
-                onClick={() => setStep(selectedCompanyId ? 1 : 4)}
-                whileHover={{ opacity: 0.88 }}
-                whileTap={{ scale: 0.97 }}
-                style={btnNext(true)}
-              >
-                {selectedCompanyId ? "Continue" : "Skip"} →
-              </motion.button>
-            </div>
-          </motion.div>
+          <StepCompany
+            selectedCompanyId={selectedCompanyId}
+            customCompanyName={customCompanyName}
+            onSelectCompany={(id) => {
+              setSelectedCompanyId(id);
+              if (id !== "__custom__") setCustomCompanyName("");
+            }}
+            onCustomCompanyChange={setCustomCompanyName}
+            onNext={() =>
+              setStep(
+                selectedCompanyId && selectedCompanyId !== "__custom__"
+                  ? 1
+                  : selectedCompanyId === "__custom__" &&
+                      customCompanyName.trim()
+                    ? 1
+                    : 4,
+              )
+            }
+          />
         )}
 
         {step === 1 && (
-          <motion.div
-            key="step-1"
-            variants={stepVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.15 }}
-          >
-            <div style={{ marginBottom: "28px" }}>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                style={{
-                  fontSize: "11px",
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "var(--color-text-muted)",
-                  margin: "0 0 6px",
-                }}
-              >
-                Step 2 of 5
-              </motion.p>
-              <motion.h1
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                style={{
-                  fontSize: "clamp(1.25rem, 3vw, 1.6rem)",
-                  fontWeight: 500,
-                  letterSpacing: "-0.025em",
-                  color: "var(--color-text)",
-                  lineHeight: 1.2,
-                  margin: 0,
-                }}
-              >
-                {selectedCompany
-                  ? `Role at ${selectedCompany.name}`
-                  : "Enter your role"}
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                style={{
-                  fontSize: "13px",
-                  color: "var(--color-text-muted)",
-                  margin: "6px 0 0",
-                }}
-              >
-                {selectedCompany
-                  ? "Select the position you're applying for"
-                  : "Type the role you're targeting"}
-              </motion.p>
-            </div>
-            <RolePicker
-              companyId={selectedCompanyId}
-              selectedRoleTitle={selectedRoleTitle}
-              customRole={customRole}
-              onSelectRole={setSelectedRoleTitle}
-              onCustomRoleChange={setCustomRole}
-            />
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginTop: "24px",
-              }}
-            >
-              <motion.button
-                onClick={() => setStep(0)}
-                whileTap={{ scale: 0.97 }}
-                style={btnBack}
-              >
-                ← Back
-              </motion.button>
-              <motion.button
-                onClick={() => {
-                  if (effectivePosition) setStep(2);
-                  else toast.error("Select a role first");
-                }}
-                whileHover={{ opacity: effectivePosition ? 0.88 : 1 }}
-                whileTap={{ scale: 0.97 }}
-                style={btnNext(!!effectivePosition)}
-              >
-                Continue to Round →
-              </motion.button>
-            </div>
-          </motion.div>
+          <StepRole
+            companyId={selectedCompanyId}
+            companyName={selectedCompany?.name ?? null}
+            selectedRoleTitle={selectedRoleTitle}
+            customRole={customRole}
+            effectivePosition={effectivePosition}
+            onSelectRole={setSelectedRoleTitle}
+            onCustomRoleChange={setCustomRole}
+            onContinue={() => setStep(2)}
+            onBack={() => setStep(0)}
+          />
         )}
 
         {step === 2 && (
-          <motion.div
-            key="step-2"
-            variants={stepVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.15 }}
-          >
-            <div style={{ marginBottom: "28px" }}>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                style={{
-                  fontSize: "11px",
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "var(--color-text-muted)",
-                  margin: "0 0 6px",
-                }}
-              >
-                Step 3 of 5
-              </motion.p>
-              <motion.h1
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                style={{
-                  fontSize: "clamp(1.25rem, 3vw, 1.6rem)",
-                  fontWeight: 500,
-                  letterSpacing: "-0.025em",
-                  color: "var(--color-text)",
-                  lineHeight: 1.2,
-                  margin: 0,
-                }}
-              >
-                Interview round
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                style={{
-                  fontSize: "13px",
-                  color: "var(--color-text-muted)",
-                  margin: "6px 0 0",
-                }}
-              >
-                {selectedCompany
-                  ? `What stage at ${selectedCompany.name}?`
-                  : "What type of interview round?"}
-              </motion.p>
-            </div>
-            <RoundPicker
-              companyId={selectedCompanyId}
-              selectedRound={selectedRound}
-              customRound={customRound}
-              onSelectRound={setSelectedRound}
-              onCustomRoundChange={setCustomRound}
-              onSkip={() => {
-                setStep(3);
-                setSelectedRound(null);
-                setCustomRound("");
-              }}
-            />
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginTop: "24px",
-              }}
-            >
-              <motion.button
-                onClick={() => setStep(1)}
-                whileTap={{ scale: 0.97 }}
-                style={btnBack}
-              >
-                ← Back
-              </motion.button>
-              <motion.button
-                onClick={() => setStep(3)}
-                whileHover={{ opacity: 0.88 }}
-                whileTap={{ scale: 0.97 }}
-                style={btnNext(true)}
-              >
-                Continue to Style →
-              </motion.button>
-            </div>
-          </motion.div>
+          <StepRound
+            companyId={selectedCompanyId}
+            companyName={selectedCompany?.name ?? null}
+            selectedRound={selectedRound}
+            customRound={customRound}
+            onSelectRound={setSelectedRound}
+            onCustomRoundChange={setCustomRound}
+            onContinue={() => setStep(3)}
+            onBack={() => setStep(1)}
+            onSkip={() => {
+              setStep(3);
+              setSelectedRound(null);
+              setCustomRound("");
+            }}
+          />
         )}
 
         {step === 3 && (
-          <motion.div
-            key="step-3"
-            variants={stepVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.15 }}
-          >
-            <div style={{ marginBottom: "28px" }}>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                style={{
-                  fontSize: "11px",
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "var(--color-text-muted)",
-                  margin: "0 0 6px",
-                }}
-              >
-                Step 4 of 5
-              </motion.p>
-              <motion.h1
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                style={{
-                  fontSize: "clamp(1.25rem, 3vw, 1.6rem)",
-                  fontWeight: 500,
-                  letterSpacing: "-0.025em",
-                  color: "var(--color-text)",
-                  lineHeight: 1.2,
-                  margin: 0,
-                }}
-              >
-                Style & Depth
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                style={{
-                  fontSize: "13px",
-                  color: "var(--color-text-muted)",
-                  margin: "6px 0 0",
-                }}
-              >
-                Choose how the AI interviews you
-              </motion.p>
-            </div>
-            <StyleDepthPicker
-              style={interviewStyle}
-              depth={interviewDepth}
-              onStyleChange={setInterviewStyle}
-              onDepthChange={setInterviewDepth}
-            />
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginTop: "24px",
-              }}
-            >
-              <motion.button
-                onClick={() => setStep(2)}
-                whileTap={{ scale: 0.97 }}
-                style={btnBack}
-              >
-                ← Back
-              </motion.button>
-              <motion.button
-                onClick={() => setStep(4)}
-                whileHover={{ opacity: 0.88 }}
-                whileTap={{ scale: 0.97 }}
-                style={btnNext(true)}
-              >
-                Continue to Resume →
-              </motion.button>
-            </div>
-          </motion.div>
+          <StepStyle
+            style={interviewStyle}
+            depth={interviewDepth}
+            onStyleChange={setInterviewStyle}
+            onDepthChange={setInterviewDepth}
+            onContinue={() => setStep(4)}
+            onBack={() => setStep(2)}
+          />
         )}
 
         {step === 4 && (
-          <motion.div
-            key="step-4"
-            variants={stepVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.15 }}
-          >
-            <ResumeSection
-              resumes={resumes ?? []}
-              selectedResumeId={effectiveResumeId}
-              githubUrl={effectiveGithubUrl}
-              githubOpen={githubOpen}
-              githubProfile={githubProfile}
-              useConnectedGithub={useConnectedGithub}
-              onResumeSelect={setSelectedResumeId}
-              onPreviewResume={setPreviewResumeId}
-              onResumesRefetch={() => refetchResumes()}
-              onGithubUrlChange={(url) => {
-                setGithubUrl(url);
-                setUseConnectedGithub(false);
-              }}
-              onGithubToggle={() => setGithubOpen((p) => !p)}
-              onUseConnectedGithub={() => {
-                setUseConnectedGithub(true);
-                setGithubOpen(false);
-                if (githubProfile?.username) {
-                  setGithubUrl(`https://github.com/${githubProfile.username}`);
-                }
-              }}
-            />
-
-            {/* Job description */}
-            <details
-              style={{
-                marginTop: "24px",
-                marginBottom: "24px",
-                borderRadius: "12px",
-                border: "1px solid rgba(255,255,255,0.06)",
-                padding: "16px 20px",
-                fontSize: "13px",
-                color: "var(--color-text-secondary)",
-              }}
-            >
-              <summary
-                style={{
-                  cursor: "pointer",
-                  fontWeight: 500,
-                  color: "var(--color-text)",
-                  fontSize: "14px",
-                  userSelect: "none",
-                }}
-              >
-                Add job description (optional)
-              </summary>
-              <textarea
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Paste the job description here so the AI can tailor questions..."
-                rows={6}
-                style={{
-                  marginTop: "12px",
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  background: "transparent",
-                  color: "var(--color-text)",
-                  fontSize: "13px",
-                  lineHeight: 1.5,
-                  resize: "vertical",
-                  fontFamily: "inherit",
-                }}
-              />
-            </details>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: "32px",
-              }}
-            >
-              <motion.button
-                onClick={() => setStep(3)}
-                whileTap={{ scale: 0.97 }}
-                style={btnBack}
-              >
-                ← Back
-              </motion.button>
-            </div>
-
-            {selectedCompany && selectedRole && (
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                style={{
-                  marginBottom: "20px",
-                  padding: "14px 18px",
-                  borderRadius: "10px",
-                  border: "1px solid var(--color-border)",
-                  background: "var(--color-bg-card)",
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    color: "var(--color-text)",
-                    margin: 0,
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  {selectedCompany.name} — {selectedRole.title}
-                </p>
-                <p
-                  style={{
-                    fontSize: "12px",
-                    color: "var(--color-text-muted)",
-                    margin: "4px 0 0",
-                  }}
-                >
-                  {interviewStyle === "SUPPORTIVE"
-                    ? "Supportive"
-                    : interviewStyle === "PROFESSIONAL"
-                      ? "Professional"
-                      : interviewStyle === "CHALLENGING"
-                        ? "Challenging"
-                        : "Bar Raiser"}{" "}
-                  ·{" "}
-                  {interviewDepth === "STANDARD"
-                    ? "Standard"
-                    : interviewDepth === "PROBING"
-                      ? "Probing"
-                      : interviewDepth === "CHALLENGE"
-                        ? "Challenge"
-                        : "Bar Raiser"}{" "}
-                  · ~{selectedRole.duration}min
-                </p>
-              </motion.div>
-            )}
-
-            <SessionCard
-              position={effectivePosition ?? ""}
-              customPosition={customRole}
-              selectedResumeId={effectiveResumeId}
-              resumes={resumes ?? []}
-              isPending={createMutation.isPending}
-              onCreate={handleCreate}
-            />
-          </motion.div>
+          <StepResume
+            resumes={resumes ?? []}
+            effectiveResumeId={effectiveResumeId}
+            githubUrl={effectiveGithubUrl}
+            githubOpen={githubOpen}
+            githubProfile={githubProfile ?? null}
+            useConnectedGithub={useConnectedGithub}
+            interviewMode={interviewMode}
+            interviewStyle={interviewStyle}
+            interviewDepth={interviewDepth}
+            dsaLanguage={dsaLanguage}
+            jobDescription={jobDescription}
+            selectedCompany={selectedCompany}
+            selectedRole={selectedRole}
+            customRole={customRole}
+            effectivePosition={effectivePosition}
+            isPending={createMutation.isPending}
+            onResumeSelect={setSelectedResumeId}
+            onPreviewResume={setPreviewResumeId}
+            onResumesRefetch={() => refetchResumes()}
+            onGithubUrlChange={(url) => {
+              setGithubUrl(url);
+              setUseConnectedGithub(false);
+            }}
+            onGithubToggle={() => setGithubOpen((p) => !p)}
+            onUseConnectedGithub={() => {
+              setUseConnectedGithub(true);
+              setGithubOpen(false);
+              if (githubProfile?.username) {
+                setGithubUrl(`https://github.com/${githubProfile.username}`);
+              }
+            }}
+            onDsaLanguageChange={setDsaLanguage}
+            onJobDescriptionChange={setJobDescription}
+            onBack={() => setStep(3)}
+            onCreate={handleCreate}
+          />
         )}
       </AnimatePresence>
     </div>

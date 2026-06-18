@@ -98,6 +98,20 @@ export class InterviewSocket {
     this.send({ type: "end_interview" });
   }
 
+  sendCodeSnapshot(code: string, language: string, questionIndex: number) {
+    this.send({
+      type: "code_snapshot",
+      code,
+      language,
+      questionIndex,
+      phase: "implementation",
+    });
+  }
+
+  sendPhaseUpdate(phase: string, questionIndex: number) {
+    this.send({ type: "phase_update", phase, questionIndex });
+  }
+
   forceClose() {
     this.closed = true;
     this.handlers.clear();

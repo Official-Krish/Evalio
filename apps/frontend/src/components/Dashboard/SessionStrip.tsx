@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { isToday, formatDuration } from "./helpers";
 import type { InterviewSession } from "@evalio/shared";
@@ -24,6 +24,7 @@ const DEPTH_LABELS: Record<string, string> = {
 };
 
 export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
+  const navigate = useNavigate();
   const score = mostRecent.overallScore;
   const isActive = mostRecent.status === "ACTIVE";
   const scorePct = score != null ? Math.round(score) : 0;
@@ -34,11 +35,26 @@ export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Link
-        to={
-          isActive ? `/interview/${mostRecent.id}` : `/results/${mostRecent.id}`
+      <div
+        onClick={() =>
+          navigate(
+            isActive
+              ? `/interview/${mostRecent.id}`
+              : `/results/${mostRecent.id}`,
+          )
         }
-        style={{ textDecoration: "none", display: "block" }}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            navigate(
+              isActive
+                ? `/interview/${mostRecent.id}`
+                : `/results/${mostRecent.id}`,
+            );
+          }
+        }}
+        style={{ cursor: "pointer" }}
       >
         <div
           style={{
@@ -265,28 +281,32 @@ export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
 
           {/* Actions */}
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <Link
-              to={
-                isActive
-                  ? `/interview/${mostRecent.id}`
-                  : `/results/${mostRecent.id}`
-              }
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(
+                  isActive
+                    ? `/interview/${mostRecent.id}`
+                    : `/results/${mostRecent.id}`,
+                );
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
                 padding: "9px 20px",
                 borderRadius: "999px",
+                border: "none",
                 background: isActive ? "#22c55e" : "var(--color-text)",
                 color: "var(--color-bg)",
                 fontSize: "13px",
                 fontWeight: 600,
-                textDecoration: "none",
-                transition: "opacity 0.2s",
+                cursor: "pointer",
                 letterSpacing: "0.02em",
+                fontFamily: "inherit",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
               {isActive ? "Continue session" : "View report"}
               <svg
@@ -301,7 +321,7 @@ export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
               >
                 <path d="M4 2l4 4-4 4" />
               </svg>
-            </Link>
+            </button>
             {mostRecent.resume?.id && (
               <button
                 onClick={(e) => {
@@ -338,7 +358,7 @@ export function SessionStrip({ mostRecent, onViewResume }: SessionStripProps) {
             )}
           </div>
         </div>
-      </Link>
+      </div>
     </motion.section>
   );
 }

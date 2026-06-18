@@ -105,10 +105,10 @@ export function ResumeSection({
           <p
             style={{
               fontSize: "11px",
-              letterSpacing: "0.05em",
+              letterSpacing: "0.08em",
               textTransform: "uppercase",
               color: "var(--color-text-muted)",
-              marginBottom: "8px",
+              marginBottom: "0.4rem",
             }}
           >
             Previously uploaded
@@ -451,17 +451,18 @@ export function ResumeSection({
                 placeholder="https://github.com/username"
                 style={{
                   width: "100%",
-                  fontSize: "14px",
-                  padding: "12px 14px",
-                  borderRadius: "8px",
+                  padding: "0.7rem 0.9rem",
+                  fontSize: "13px",
+                  borderRadius: "2px",
                   border: "1px solid var(--color-border)",
-                  background: "var(--color-bg-hover)",
+                  background: "transparent",
                   color: "var(--color-text)",
                   outline: "none",
                   boxSizing: "border-box",
+                  fontFamily: "inherit",
                 }}
                 onFocus={(e) =>
-                  (e.target.style.borderColor = "var(--color-accent)")
+                  (e.target.style.borderColor = "rgba(184, 168, 138, 0.35)")
                 }
                 onBlur={(e) =>
                   (e.target.style.borderColor = "var(--color-border)")
@@ -508,17 +509,20 @@ export function ResumeSection({
               )}
             </div>
           ) : (
-            <button
+            <motion.button
               onClick={onGithubToggle}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-accent)";
-                e.currentTarget.style.color = "var(--color-accent)";
+              whileHover={{
+                borderColor: "var(--app-accent, #b8a88a)",
+                color: "var(--app-accent, #b8a88a)",
+                background: "var(--app-accent-bg, rgba(184,168,138,0.04))",
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-border-light)";
-                e.currentTarget.style.color = "var(--color-text-secondary)";
+              whileTap={{ scale: 0.98 }}
+              style={{
+                ...btnBase,
+                width: "100%",
+                justifyContent: "center",
+                padding: "12px 18px",
               }}
-              style={btnBase}
             >
               <span style={{ fontSize: "16px", lineHeight: 1 }}>
                 {<SiGithub />}
@@ -529,7 +533,7 @@ export function ResumeSection({
                   : "Add GitHub for code-specific questions"}
               </span>
               <span style={{ fontSize: "11px", opacity: 0.6 }}>{"\u2192"}</span>
-            </button>
+            </motion.button>
           )}
         </div>
       )}

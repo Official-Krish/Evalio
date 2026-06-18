@@ -6,6 +6,7 @@ import { useMicrophone } from "../hooks/useMicrophone";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import { InterviewSocket } from "../lib/ws";
 import { api } from "../lib/api";
+import { DsaPanel } from "../components/interview/DsaPanel";
 import { Ambient } from "@/components/landing/Ambient";
 import { PresenceOrb } from "@/components/interview/PresenceOrb";
 import { SessionControls } from "@/components/interview/SessionControls";
@@ -68,6 +69,66 @@ export function InterviewPage() {
     Array<{ role: "user" | "assistant"; text: string; id: string }>
   >([]);
   const [queuedPosition, setQueuedPosition] = useState<number | null>(null);
+
+  // DSA state
+  const [dsaCode, setDsaCode] = useState("");
+  const [dsaSessionData, setDsaSessionData] = useState<{
+    questions: Array<{
+      dbId: string;
+      leetcodeId: number;
+      title: string;
+      slug: string;
+      difficulty: string;
+      description?: string;
+      testCases?: { input: string; output: string; explanation?: string }[];
+    }>;
+    attempts: Array<{
+      id: string;
+      index: number;
+      currentPhase: string;
+      phasesCompleted: string[];
+      code: string | null;
+      score: number | null;
+      feedback: string | null;
+    }>;
+    currentIndex: number;
+    language: string;
+  } | null>(null);
+  const isDsa = interviewMeta?.mode === "DSA";
+
+  const dsaPanelVisible = useMemo(() => {
+    return isDsa && messages.length > 0;
+  }, [isDsa, messages.length]);
+
+  // Load DSA session on mount if DSA mode
+  useEffect(() => {
+    if (!isDsa || !id) return;
+    const loadDsa = async () => {
+      try {
+        const startRes = await fetch(`/api/dsa/start`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ interviewId: id }),
+        });
+        const data = await startRes.json();
+        if (data.session) {
+          setDsaSessionData({
+            questions: data.session.questions,
+            attempts: data.session.attempts,
+            currentIndex: data.session.currentIndex ?? 0,
+            language: data.session.language ?? "python",
+          });
+          if (data.session.attempts?.[0]) {
+            setDsaCode(data.session.attempts[0].code ?? "");
+          }
+        }
+      } catch {
+        // Silently fail — session will show without panel
+      }
+    };
+    loadDsa();
+  }, [isDsa, id]);
 
   const phase = useMemo((): Phase => {
     if (feedbackReady) return "ended";
@@ -430,7 +491,14 @@ export function InterviewPage() {
     <div className="interview-room landing-page min-h-[100dvh] flex flex-col relative overflow-hidden">
       <Ambient />
 
-      <div className="relative z-10 flex flex-col min-h-[100dvh]">
+      <div
+        className="relative z-10 flex flex-col min-h-[100dvh]"
+        style={
+          isDsa && dsaPanelVisible
+            ? { marginRight: "min(520px, 45vw)" }
+            : undefined
+        }
+      >
         <div className="landing-container pt-6">
           <SessionHeader
             position={position}
@@ -469,6 +537,18 @@ export function InterviewPage() {
           />
         </div>
       </div>
+
+      {isDsa && dsaSessionData && (
+        <DsaPanel
+          questions={dsaSessionData.questions}
+          attempts={dsaSessionData.attempts}
+          currentIndex={dsaSessionData.currentIndex}
+          language={dsaSessionData.language}
+          code={dsaCode}
+          onCodeChange={setDsaCode}
+          visible={dsaPanelVisible}
+        />
+      )}
 
       <ConfirmDialog
         open={showEndConfirm}
