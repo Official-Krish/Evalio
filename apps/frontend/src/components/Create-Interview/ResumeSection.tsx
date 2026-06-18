@@ -64,6 +64,7 @@ export function ResumeSection({
   onUseConnectedGithub,
 }: ResumeSectionProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadKey, setUploadKey] = useState(0);
 
   const selectedResume = selectedResumeId
     ? (resumes.find((r) => r.id === selectedResumeId) ?? null)
@@ -83,6 +84,7 @@ export function ResumeSection({
       onResumesRefetch();
     } catch (err) {
       toast.error((err as Error).message);
+      setUploadKey((k) => k + 1);
     } finally {
       setIsUploading(false);
     }
@@ -91,7 +93,11 @@ export function ResumeSection({
   return (
     <div style={{ marginBottom: "48px" }}>
       {/* Animated drag zone via FileUpload */}
-      <FileUpload onChange={handleUploadResume} disabled={isUploading} />
+      <FileUpload
+        key={uploadKey}
+        onChange={handleUploadResume}
+        disabled={isUploading}
+      />
 
       {resumes.length > 0 && (
         <div

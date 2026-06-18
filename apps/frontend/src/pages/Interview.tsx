@@ -159,6 +159,7 @@ export function InterviewPage() {
   const closingRef = useRef(false);
   const feedbackReadyRef = useRef(false);
   const micActiveRef = useRef(micActive);
+  const mountedRef = useRef(true);
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
@@ -195,7 +196,11 @@ export function InterviewPage() {
   }, [stopMic, stopAudio]);
 
   useEffect(() => {
-    return () => teardown();
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      teardown();
+    };
   }, [teardown]);
 
   const connectSocket = useCallback(async () => {
@@ -321,7 +326,7 @@ export function InterviewPage() {
     });
 
     socket.on("error", (err: unknown) => {
-      if (endedRef.current) return;
+      if (!mountedRef.current || endedRef.current) return;
       const msg = (err as Record<string, unknown>)?.error as string | undefined;
       setError(msg || "Connection failed");
       toast.error(msg || "Connection failed");
@@ -376,7 +381,7 @@ export function InterviewPage() {
 
   useEffect(() => {
     connectSocket().catch((err: Error) => {
-      if (!endedRef.current) {
+      if (mountedRef.current && !endedRef.current) {
         setError(err.message);
         toast.error(err.message);
       }

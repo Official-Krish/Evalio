@@ -10,8 +10,52 @@ const COMMON_ROUNDS = [
   "Coding Round (DSA)",
 ];
 
+const TECHNICAL_KEYWORDS = [
+  "engineer",
+  "developer",
+  "sde",
+  "swe",
+  "software",
+  "frontend",
+  "front-end",
+  "backend",
+  "back-end",
+  "full stack",
+  "fullstack",
+  "data scientist",
+  "data engineer",
+  "ml engineer",
+  "ai",
+  "machine learning",
+  "devops",
+  "sre",
+  "infrastructure",
+  "cloud",
+  "systems engineer",
+  "network engineer",
+  "security",
+  "architect",
+  "technical",
+  "ios",
+  "android",
+  "mobile",
+  "research scientist",
+  "applied scientist",
+  "qa engineer",
+  "test engineer",
+  "platform engineer",
+  "site reliability",
+];
+
+function isTechnicalRole(roleTitle: string | null | undefined): boolean {
+  if (!roleTitle) return true;
+  const lower = roleTitle.toLowerCase();
+  return TECHNICAL_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
 interface RoundPickerProps {
   companyId: string | null;
+  roleTitle: string | null;
   selectedRound: string | null;
   customRound: string;
   onSelectRound: (round: string | null) => void;
@@ -101,6 +145,7 @@ const hoverProps = {
 
 export function RoundPicker({
   companyId,
+  roleTitle,
   selectedRound,
   customRound,
   onSelectRound,
@@ -114,9 +159,14 @@ export function RoundPicker({
     return COMPANIES.find((c) => c.id === companyId) ?? null;
   }, [companyId]);
 
+  const technical = isTechnicalRole(roleTitle);
   const baseRounds = company?.interviewRounds ?? [];
   const isStartup = companyId === "startup";
-  const rounds = isStartup ? baseRounds : [...baseRounds, "Coding Round (DSA)"];
+  const dsaRound = technical && !isStartup ? ["Coding Round (DSA)"] : [];
+  const rounds = isStartup ? baseRounds : [...baseRounds, ...dsaRound];
+  const commonRounds = technical
+    ? COMMON_ROUNDS
+    : COMMON_ROUNDS.filter((r) => r !== "Coding Round (DSA)");
   const isCustom = companyId === "__custom__";
   const hasChosen = selectedRound !== null;
 
@@ -292,7 +342,7 @@ export function RoundPicker({
 
         {isCustom && (
           <>
-            {COMMON_ROUNDS.map((round) => {
+            {commonRounds.map((round) => {
               const active = selectedRound === round;
               return (
                 <motion.button

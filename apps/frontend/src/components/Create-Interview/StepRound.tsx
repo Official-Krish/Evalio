@@ -34,6 +34,7 @@ const btnBack: React.CSSProperties = {
 interface StepRoundProps {
   companyId: string | null;
   companyName: string | null;
+  roleTitle: string | null;
   selectedRound: string | null;
   customRound: string;
   onSelectRound: (round: string | null) => void;
@@ -46,6 +47,7 @@ interface StepRoundProps {
 export function StepRound({
   companyId,
   companyName,
+  roleTitle,
   selectedRound,
   customRound,
   onSelectRound,
@@ -109,6 +111,7 @@ export function StepRound({
       </div>
       <RoundPicker
         companyId={companyId}
+        roleTitle={roleTitle}
         selectedRound={selectedRound}
         customRound={customRound}
         onSelectRound={onSelectRound}

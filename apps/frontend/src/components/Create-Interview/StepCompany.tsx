@@ -25,7 +25,8 @@ interface StepCompanyProps {
   customCompanyName: string;
   onSelectCompany: (id: string | null) => void;
   onCustomCompanyChange: (name: string) => void;
-  onNext: () => void;
+  onContinue: () => void;
+  onSkip: () => void;
 }
 
 export function StepCompany({
@@ -33,7 +34,8 @@ export function StepCompany({
   customCompanyName,
   onSelectCompany,
   onCustomCompanyChange,
-  onNext,
+  onContinue,
+  onSkip,
 }: StepCompanyProps) {
   return (
     <motion.div
@@ -79,7 +81,7 @@ export function StepCompany({
         onSelect={(id) => {
           onSelectCompany(id);
           if (id && id !== "__custom__") {
-            setTimeout(() => onNext(), 0);
+            onContinue();
           }
         }}
       />
@@ -108,7 +110,7 @@ export function StepCompany({
             autoFocus
             onKeyDown={(e) => {
               if (e.key === "Enter" && customCompanyName.trim()) {
-                onNext();
+                onContinue();
               }
             }}
             whileFocus={{ borderColor: "rgba(184, 168, 138, 0.35)" }}
@@ -136,7 +138,16 @@ export function StepCompany({
         }}
       >
         <motion.button
-          onClick={onNext}
+          onClick={() => {
+            if (selectedCompanyId && selectedCompanyId !== "__custom__")
+              onContinue();
+            else if (
+              selectedCompanyId === "__custom__" &&
+              customCompanyName.trim()
+            )
+              onContinue();
+            else onSkip();
+          }}
           whileHover={{ opacity: 0.88 }}
           whileTap={{ scale: 0.97 }}
           style={btnNext(

@@ -351,16 +351,8 @@ export function NewInterviewPage() {
               if (id !== "__custom__") setCustomCompanyName("");
             }}
             onCustomCompanyChange={setCustomCompanyName}
-            onNext={() =>
-              setStep(
-                selectedCompanyId && selectedCompanyId !== "__custom__"
-                  ? 1
-                  : selectedCompanyId === "__custom__" &&
-                      customCompanyName.trim()
-                    ? 1
-                    : 4,
-              )
-            }
+            onContinue={() => setStep(1)}
+            onSkip={() => setStep(4)}
           />
         )}
 
@@ -382,6 +374,7 @@ export function NewInterviewPage() {
           <StepRound
             companyId={selectedCompanyId}
             companyName={selectedCompany?.name ?? null}
+            roleTitle={selectedRoleTitle}
             selectedRound={selectedRound}
             customRound={customRound}
             onSelectRound={setSelectedRound}
