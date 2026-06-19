@@ -342,12 +342,20 @@ export class InterviewConnection {
     }
 
     console.log("[ws] sending initial clientContent to start interview...");
-    // pick a random greeting instruction so the AI varies its opening
-    const greetings = [
-      "Start the interview. Greet the candidate naturally — vary your opening based on their background. Introduce yourself as an Evalio interviewer, then ask your first question.",
-      "Begin the interview. Welcome the candidate with a varied opening — reference something about their experience if available. Keep the intro brief under 30 seconds, then move to questions.",
-      "Start the session. Greet the candidate conversationally — don't use a scripted opening. Introduce yourself and the structure briefly, then lead into the first question.",
-    ];
+
+    let greetings: string[];
+    if (this.isDsaMode) {
+      greetings = [
+        "Start the DSA coding interview. Introduce yourself and the company/role context. Tell the candidate their first coding problem is displayed on the right side of their screen. Ask them to take a moment to read it and let you know when they're ready. Then STOP — wait for their response. Do NOT discuss the problem or ask any technical questions until they confirm they're ready.",
+        "Begin the DSA coding interview. Welcome the candidate and briefly mention the role they're interviewing for. Point out that the first question is visible on their screen. Ask if they can see it and if they have any immediate questions. Then wait for their reply before proceeding.",
+      ];
+    } else {
+      greetings = [
+        "Start the interview. Greet the candidate naturally — vary your opening based on their background. Introduce yourself as an Evalio interviewer, then ask your first question.",
+        "Begin the interview. Welcome the candidate with a varied opening — reference something about their experience if available. Keep the intro brief under 30 seconds, then move to questions.",
+        "Start the session. Greet the candidate conversationally — don't use a scripted opening. Introduce yourself and the structure briefly, then lead into the first question.",
+      ];
+    }
     this.gemini.send(
       JSON.stringify({
         clientContent: {
@@ -639,6 +647,15 @@ export class InterviewConnection {
           systemPrompt = buildDsaSystemPrompt(
             enriched,
             dsaSession?.language ?? "python",
+            {
+              companyName: interview.companyName,
+              roleTitle: (interview as { roleTitle?: string | null }).roleTitle,
+              interviewRound: (interview as { interviewRound?: string | null })
+                .interviewRound,
+              position: interview.position,
+              interviewDepth: (interview as { interviewDepth?: string | null })
+                .interviewDepth,
+            },
           );
         } else {
           const promptInput = {
@@ -920,6 +937,29 @@ export class InterviewConnection {
             }),
           );
         }
+        break;
+      }
+
+      case "request_hint": {
+        if (!this.gemini || this.closingMode || !this.isDsaMode) return;
+        const hintMsg = msg as { questionIndex?: number };
+        this.gemini.send(
+          JSON.stringify({
+            clientContent: {
+              turns: [
+                {
+                  role: "user",
+                  parts: [
+                    {
+                      text: `[Hint Request] The candidate is asking for a hint on Question ${hintMsg.questionIndex ?? 0}. Provide a subtle hint that guides them toward the solution without giving it away. Use a Socratic approach — ask a leading question or point them toward the relevant data structure/algorithm to consider.`,
+                    },
+                  ],
+                },
+              ],
+              turnComplete: true,
+            },
+          }),
+        );
         break;
       }
 

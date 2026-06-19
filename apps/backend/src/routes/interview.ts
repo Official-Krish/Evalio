@@ -188,7 +188,34 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
                 : null,
             }
           : null;
-        return { interview: { ...interview, resume: mappedResume } };
+
+        const scoredInterviews = await prisma.interviewSession.findMany({
+          where: {
+            userId: user.id,
+            status: "COMPLETED",
+            overallScore: { not: null },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { overallScore: true },
+        });
+        const scores = scoredInterviews.map((i) => i.overallScore!).reverse();
+        const scoreTrendLast5: "improving" | "stable" | "declining" | null =
+          scores.length < 2
+            ? null
+            : scores[scores.length - 1]! > scores[0]! + 5
+              ? "improving"
+              : scores[scores.length - 1]! < scores[0]! - 5
+                ? "declining"
+                : "stable";
+
+        return {
+          interview: {
+            ...interview,
+            resume: mappedResume,
+            scoreTrendLast5,
+          },
+        };
       })
       .patch(
         "/:id",
