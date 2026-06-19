@@ -38,10 +38,10 @@ export function Sidebar({ completedCount }: { completedCount: number }) {
           Upgrade
         </p>
         <h4 className="text-[12px] font-semibold text-[var(--color-text)] mb-1">
-          AI Coach Plan
+          More Interviews
         </h4>
         <p className="text-[11px] text-[var(--color-text-secondary)] leading-relaxed">
-          Unlock advanced signals, mock feedback, and premium analytics.
+          Get more mock interviews, extended session time, and priority access.
         </p>
       </Link>
     </aside>

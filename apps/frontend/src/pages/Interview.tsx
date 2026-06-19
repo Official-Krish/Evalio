@@ -97,8 +97,8 @@ export function InterviewPage() {
   const isDsa = interviewMeta?.mode === "DSA";
 
   const dsaPanelVisible = useMemo(() => {
-    return isDsa && messages.length > 0;
-  }, [isDsa, messages.length]);
+    return isDsa && !!dsaSessionData;
+  }, [isDsa, dsaSessionData]);
 
   // Load DSA session on mount if DSA mode
   useEffect(() => {
@@ -372,6 +372,30 @@ export function InterviewPage() {
       navigate(`/results/${id}`, { replace: true });
     });
 
+    socket.on("dsa_ready_next", () => {
+      setDsaSessionData((prev) => {
+        if (!prev) return prev;
+        const nextIdx = prev.currentIndex + 1;
+        if (nextIdx >= prev.questions.length) return prev;
+        return {
+          ...prev,
+          currentIndex: nextIdx,
+          attempts: prev.attempts.map((a, i) =>
+            i === nextIdx ? { ...a, currentPhase: "understanding" } : a,
+          ),
+        };
+      });
+      setDsaCode("");
+    });
+
+    socket.on("dsa_all_done", () => {
+      if (!closingRef.current && !endedRef.current) {
+        setClosing(true);
+        stopMic();
+        socketRef.current?.sendEndInterview();
+      }
+    });
+
     // Time cap events
     socket.on("time_limit", (data: unknown) => {
       const msg = data as Record<string, unknown>;
@@ -571,6 +595,9 @@ export function InterviewPage() {
           code={dsaCode}
           onCodeChange={setDsaCode}
           visible={dsaPanelVisible}
+          onRequestHint={() =>
+            socketRef.current?.sendRequestHint(dsaSessionData.currentIndex)
+          }
         />
       )}
 

@@ -9,7 +9,7 @@ export function StudyRecommendations({ topics }: Props) {
     <div className="mb-12">
       <p
         className="text-[11px] tracking-[0.1em] uppercase mb-4 font-semibold"
-        style={{ color: "var(--color-text-tertiary)" }}
+        style={{ color: "var(--landing-fg-muted)" }}
       >
         Study Recommendations
       </p>

@@ -21,7 +21,6 @@ import type {
   InterviewMode,
 } from "@evalio/shared";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
 
 export function NewInterviewPage() {
   usePageTitle("New Interview");
@@ -267,9 +266,11 @@ export function NewInterviewPage() {
                   You've used all 3 free interviews this 7-day period.{dayMsg}
                 </p>
               </div>
-              <Link
-                to="/contact?subject=Pro+upgrade"
-                onClick={() => toast.dismiss()}
+              <button
+                onClick={() => {
+                  toast.dismiss();
+                  window.location.href = "/contact?subject=Pro+upgrade";
+                }}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -280,12 +281,13 @@ export function NewInterviewPage() {
                   color: "#080808",
                   fontSize: 12,
                   fontWeight: 600,
-                  textDecoration: "none",
+                  border: "none",
+                  cursor: "pointer",
                   alignSelf: "flex-start",
                 }}
               >
                 Contact for upgrade
-              </Link>
+              </button>
             </div>,
             { duration: 10_000 },
           );

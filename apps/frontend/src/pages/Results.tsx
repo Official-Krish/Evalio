@@ -166,6 +166,9 @@ export function ResultsPage() {
   const turns = interview.turns ?? [];
   const verdict = getVerdict(overall);
 
+  const scoreTrendLast5 = (interview as unknown as Record<string, unknown>)
+    .scoreTrendLast5 as "improving" | "stable" | "declining" | null;
+
   const strengths: string[] =
     (interview.summary?.strengths as string[] | undefined) ?? [];
   const resumeStrengths: string[] =
@@ -194,6 +197,45 @@ export function ResultsPage() {
         evalStuck={evalStuck}
         onRetry={handleRetryEval}
       />
+
+      {scoreTrendLast5 && (
+        <div
+          className="flex items-center gap-3 px-5 py-3 rounded-lg mb-8"
+          style={{
+            background: "var(--color-bg-hover)",
+            border: "1px solid var(--color-border)",
+          }}
+        >
+          <span className="text-[11px] font-[500] uppercase tracking-[0.06em]">
+            <span
+              style={{
+                color:
+                  scoreTrendLast5 === "improving"
+                    ? "#22c55e"
+                    : scoreTrendLast5 === "declining"
+                      ? "#ef4444"
+                      : "var(--color-text-muted)",
+              }}
+            >
+              {scoreTrendLast5 === "improving"
+                ? "↑"
+                : scoreTrendLast5 === "declining"
+                  ? "↓"
+                  : "→"}
+            </span>
+          </span>
+          <span
+            className="text-[12px]"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            {scoreTrendLast5 === "improving"
+              ? "Your scores are trending upward — keep it up!"
+              : scoreTrendLast5 === "declining"
+                ? "Your scores have dipped recently. Consider reviewing fundamentals."
+                : "Your performance has been consistent."}
+          </span>
+        </div>
+      )}
 
       {interview.summary && (
         <div className="mb-10">
@@ -231,14 +273,14 @@ export function ResultsPage() {
           <div className="flex items-center justify-between mb-5">
             <p
               className="text-[11px] tracking-[0.1em] uppercase m-0 font-semibold"
-              style={{ color: "var(--color-text-tertiary)" }}
+              style={{ color: "var(--landing-fg-muted)" }}
             >
               QUESTIONS & ANSWERS
             </p>
             <span
               className="text-[11px] px-[10px] py-[2px] rounded-full border"
               style={{
-                color: "var(--color-text-muted)",
+                color: "var(--color-text-secondary)",
                 background: "var(--color-bg-hover)",
                 borderColor: "var(--color-border)",
               }}

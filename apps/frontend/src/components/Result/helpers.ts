@@ -1,3 +1,11 @@
+export function formatTime(seconds: number | null | undefined): string {
+  if (seconds == null) return "—";
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (m === 0) return `${s}s`;
+  return `${m}m ${s}s`;
+}
+
 export function getVerdict(score: number): {
   label: string;
   description: string;

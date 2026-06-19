@@ -49,6 +49,8 @@ export class InterviewSocket {
             "time_limit_reached",
             "position_update",
             "slot_assigned",
+            "dsa_ready_next",
+            "dsa_all_done",
           ];
           if (
             typeof data.type === "string" &&
@@ -115,6 +117,10 @@ export class InterviewSocket {
 
   sendPhaseUpdate(phase: string, questionIndex: number) {
     this.send({ type: "phase_update", phase, questionIndex });
+  }
+
+  sendRequestHint(questionIndex: number) {
+    this.send({ type: "request_hint", questionIndex });
   }
 
   forceClose() {

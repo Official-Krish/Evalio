@@ -36,6 +36,7 @@ interface DsaPanelProps {
   code: string;
   onCodeChange: (code: string) => void;
   visible: boolean;
+  onRequestHint?: () => void;
 }
 
 const PHASES = [
@@ -518,6 +519,7 @@ export function DsaPanel({
   code,
   onCodeChange,
   visible,
+  onRequestHint,
 }: DsaPanelProps) {
   const currentQuestion = questions[currentIndex] ?? null;
   const currentAttempt = attempts.find((a) => a.index === currentIndex) ?? null;
@@ -603,6 +605,24 @@ export function DsaPanel({
         >
           Code
         </button>
+        {onRequestHint && (
+          <button
+            onClick={onRequestHint}
+            title="Ask for a hint"
+            style={{
+              padding: "10px 12px",
+              border: "none",
+              background: "transparent",
+              color: "var(--color-text-muted)",
+              fontSize: "11px",
+              fontWeight: 500,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Hint
+          </button>
+        )}
       </div>
 
       {/* Content area */}

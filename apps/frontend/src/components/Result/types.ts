@@ -8,6 +8,7 @@ export interface DsaAttemptData {
   score: number | null;
   feedback: string | null;
   complexity: string | null;
+  timeTaken: number | null;
 }
 
 export interface DsaSessionData {
@@ -21,4 +22,7 @@ export interface DsaSessionData {
   }>;
   attempts: DsaAttemptData[];
   language: string;
+  status: string;
+  submittedAt: string | null;
+  timeTaken: number | null;
 }
