@@ -1,6 +1,10 @@
-export interface DsaAttemptData {
+export interface DsaProblemData {
   id: string;
   index: number;
+  title: string;
+  slug: string;
+  difficulty: string;
+  description: string;
   code: string | null;
   codeSnapshots: Record<string, string> | null;
   currentPhase: string;
@@ -9,20 +13,16 @@ export interface DsaAttemptData {
   feedback: string | null;
   complexity: string | null;
   timeTaken: number | null;
+  completedAt: string | null;
+  createdAt: string;
 }
 
 export interface DsaSessionData {
   id: string;
-  questions: Array<{
-    dbId: string;
-    leetcodeId: number;
-    title: string;
-    slug: string;
-    difficulty: string;
-  }>;
-  attempts: DsaAttemptData[];
+  problems: DsaProblemData[];
   language: string;
   status: string;
   submittedAt: string | null;
   timeTaken: number | null;
+  currentIndex: number;
 }

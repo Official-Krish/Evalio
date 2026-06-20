@@ -1,7 +1,7 @@
 import { useRef, useEffect, useMemo } from "react";
 import { EditorView, basicSetup } from "codemirror";
 import { EditorState, Compartment } from "@codemirror/state";
-import { keymap } from "@codemirror/view";
+import { keymap, ViewPlugin } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { python } from "@codemirror/lang-python";
@@ -140,6 +140,16 @@ export function CodeEditor({
       }
     });
 
+    const preventPaste = ViewPlugin.fromClass(
+      class {
+        constructor(view: EditorView) {
+          view.dom.addEventListener("paste", (e: Event) => {
+            e.preventDefault();
+          });
+        }
+      },
+    );
+
     const state = EditorState.create({
       doc: initialCode,
       extensions: [
@@ -150,6 +160,7 @@ export function CodeEditor({
         updateListener,
         languageCompartment.of(buildLanguageExtension(language)),
         editableCompartment.of(EditorView.editable.of(!readOnly)),
+        preventPaste,
       ],
     });
 

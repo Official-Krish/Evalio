@@ -3,7 +3,6 @@ import { motion } from "motion/react";
 import { IconFlame } from "@tabler/icons-react";
 import type { InterviewSession } from "@evalio/shared";
 import { computeReadiness, computeStreak } from "./helpers";
-import { ConfidenceOrb } from "../landing/svg/ConfidenceOrb";
 
 interface HeroProps {
   completed: InterviewSession[];

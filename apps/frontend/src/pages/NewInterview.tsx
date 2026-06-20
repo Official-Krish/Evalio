@@ -43,8 +43,6 @@ export function NewInterviewPage() {
     useState<InterviewStyle>("PROFESSIONAL");
   const [interviewDepth, setInterviewDepth] =
     useState<InterviewDepth>("STANDARD");
-  const [dsaLanguage, setDsaLanguage] = useState("cpp");
-
   const interviewMode = useMemo((): InterviewMode => {
     return selectedRound === "Coding Round (DSA)" ? "DSA" : "VOICE";
   }, [selectedRound]);
@@ -223,6 +221,9 @@ export function NewInterviewPage() {
     mutationFn: api.createInterview,
     onSuccess: (data) => {
       toast.success("Interview created!");
+      if (interviewMode === "DSA") {
+        sessionStorage.setItem("dsa_language", "cpp");
+      }
       navigate(`/interview/${data.interview.id}`);
     },
     onError: (err: Error) => {
@@ -323,7 +324,6 @@ export function NewInterviewPage() {
       interviewStyle,
       interviewDepth,
       mode: interviewMode,
-      language: interviewMode === "DSA" ? dsaLanguage : undefined,
     });
   };
 
@@ -413,7 +413,6 @@ export function NewInterviewPage() {
             interviewMode={interviewMode}
             interviewStyle={interviewStyle}
             interviewDepth={interviewDepth}
-            dsaLanguage={dsaLanguage}
             jobDescription={jobDescription}
             selectedCompany={selectedCompany}
             selectedRole={selectedRole}
@@ -435,7 +434,6 @@ export function NewInterviewPage() {
                 setGithubUrl(`https://github.com/${githubProfile.username}`);
               }
             }}
-            onDsaLanguageChange={setDsaLanguage}
             onJobDescriptionChange={setJobDescription}
             onBack={() => setStep(3)}
             onCreate={handleCreate}

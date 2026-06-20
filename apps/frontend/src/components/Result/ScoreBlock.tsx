@@ -1,5 +1,4 @@
 import { motion } from "motion/react";
-import { ConfidenceOrb } from "../landing/svg/ConfidenceOrb";
 import type { getVerdict } from "./helpers";
 
 interface Props {

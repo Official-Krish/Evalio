@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { motion } from "motion/react";
+import DOMPurify from "dompurify";
 import { CodeEditor } from "./CodeEditor";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TestCase {
   input: string;
@@ -8,35 +16,41 @@ interface TestCase {
   explanation?: string;
 }
 
-interface DsaQuestion {
-  dbId: string;
-  leetcodeId: number;
+interface DsaPanelProblem {
+  id: string;
+  index: number;
   title: string;
   slug: string;
   difficulty: string;
-  description?: string;
-  testCases?: TestCase[];
-}
-
-interface DsaAttempt {
-  id: string;
-  index: number;
+  description: string;
+  code: string | null;
+  codeSnapshots: Record<string, string> | null;
   currentPhase: string;
   phasesCompleted: string[];
-  code: string | null;
-  score: number | null;
-  feedback: string | null;
+  testCases?: Array<{ input: string; output: string; explanation?: string }>;
 }
 
+const DSA_LANGUAGES = [
+  { value: "python", label: "Python" },
+  { value: "javascript", label: "JavaScript" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "java", label: "Java" },
+  { value: "cpp", label: "C++" },
+  { value: "go", label: "Go" },
+  { value: "rust", label: "Rust" },
+  { value: "swift", label: "Swift" },
+  { value: "kotlin", label: "Kotlin" },
+] as const;
+
 interface DsaPanelProps {
-  questions: DsaQuestion[];
-  attempts: DsaAttempt[];
+  problems: DsaPanelProblem[];
   currentIndex: number;
   language: string;
   code: string;
   onCodeChange: (code: string) => void;
   visible: boolean;
   onRequestHint?: () => void;
+  onLanguageChange?: (language: string) => void;
 }
 
 const PHASES = [
@@ -368,7 +382,11 @@ function TestCaseCard({
   );
 }
 
-function ProblemDescription({ question }: { question: DsaQuestion | null }) {
+function ProblemDescription({
+  question,
+}: {
+  question: DsaPanelProblem | null;
+}) {
   const [showAllDescription, setShowAllDescription] = useState(false);
 
   if (!question) {
@@ -512,17 +530,16 @@ function ProblemDescription({ question }: { question: DsaQuestion | null }) {
 }
 
 export function DsaPanel({
-  questions,
-  attempts,
+  problems,
   currentIndex,
   language,
   code,
   onCodeChange,
   visible,
   onRequestHint,
+  onLanguageChange,
 }: DsaPanelProps) {
-  const currentQuestion = questions[currentIndex] ?? null;
-  const currentAttempt = attempts.find((a) => a.index === currentIndex) ?? null;
+  const currentProblem = problems[currentIndex] ?? null;
 
   const [tab, setTab] = useState<"problem" | "code">("code");
 
@@ -548,8 +565,8 @@ export function DsaPanel({
     >
       {/* Phase stepper */}
       <PhaseStepper
-        currentPhase={currentAttempt?.currentPhase ?? "understanding"}
-        phasesCompleted={currentAttempt?.phasesCompleted ?? []}
+        currentPhase={currentProblem?.currentPhase ?? "understanding"}
+        phasesCompleted={currentProblem?.phasesCompleted ?? []}
       />
 
       {/* Tab bar */}
@@ -605,29 +622,67 @@ export function DsaPanel({
         >
           Code
         </button>
-        {onRequestHint && (
-          <button
-            onClick={onRequestHint}
-            title="Ask for a hint"
-            style={{
-              padding: "10px 12px",
-              border: "none",
-              background: "transparent",
-              color: "var(--color-text-muted)",
-              fontSize: "11px",
-              fontWeight: 500,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Hint
-          </button>
-        )}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "0 8px",
+          }}
+        >
+          {onLanguageChange && (
+            <Select value={language} onValueChange={onLanguageChange}>
+              <SelectTrigger
+                style={{
+                  height: "28px",
+                  padding: "0 8px",
+                  border: "1px solid var(--color-border-light)",
+                  borderRadius: "4px",
+                  color: "var(--color-text-muted)",
+                  fontSize: "10px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  gap: "2px",
+                  minWidth: "60px",
+                }}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DSA_LANGUAGES.map((l) => (
+                  <SelectItem key={l.value} value={l.value}>
+                    {l.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {onRequestHint && (
+            <button
+              onClick={onRequestHint}
+              title="Ask for a hint"
+              className="cursor-pointer"
+              style={{
+                padding: "6px 8px",
+                border: "none",
+                background: "transparent",
+                color: "var(--color-text-muted)",
+                fontSize: "10px",
+                fontWeight: 500,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                borderRadius: "4px",
+              }}
+            >
+              Hint
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Content area */}
       {tab === "problem" ? (
-        <ProblemDescription question={currentQuestion} />
+        <ProblemDescription question={currentProblem} />
       ) : (
         <div style={{ flex: 1, padding: "12px", overflow: "hidden" }}>
           <CodeEditor language={language} code={code} onChange={onCodeChange} />

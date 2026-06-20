@@ -51,6 +51,7 @@ export class InterviewSocket {
             "slot_assigned",
             "dsa_ready_next",
             "dsa_all_done",
+            "dsa_code_update",
           ];
           if (
             typeof data.type === "string" &&
@@ -115,12 +116,31 @@ export class InterviewSocket {
     });
   }
 
+  sendCodePreview(
+    code: string,
+    language: string,
+    questionIndex: number,
+    phase = "implementation",
+  ) {
+    this.send({
+      type: "code_preview",
+      code,
+      language,
+      questionIndex,
+      phase,
+    });
+  }
+
   sendPhaseUpdate(phase: string, questionIndex: number) {
     this.send({ type: "phase_update", phase, questionIndex });
   }
 
   sendRequestHint(questionIndex: number) {
     this.send({ type: "request_hint", questionIndex });
+  }
+
+  sendLanguageChange(language: string) {
+    this.send({ type: "language_change", language });
   }
 
   forceClose() {

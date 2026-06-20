@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { flushSync } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useSession } from "../lib/auth";
 import { useMicrophone } from "../hooks/useMicrophone";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
@@ -57,6 +58,8 @@ export function InterviewPage() {
   } = useAudioPlayer();
   const socketRef = useRef<InterviewSocket | null>(null);
   const endedRef = useRef(false);
+  const dsaLastTransitionRef = useRef(-1);
+  const isDsaRef = useRef(false);
 
   const [isConnecting, setIsConnecting] = useState(true);
   const [closing, setClosing] = useState(false);
@@ -73,27 +76,22 @@ export function InterviewPage() {
   // DSA state
   const [dsaCode, setDsaCode] = useState("");
   const [dsaSessionData, setDsaSessionData] = useState<{
-    questions: Array<{
-      dbId: string;
-      leetcodeId: number;
+    problems: Array<{
+      id: string;
+      index: number;
       title: string;
       slug: string;
       difficulty: string;
-      description?: string;
-      testCases?: { input: string; output: string; explanation?: string }[];
-    }>;
-    attempts: Array<{
-      id: string;
-      index: number;
+      description: string;
+      code: string | null;
+      codeSnapshots: Record<string, string> | null;
       currentPhase: string;
       phasesCompleted: string[];
-      code: string | null;
-      score: number | null;
-      feedback: string | null;
     }>;
     currentIndex: number;
     language: string;
   } | null>(null);
+  const [dsaLoading, setDsaLoading] = useState(false);
   const isDsa = interviewMeta?.mode === "DSA";
 
   const dsaPanelVisible = useMemo(() => {
@@ -101,51 +99,101 @@ export function InterviewPage() {
   }, [isDsa, dsaSessionData]);
 
   // Load DSA session on mount if DSA mode
-  useEffect(() => {
-    if (!isDsa || !id) return;
-    const loadDsa = async () => {
-      try {
-        const startRes = await fetch(`/api/dsa/start`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ interviewId: id }),
-        });
-        const data = await startRes.json();
-        if (data.session) {
-          setDsaSessionData({
-            questions: data.session.questions,
-            attempts: data.session.attempts,
-            currentIndex: data.session.currentIndex ?? 0,
-            language: data.session.language ?? "python",
-          });
-          if (data.session.attempts?.[0]) {
-            setDsaCode(data.session.attempts[0].code ?? "");
-          }
-        }
-      } catch {
-        // Silently fail — session will show without panel
+  const { mutate: loadDsaSession } = useMutation({
+    mutationFn: () => {
+      setDsaLoading(true);
+      const storedLang = sessionStorage.getItem("dsa_language");
+      sessionStorage.removeItem("dsa_language");
+      return api.startDsaSession(id!, storedLang ?? undefined);
+    },
+    onSuccess: (data) => {
+      setDsaLoading(false);
+      const session = data.session as Record<string, unknown>;
+      if (!session) return;
+      setDsaSessionData({
+        problems:
+          (session.problems as Array<{
+            id: string;
+            index: number;
+            title: string;
+            slug: string;
+            difficulty: string;
+            description: string;
+            code: string | null;
+            codeSnapshots: Record<string, string> | null;
+            currentPhase: string;
+            phasesCompleted: string[];
+          }>) ?? [],
+        currentIndex: (session.currentIndex as number) ?? 0,
+        language: (session.language as string) ?? "python",
+      });
+      const firstProblem = (
+        session.problems as Array<Record<string, unknown>> | undefined
+      )?.[0];
+      if (firstProblem) {
+        setDsaCode((firstProblem.code as string) ?? "");
       }
-    };
-    loadDsa();
-  }, [isDsa, id]);
+    },
+    onError: () => setDsaLoading(false),
+  });
 
-  // Debounced DSA code snapshot sync
-  const codeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!isDsa || !dsaCode || !socketRef.current || !dsaSessionData) return;
-    if (codeTimerRef.current) clearTimeout(codeTimerRef.current);
-    codeTimerRef.current = setTimeout(() => {
+    if (isDsa && id) loadDsaSession();
+  }, [isDsa, id, loadDsaSession]);
+
+  // Refs for stable cross-render access to latest values
+  const latestCodeRef = useRef(dsaCode);
+  const sessionDataRef = useRef(dsaSessionData);
+  useEffect(() => {
+    latestCodeRef.current = dsaCode;
+  }, [dsaCode]);
+  useEffect(() => {
+    sessionDataRef.current = dsaSessionData;
+  }, [dsaSessionData]);
+
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Dedup refs — never updated from inside an effect dep array
+  const lastPreviewedCodeRef = useRef("");
+  const lastSavedCodeRef = useRef("");
+
+  // Stable interval: reads latest code from refs, not affected by keystrokes
+  useEffect(() => {
+    if (!isDsa || !socketRef.current) return;
+    const interval = setInterval(() => {
+      const code = latestCodeRef.current;
+      if (!code || code === lastPreviewedCodeRef.current) return;
+      const sd = sessionDataRef.current;
+      if (!sd) return;
+      lastPreviewedCodeRef.current = code;
+      socketRef.current?.sendCodePreview(
+        code,
+        sd.language,
+        sd.currentIndex,
+        sd.problems[sd.currentIndex]?.currentPhase ?? "implementation",
+      );
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [isDsa]);
+
+  // Debounced save: fires 25s after last code change; skip if unchanged since last save
+  useEffect(() => {
+    if (!isDsa || !socketRef.current || !dsaSessionData) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      if (!dsaCode || dsaCode === lastSavedCodeRef.current) return;
+      lastSavedCodeRef.current = dsaCode;
+      const sd = sessionDataRef.current;
+      if (!sd) return;
       socketRef.current?.sendCodeSnapshot(
         dsaCode,
-        dsaSessionData.language,
-        dsaSessionData.currentIndex,
-        dsaSessionData.attempts[dsaSessionData.currentIndex]?.currentPhase ??
-          "implementation",
+        sd.language,
+        sd.currentIndex,
+        sd.problems[sd.currentIndex]?.currentPhase ?? "implementation",
       );
-    }, 2000);
+    }, 25000);
     return () => {
-      if (codeTimerRef.current) clearTimeout(codeTimerRef.current);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, [dsaCode, isDsa, dsaSessionData]);
 
@@ -199,6 +247,10 @@ export function InterviewPage() {
   useEffect(() => {
     feedbackReadyRef.current = feedbackReady;
   }, [feedbackReady]);
+
+  useEffect(() => {
+    isDsaRef.current = isDsa;
+  }, [isDsa]);
 
   useEffect(() => {
     document.documentElement.classList.add("landing-active");
@@ -321,6 +373,40 @@ export function InterviewPage() {
           { role: "assistant", text: outputText, id: `ai-${Date.now()}` },
         ]);
 
+        // DSA: detect question transition directly from AI output
+        if (isDsaRef.current && outputText.includes("READY_FOR_NEXT")) {
+          const skipMatch = outputText.match(/READY_FOR_NEXT\s*[:－]\s*(\d+)/);
+          const targetIdx = skipMatch
+            ? Math.max(0, parseInt(skipMatch[1]!, 10) - 1)
+            : null;
+          flushSync(() => {
+            setDsaSessionData((prev) => {
+              if (!prev) return prev;
+              const nextIdx = targetIdx ?? prev.currentIndex + 1;
+              if (
+                nextIdx >= prev.problems.length ||
+                nextIdx <= dsaLastTransitionRef.current
+              )
+                return prev;
+              dsaLastTransitionRef.current = nextIdx;
+              return {
+                ...prev,
+                currentIndex: nextIdx,
+                problems: prev.problems.map((p, i) =>
+                  i === nextIdx
+                    ? {
+                        ...p,
+                        currentPhase: "understanding",
+                        phasesCompleted: [],
+                      }
+                    : p,
+                ),
+              };
+            });
+            setDsaCode("");
+          });
+        }
+
         // Detect AI signaling end-of-interview — auto-trigger closing
         if (outputText.includes("Thank you for interviewing with Evalio")) {
           autoEndPendingRef.current = true;
@@ -372,20 +458,30 @@ export function InterviewPage() {
       navigate(`/results/${id}`, { replace: true });
     });
 
-    socket.on("dsa_ready_next", () => {
-      setDsaSessionData((prev) => {
-        if (!prev) return prev;
-        const nextIdx = prev.currentIndex + 1;
-        if (nextIdx >= prev.questions.length) return prev;
-        return {
-          ...prev,
-          currentIndex: nextIdx,
-          attempts: prev.attempts.map((a, i) =>
-            i === nextIdx ? { ...a, currentPhase: "understanding" } : a,
-          ),
-        };
+    socket.on("dsa_ready_next", (data) => {
+      const msg = data as { index?: number | null };
+      flushSync(() => {
+        setDsaSessionData((prev) => {
+          if (!prev) return prev;
+          const nextIdx = msg.index ?? prev.currentIndex + 1;
+          if (
+            nextIdx >= prev.problems.length ||
+            nextIdx <= dsaLastTransitionRef.current
+          )
+            return prev;
+          dsaLastTransitionRef.current = nextIdx;
+          return {
+            ...prev,
+            currentIndex: nextIdx,
+            problems: prev.problems.map((p, i) =>
+              i === nextIdx
+                ? { ...p, currentPhase: "understanding", phasesCompleted: [] }
+                : p,
+            ),
+          };
+        });
+        setDsaCode("");
       });
-      setDsaCode("");
     });
 
     socket.on("dsa_all_done", () => {
@@ -393,6 +489,16 @@ export function InterviewPage() {
         setClosing(true);
         stopMic();
         socketRef.current?.sendEndInterview();
+      }
+    });
+
+    socket.on("dsa_code_update", (data) => {
+      const msg = data as { code?: string };
+      const newCode = msg.code;
+      if (newCode != null) {
+        flushSync(() => {
+          setDsaCode(newCode);
+        });
       }
     });
 
@@ -586,19 +692,72 @@ export function InterviewPage() {
         </div>
       </div>
 
-      {isDsa && dsaSessionData && (
-        <DsaPanel
-          questions={dsaSessionData.questions}
-          attempts={dsaSessionData.attempts}
-          currentIndex={dsaSessionData.currentIndex}
-          language={dsaSessionData.language}
-          code={dsaCode}
-          onCodeChange={setDsaCode}
-          visible={dsaPanelVisible}
-          onRequestHint={() =>
-            socketRef.current?.sendRequestHint(dsaSessionData.currentIndex)
-          }
-        />
+      {isDsa && (
+        <>
+          {/* Loading skeleton */}
+          {dsaLoading && !dsaSessionData && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                right: 0,
+                bottom: 0,
+                width: "min(520px, 45vw)",
+                zIndex: 50,
+                display: "flex",
+                flexDirection: "column",
+                background: "var(--db-card-bg)",
+                borderLeft: "1px solid var(--app-accent-border)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+                boxShadow: "var(--db-card-shadow)",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "12px",
+              }}
+            >
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  border: "3px solid var(--color-border)",
+                  borderTopColor: "var(--color-text)",
+                  borderRadius: "50%",
+                  animation: "spin 0.8s linear infinite",
+                }}
+              />
+              <span
+                style={{
+                  fontSize: "12px",
+                  color: "var(--color-text-muted)",
+                }}
+              >
+                Loading coding session...
+              </span>
+              <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+            </div>
+          )}
+
+          {dsaSessionData && (
+            <DsaPanel
+              problems={dsaSessionData.problems}
+              currentIndex={dsaSessionData.currentIndex}
+              language={dsaSessionData.language}
+              code={dsaCode}
+              onCodeChange={setDsaCode}
+              visible={dsaPanelVisible}
+              onRequestHint={() =>
+                socketRef.current?.sendRequestHint(dsaSessionData.currentIndex)
+              }
+              onLanguageChange={(lang) => {
+                setDsaSessionData((prev) =>
+                  prev ? { ...prev, language: lang } : prev,
+                );
+                socketRef.current?.sendLanguageChange(lang);
+              }}
+            />
+          )}
+        </>
       )}
 
       <ConfirmDialog

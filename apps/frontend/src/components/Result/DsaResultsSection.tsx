@@ -4,13 +4,7 @@ import { formatTime } from "./helpers";
 import type { DsaSessionData } from "./types";
 
 export function DsaResultsSection({ session }: { session: DsaSessionData }) {
-  const questions = session.questions as Array<{
-    dbId: string;
-    leetcodeId: number;
-    title: string;
-    slug: string;
-    difficulty: string;
-  }>;
+  const problems = session.problems;
 
   const statusColors: Record<string, string> = {
     IN_PROGRESS: "#eab308",
@@ -24,7 +18,7 @@ export function DsaResultsSection({ session }: { session: DsaSessionData }) {
     EVALUATED: "rgba(34,197,94,0.12)",
   };
 
-  const scoredAttempts = session.attempts.filter((a) => a.score != null);
+  const scoredProblems = problems.filter((p) => p.score != null);
 
   return (
     <div className="mb-12">
@@ -63,7 +57,7 @@ export function DsaResultsSection({ session }: { session: DsaSessionData }) {
         </div>
       </div>
 
-      {scoredAttempts.length > 0 && (
+      {scoredProblems.length > 0 && (
         <div
           className="flex items-center gap-4 mb-6 px-5 py-3 rounded-lg"
           style={{
@@ -71,26 +65,26 @@ export function DsaResultsSection({ session }: { session: DsaSessionData }) {
             border: "1px solid var(--color-border)",
           }}
         >
-          {scoredAttempts.map((a, i) => (
-            <div key={a.id} className="flex items-center gap-2">
+          {scoredProblems.map((p) => (
+            <div key={p.id} className="flex items-center gap-2">
               <span
                 className="text-[11px] font-[500]"
                 style={{ color: "var(--color-text-secondary)" }}
               >
-                Q{a.index + 1}:
+                Q{p.index + 1}:
               </span>
               <span
                 className="text-[12px] font-[600]"
                 style={{
                   color:
-                    a.score! >= 7
+                    p.score! >= 7
                       ? "#5DCAA5"
-                      : a.score! >= 4
+                      : p.score! >= 4
                         ? "#eab308"
                         : "#ef4444",
                 }}
               >
-                {Math.round(a.score!)}/10
+                {Math.round(p.score!)}/10
               </span>
             </div>
           ))}
@@ -98,39 +92,54 @@ export function DsaResultsSection({ session }: { session: DsaSessionData }) {
       )}
 
       <div className="flex flex-col gap-8">
-        {questions.map((q, qIdx) => {
-          const attempt = session.attempts.find((a) => a.index === qIdx);
-          const snapshots = attempt?.codeSnapshots ?? {};
+        {problems.map((problem) => {
+          const snapshots = problem.codeSnapshots ?? {};
           const diffColor =
-            DIFFICULTY_COLORS[q.difficulty] ?? "var(--color-text-muted)";
+            DIFFICULTY_COLORS[problem.difficulty] ?? "var(--color-text-muted)";
 
           const approaches = [
             "understanding",
             "brute_force",
             "optimization",
+            "implementation",
+            "testing",
           ].filter((p) => snapshots[p]);
 
           return (
             <div
-              key={q.dbId}
-              className="rounded-xl border p-5"
+              key={problem.id}
+              className="rounded-xl border"
               style={{
                 borderColor: "var(--color-border)",
                 background: "var(--color-bg-card)",
+                overflow: "hidden",
               }}
             >
-              <div className="flex items-center gap-3 mb-4">
+              {/* Problem Header */}
+              <div
+                className="flex items-center gap-3 px-5 py-4"
+                style={{
+                  borderBottom: "1px solid var(--color-border)",
+                  background: "var(--color-bg-hover)",
+                }}
+              >
                 <span
                   className="text-[13px] font-[600]"
                   style={{ color: "var(--color-text)" }}
                 >
-                  {qIdx + 1}. {q.title}
+                  Problem {problem.index + 1}
+                </span>
+                <span
+                  className="text-[13px]"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  {problem.title}
                 </span>
                 <span
                   className="text-[10px] font-[600] px-[8px] py-[2px] rounded-md uppercase tracking-[0.04em]"
                   style={{ color: diffColor, background: `${diffColor}18` }}
                 >
-                  {q.difficulty}
+                  {problem.difficulty}
                 </span>
                 <span
                   className="text-[10px] px-[8px] py-[2px] rounded-md"
@@ -141,7 +150,7 @@ export function DsaResultsSection({ session }: { session: DsaSessionData }) {
                 >
                   {session.language}
                 </span>
-                {attempt?.timeTaken != null && (
+                {problem.timeTaken != null && (
                   <span
                     className="text-[10px] px-[8px] py-[2px] rounded-md ml-auto"
                     style={{
@@ -149,91 +158,106 @@ export function DsaResultsSection({ session }: { session: DsaSessionData }) {
                       background: "var(--color-bg-hover)",
                     }}
                   >
-                    {formatTime(attempt.timeTaken)}
+                    {formatTime(problem.timeTaken)}
                   </span>
                 )}
               </div>
 
-              {attempt?.score != null && (
-                <div className="flex items-center gap-3 mb-4">
-                  <span
-                    className="text-[12px] font-[500]"
-                    style={{
-                      color:
-                        attempt.score >= 7
-                          ? "#5DCAA5"
-                          : attempt.score >= 4
-                            ? "#eab308"
-                            : "#ef4444",
-                    }}
-                  >
-                    Score: {Math.round(attempt.score)}/10
-                  </span>
-                  {attempt.complexity && (
+              {/* Body — score, feedback, code all in one */}
+              <div className="p-5">
+                {problem.score != null && (
+                  <div className="flex items-center gap-3 mb-4">
                     <span
-                      className="text-[11px] font-mono px-[8px] py-[2px] rounded-md"
+                      className="text-[12px] font-[500]"
                       style={{
-                        color: "var(--color-text-muted)",
-                        background: "var(--color-bg-hover)",
+                        color:
+                          problem.score >= 7
+                            ? "#5DCAA5"
+                            : problem.score >= 4
+                              ? "#eab308"
+                              : "#ef4444",
                       }}
                     >
-                      {attempt.complexity}
+                      Score: {Math.round(problem.score)}/10
                     </span>
-                  )}
-                </div>
-              )}
+                    {problem.complexity && (
+                      <span
+                        className="text-[11px] font-mono px-[8px] py-[2px] rounded-md"
+                        style={{
+                          color: "var(--color-text-muted)",
+                          background: "var(--color-bg-hover)",
+                        }}
+                      >
+                        {problem.complexity}
+                      </span>
+                    )}
+                  </div>
+                )}
 
-              {attempt?.feedback && (
-                <blockquote
-                  className="text-[12.5px] leading-[1.6] italic mb-4 pl-4"
-                  style={{
-                    color: "var(--color-text-muted)",
-                    borderLeft: "2px solid var(--app-accent-border)",
-                  }}
-                >
-                  {attempt.feedback}
-                </blockquote>
-              )}
+                {problem.feedback && (
+                  <div
+                    className="text-[12.5px] leading-[1.6] mb-5 p-4 rounded-lg"
+                    style={{
+                      color: "var(--color-text-secondary)",
+                      background: "var(--color-bg-hover)",
+                      border: "1px solid var(--color-border)",
+                    }}
+                  >
+                    {problem.feedback}
+                  </div>
+                )}
 
-              {approaches.length > 0 ? (
-                approaches.map((phase) => {
-                  const info = APPROACH_LABELS[phase] ?? {
-                    label: phase,
-                    description: "",
-                  };
-                  return (
-                    <div key={phase} className="mb-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span
-                          className="text-[10px] font-[600] tracking-[0.06em] uppercase"
-                          style={{ color: "var(--color-text-secondary)" }}
-                        >
-                          {info.label}
-                        </span>
-                        <span
-                          className="text-[10px]"
-                          style={{ color: "var(--color-text-muted)" }}
-                        >
-                          — {info.description}
-                        </span>
+                {/* Show code from snapshots or fallback to problem.code */}
+                {approaches.length > 0
+                  ? approaches.map((phase) => {
+                      const info = APPROACH_LABELS[phase] ?? {
+                        label: phase,
+                        description: "",
+                      };
+                      return (
+                        <div key={phase} className="mb-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span
+                              className="text-[10px] font-[600] tracking-[0.06em] uppercase"
+                              style={{
+                                color: "var(--color-text-secondary)",
+                              }}
+                            >
+                              {info.label}
+                            </span>
+                            <span
+                              className="text-[10px]"
+                              style={{ color: "var(--color-text-muted)" }}
+                            >
+                              — {info.description}
+                            </span>
+                          </div>
+                          <CodeBlock
+                            code={snapshots[phase]!}
+                            language={session.language}
+                          />
+                        </div>
+                      );
+                    })
+                  : problem.code && (
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className="text-[10px] font-[600] tracking-[0.06em] uppercase"
+                            style={{
+                              color: "var(--color-text-secondary)",
+                            }}
+                          >
+                            Code
+                          </span>
+                        </div>
+                        <CodeBlock
+                          code={problem.code}
+                          language={session.language}
+                        />
                       </div>
-                      <CodeBlock
-                        code={snapshots[phase]!}
-                        language={session.language}
-                      />
-                    </div>
-                  );
-                })
-              ) : (
-                <p
-                  className="text-[12px] italic"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
-                  {attempt?.code
-                    ? "Code submitted during implementation phase."
-                    : "No code submitted for this question."}
-                </p>
-              )}
+                    )}
+              </div>
             </div>
           );
         })}

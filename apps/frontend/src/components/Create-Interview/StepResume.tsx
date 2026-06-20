@@ -1,11 +1,4 @@
 import { motion } from "motion/react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ResumeSection } from "./ResumeSection";
 import { SessionCard } from "./SessionCard";
 import type {
@@ -52,7 +45,6 @@ interface StepResumeProps {
   interviewMode: InterviewMode;
   interviewStyle: InterviewStyle;
   interviewDepth: InterviewDepth;
-  dsaLanguage: string;
   jobDescription: string;
   selectedCompany: { name: string } | null;
   selectedRole: { title: string; duration: number } | null;
@@ -65,7 +57,6 @@ interface StepResumeProps {
   onGithubUrlChange: (url: string) => void;
   onGithubToggle: () => void;
   onUseConnectedGithub: () => void;
-  onDsaLanguageChange: (lang: string) => void;
   onJobDescriptionChange: (desc: string) => void;
   onBack: () => void;
   onCreate: () => void;
@@ -81,7 +72,6 @@ export function StepResume({
   interviewMode,
   interviewStyle,
   interviewDepth,
-  dsaLanguage,
   jobDescription,
   selectedCompany,
   selectedRole,
@@ -94,7 +84,6 @@ export function StepResume({
   onGithubUrlChange,
   onGithubToggle,
   onUseConnectedGithub,
-  onDsaLanguageChange,
   onJobDescriptionChange,
   onBack,
   onCreate,
@@ -123,68 +112,7 @@ export function StepResume({
         onUseConnectedGithub={onUseConnectedGithub}
       />
 
-      {interviewMode === "DSA" ? (
-        <div
-          style={{
-            marginTop: "24px",
-            marginBottom: "24px",
-            borderRadius: "12px",
-            border: "1px solid rgba(255,255,255,0.06)",
-            padding: "16px 20px",
-          }}
-        >
-          <p
-            style={{
-              fontSize: "11px",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--color-text-muted)",
-              margin: "0 0 0.4rem",
-            }}
-          >
-            Coding Language
-          </p>
-          <Select
-            value={dsaLanguage}
-            onValueChange={onDsaLanguageChange}
-            defaultValue={dsaLanguage}
-          >
-            <SelectTrigger
-              style={{
-                width: "100%",
-                borderRadius: "2px",
-                border: "1px solid var(--color-border)",
-                background: "transparent",
-                color: "var(--color-text)",
-                fontSize: "13px",
-                fontFamily: "inherit",
-                height: "auto",
-                padding: "0.7rem 0.9rem",
-              }}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent
-              style={{
-                borderRadius: "2px",
-                border: "1px solid var(--color-border)",
-                background: "var(--color-bg-elevated, #121218)",
-                fontFamily: "inherit",
-              }}
-            >
-              <SelectItem value="python">Python</SelectItem>
-              <SelectItem value="javascript">JavaScript</SelectItem>
-              <SelectItem value="typescript">TypeScript</SelectItem>
-              <SelectItem value="java">Java</SelectItem>
-              <SelectItem value="cpp">C++</SelectItem>
-              <SelectItem value="go">Go</SelectItem>
-              <SelectItem value="rust">Rust</SelectItem>
-              <SelectItem value="swift">Swift</SelectItem>
-              <SelectItem value="kotlin">Kotlin</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      ) : (
+      {interviewMode !== "DSA" && (
         <div style={{ marginTop: "24px", marginBottom: "24px" }}>
           <p
             style={{
