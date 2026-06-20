@@ -37,16 +37,46 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
             },
           });
           if (existing) {
+            const existingQuestions = existing.questions as Array<{
+              dbId?: string;
+              id?: number;
+              leetcodeId?: number;
+              title: string;
+              slug: string;
+              difficulty: string;
+              description?: string;
+              testCases?: {
+                input: string;
+                output: string;
+                explanation?: string;
+              }[];
+            }>;
+
+            const enrichedExisting = await Promise.all(
+              existingQuestions.map(async (q) => {
+                if (q.description) return q;
+                const dbQ = q.leetcodeId
+                  ? await prisma.leetCodeQuestion.findUnique({
+                      where: { leetcodeId: q.leetcodeId },
+                      select: { description: true, id: true, leetcodeId: true },
+                    })
+                  : await prisma.leetCodeQuestion.findFirst({
+                      where: { slug: q.slug },
+                      select: { description: true, id: true, leetcodeId: true },
+                    });
+                return {
+                  ...q,
+                  description: dbQ?.description ?? "",
+                  dbId: dbQ?.id ?? q.dbId,
+                  leetcodeId: q.leetcodeId ?? dbQ?.leetcodeId,
+                };
+              }),
+            );
+
             return {
               session: {
                 ...existing,
-                questions: existing.questions as Array<{
-                  id: number;
-                  title: string;
-                  slug: string;
-                  difficulty: string;
-                  acceptanceRate: number;
-                }>,
+                questions: enrichedExisting,
               },
             };
           }
@@ -121,6 +151,7 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
                 title: q.title,
                 slug: q.slug,
                 difficulty: q.difficulty,
+                description: q.description,
                 testCases: q.testCases,
               })),
             },

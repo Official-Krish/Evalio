@@ -346,14 +346,14 @@ export class InterviewConnection {
     let greetings: string[];
     if (this.isDsaMode) {
       greetings = [
-        "Start the DSA coding interview. Introduce yourself and the company/role context. Tell the candidate their first coding problem is displayed on the right side of their screen. Ask them to take a moment to read it and let you know when they're ready. Then STOP — wait for their response. Do NOT discuss the problem or ask any technical questions until they confirm they're ready.",
-        "Begin the DSA coding interview. Welcome the candidate and briefly mention the role they're interviewing for. Point out that the first question is visible on their screen. Ask if they can see it and if they have any immediate questions. Then wait for their reply before proceeding.",
+        "Start the DSA coding interview. Say you're their interviewer for the day. Mention the role and company they're interviewing for. Tell the candidate their first coding problem is displayed on the right side of their screen. Ask them to take a moment to read it and let you know when they're ready. Then STOP — wait for their response. Do NOT discuss the problem or ask any technical questions until they confirm they're ready. Do not use a name or introduce yourself personally — just say you're their interviewer.",
+        "Begin the DSA coding interview. Briefly mention the role they're interviewing for and the company. Do not say your name or introduce yourself personally — just say you're their interviewer. Point out that the first question is visible on their screen. Ask if they can see it and if they have any immediate questions. Then wait for their reply before proceeding.",
       ];
     } else {
       greetings = [
-        "Start the interview. Greet the candidate naturally — vary your opening based on their background. Introduce yourself as an Evalio interviewer, then ask your first question.",
-        "Begin the interview. Welcome the candidate with a varied opening — reference something about their experience if available. Keep the intro brief under 30 seconds, then move to questions.",
-        "Start the session. Greet the candidate conversationally — don't use a scripted opening. Introduce yourself and the structure briefly, then lead into the first question.",
+        "Start the interview. Greet the candidate naturally. Say you're their interviewer for the day and mention the role and company they're interviewing for. Do not introduce yourself with a name. Then ask your first question.",
+        "Begin the interview. Welcome the candidate — just say you're their interviewer, mention what they're here for (role at company), and keep it brief. Do not use a name. Then move to questions.",
+        "Start the session. Greet the candidate conversationally — say you're their interviewer for the day and state the role and company. No name or personal introduction. Then lead into the first question.",
       ];
     }
     this.gemini.send(
@@ -454,6 +454,52 @@ export class InterviewConnection {
         if (turnComplete && outputText && this.isDsaMode) {
           if (outputText.includes("READY_FOR_NEXT")) {
             await this.safeSend({ type: "dsa_ready_next" });
+            console.log("[dsa] READY_FOR_NEXT detected — notifying AI");
+
+            // Explicitly tell Gemini which question we're moving to
+            try {
+              const dsaSession = await prisma.dsaSession.findUnique({
+                where: { interviewId: this.interviewId! },
+              });
+              if (dsaSession) {
+                const questions = dsaSession.questions as Array<{
+                  title: string;
+                  difficulty: string;
+                  slug: string;
+                }>;
+                const nextIdx = dsaSession.currentIndex + 1;
+                if (nextIdx < questions.length) {
+                  const nextQ = questions[nextIdx]!;
+                  await prisma.dsaSession.update({
+                    where: { id: dsaSession.id },
+                    data: { currentIndex: nextIdx },
+                  });
+                  console.log(
+                    `[dsa] updated currentIndex to ${nextIdx} (${nextQ.title})`,
+                  );
+
+                  this.gemini?.send(
+                    JSON.stringify({
+                      clientContent: {
+                        turns: [
+                          {
+                            role: "user",
+                            parts: [
+                              {
+                                text: `[System] The interview has moved to the next question. The candidate is now on Question ${nextIdx + 1}: "${nextQ.title}" (${nextQ.difficulty}). Do NOT read the question aloud — it's displayed on their screen. Wait for the candidate to indicate they've read it before discussing. Start with comprehension checks: ask them to explain their understanding of this problem.`,
+                              },
+                            ],
+                          },
+                        ],
+                        turnComplete: true,
+                      },
+                    }),
+                  );
+                }
+              }
+            } catch (err) {
+              console.error("[dsa] failed to handle READY_FOR_NEXT:", err);
+            }
           }
           if (outputText.includes("ALL_DONE")) {
             await this.safeSend({ type: "dsa_all_done" });
@@ -960,6 +1006,42 @@ export class InterviewConnection {
             },
           }),
         );
+        break;
+      }
+
+      case "language_change": {
+        if (!this.isDsaMode || !this.gemini) break;
+        const langMsg = msg as { language?: string };
+        const newLang = langMsg.language;
+        if (!newLang) break;
+        console.log(`[dsa] language change to "${newLang}"`);
+
+        try {
+          await prisma.dsaSession.update({
+            where: { interviewId: this.interviewId! },
+            data: { language: newLang },
+          });
+
+          this.gemini.send(
+            JSON.stringify({
+              clientContent: {
+                turns: [
+                  {
+                    role: "user",
+                    parts: [
+                      {
+                        text: `[Language Change] The candidate has switched to coding in **${newLang}**. Adjust your code review expectations and feedback accordingly. Be aware of ${newLang}-specific idioms, syntax, and conventions.`,
+                      },
+                    ],
+                  },
+                ],
+                turnComplete: true,
+              },
+            }),
+          );
+        } catch (err) {
+          console.error("[dsa] failed to update language:", err);
+        }
         break;
       }
 
