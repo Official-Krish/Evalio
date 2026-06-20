@@ -450,7 +450,7 @@ export async function evaluateDsaSession(interviewId: string) {
     const dsaSession = await prisma.dsaSession.findUnique({
       where: { interviewId },
       include: {
-        attempts: { orderBy: { index: "asc" } },
+        problems: { orderBy: { index: "asc" } },
       },
     });
 
@@ -463,32 +463,25 @@ export async function evaluateDsaSession(interviewId: string) {
 
     if (dsaSession.status === "EVALUATED") return;
 
-    const questions = dsaSession.questions as Array<{
-      dbId: string;
-      leetcodeId: number;
-      title: string;
-      slug: string;
-      difficulty: string;
-    }>;
-
-    const questionBlocks = questions
-      .map((q, i) => `Question ${i + 1}: ${q.title} (${q.difficulty})`)
+    const problems = dsaSession.problems;
+    const problemBlocks = problems
+      .map((p, i) => `Question ${i + 1}: ${p.title} (${p.difficulty})`)
       .join("\n");
 
-    const attemptBlocks = dsaSession.attempts
+    const attemptBlocks = problems
       .map(
-        (a) =>
-          `Attempt ${a.index + 1}:
-- Phases completed: ${a.phasesCompleted.join(", ") || "none"}
-- Time taken: ${a.timeTaken ? `${a.timeTaken}s` : "N/A"}
-- Code: ${a.code ? `\`\`\`\n${a.code.slice(0, 2000)}\n\`\`\`` : "No code submitted"}`,
+        (p) =>
+          `Attempt ${p.index + 1}:
+- Phases completed: ${p.phasesCompleted.join(", ") || "none"}
+- Time taken: ${p.timeTaken ? `${p.timeTaken}s` : "N/A"}
+- Code: ${p.code ? `\`\`\`\n${p.code.slice(0, 2000)}\n\`\`\`` : "No code submitted"}`,
       )
       .join("\n\n");
 
     const prompt = `Evaluate the candidate's DSA coding interview performance.
 
 ## Questions
-${questionBlocks}
+${problemBlocks}
 
 ## Attempts
 ${attemptBlocks}
@@ -511,10 +504,10 @@ Provide specific, actionable feedback for each question. Return ONLY valid JSON 
       return;
     }
 
-    // Update each attempt with score and feedback
+    // Update each problem with score and feedback
     await Promise.all(
       result.attempts.map((a) =>
-        prisma.dsaQuestionAttempt.updateMany({
+        prisma.dsaProblem.updateMany({
           where: { dsaSessionId: dsaSession.id, index: a.index },
           data: {
             score: a.score,

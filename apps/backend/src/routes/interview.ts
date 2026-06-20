@@ -171,7 +171,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
             resume: { select: { id: true, version: true, objectKey: true } },
             dsaSession: {
               include: {
-                attempts: { orderBy: { index: "asc" } },
+                problems: { orderBy: { index: "asc" } },
               },
             },
           },

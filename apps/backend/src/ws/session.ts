@@ -453,29 +453,37 @@ export class InterviewConnection {
         // DSA mode: detect READY_FOR_NEXT / ALL_DONE signals
         if (turnComplete && outputText && this.isDsaMode) {
           if (outputText.includes("READY_FOR_NEXT")) {
-            await this.safeSend({ type: "dsa_ready_next" });
-            console.log("[dsa] READY_FOR_NEXT detected — notifying AI");
+            // Parse optional target index: READY_FOR_NEXT:3 (1-based, skip to Q3)
+            const skipMatch = outputText.match(
+              /READY_FOR_NEXT\s*[:－]\s*(\d+)/,
+            );
+            const skipIdx = skipMatch
+              ? Math.max(0, parseInt(skipMatch[1]!, 10) - 1)
+              : null;
+            await this.safeSend({ type: "dsa_ready_next", index: skipIdx });
+            console.log(
+              `[dsa] READY_FOR_NEXT detected — skipping to ${
+                skipIdx != null ? `Q${skipIdx + 1}` : "next question"
+              }`,
+            );
 
-            // Explicitly tell Gemini which question we're moving to
+            // Tell Gemini which question we're moving to
             try {
               const dsaSession = await prisma.dsaSession.findUnique({
                 where: { interviewId: this.interviewId! },
+                include: { problems: { orderBy: { index: "asc" } } },
               });
               if (dsaSession) {
-                const questions = dsaSession.questions as Array<{
-                  title: string;
-                  difficulty: string;
-                  slug: string;
-                }>;
-                const nextIdx = dsaSession.currentIndex + 1;
-                if (nextIdx < questions.length) {
-                  const nextQ = questions[nextIdx]!;
+                const nextIdx =
+                  skipIdx != null ? skipIdx : dsaSession.currentIndex + 1;
+                const nextProblem = dsaSession.problems[nextIdx];
+                if (nextProblem) {
                   await prisma.dsaSession.update({
                     where: { id: dsaSession.id },
                     data: { currentIndex: nextIdx },
                   });
                   console.log(
-                    `[dsa] updated currentIndex to ${nextIdx} (${nextQ.title})`,
+                    `[dsa] updated currentIndex to ${nextIdx} (${nextProblem.title})`,
                   );
 
                   this.gemini?.send(
@@ -486,7 +494,10 @@ export class InterviewConnection {
                             role: "user",
                             parts: [
                               {
-                                text: `[System] The interview has moved to the next question. The candidate is now on Question ${nextIdx + 1}: "${nextQ.title}" (${nextQ.difficulty}). Do NOT read the question aloud — it's displayed on their screen. Wait for the candidate to indicate they've read it before discussing. Start with comprehension checks: ask them to explain their understanding of this problem.`,
+                                text:
+                                  skipIdx != null
+                                    ? `[System] Skip ahead. The candidate is now on Question ${nextIdx + 1}: "${nextProblem.title}" (${nextProblem.difficulty}). The previous questions were too easy for them, so we're jumping here. Do NOT read it aloud — it's on their screen. Wait for them to indicate they've read it, then start with comprehension checks.`
+                                    : `[System] The interview has moved to the next question. The candidate is now on Question ${nextIdx + 1}: "${nextProblem.title}" (${nextProblem.difficulty}). Do NOT read the question aloud — it's displayed on their screen. Wait for the candidate to indicate they've read it before discussing. Start with comprehension checks: ask them to explain their understanding of this problem.`,
                               },
                             ],
                           },
@@ -503,6 +514,43 @@ export class InterviewConnection {
           }
           if (outputText.includes("ALL_DONE")) {
             await this.safeSend({ type: "dsa_all_done" });
+          }
+
+          // DSA: detect CODE_UPDATE signal (AI modifying code)
+          const codeUpdateMatch = outputText.match(
+            /\[CODE_UPDATE\]\s*```(?:\w+)?\s*\n?([\s\S]*?)```\s*\[\/CODE_UPDATE\]/i,
+          );
+          if (codeUpdateMatch) {
+            const updatedCode = codeUpdateMatch[1]!.trim();
+            await this.safeSend({
+              type: "dsa_code_update",
+              code: updatedCode,
+            });
+            console.log("[dsa] CODE_UPDATE detected — saving");
+            try {
+              const dsaSession = await prisma.dsaSession.findUnique({
+                where: { interviewId: this.interviewId! },
+                include: { problems: { orderBy: { index: "asc" } } },
+              });
+              if (dsaSession) {
+                const problem = dsaSession.problems[dsaSession.currentIndex];
+                if (problem) {
+                  const currentSnapshots = (problem.codeSnapshots ??
+                    {}) as Record<string, string>;
+                  const currentPhase = problem.currentPhase;
+                  currentSnapshots[currentPhase] = updatedCode;
+                  await prisma.dsaProblem.update({
+                    where: { id: problem.id },
+                    data: {
+                      code: updatedCode,
+                      codeSnapshots: currentSnapshots,
+                    },
+                  });
+                }
+              }
+            } catch (err) {
+              console.error("[dsa] failed to persist CODE_UPDATE:", err);
+            }
           }
         }
       } catch {
@@ -668,30 +716,65 @@ export class InterviewConnection {
         if (isDsa) {
           const dsaSession = await prisma.dsaSession.findUnique({
             where: { interviewId: interview.id },
+            include: { problems: { orderBy: { index: "asc" } } },
           });
-          const questions =
-            (dsaSession?.questions as Array<{
-              dbId: string;
-              leetcodeId: number;
-              title: string;
-              slug: string;
-              difficulty: string;
-            }> | null) ?? [];
-          const enriched = await Promise.all(
-            questions.map(async (q) => {
-              const dbQ = await prisma.leetCodeQuestion.findUnique({
-                where: { id: q.dbId },
-              });
-              return {
-                index: questions.indexOf(q),
-                title: q.title,
-                description: dbQ?.description ?? "",
-                difficulty: q.difficulty,
-              };
-            }),
-          );
+          const problems =
+            dsaSession?.problems.map((p) => ({
+              index: p.index,
+              title: p.title,
+              description: p.description,
+              difficulty: p.difficulty,
+            })) ?? [];
+
+          // Fetch past DSA interview history
+          const pastDsaInterviews = await prisma.interviewSession.findMany({
+            where: {
+              userId: interview.userId,
+              mode: "DSA",
+              status: "COMPLETED",
+              id: { not: interview.id },
+              dsaSession: { isNot: null },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 3,
+            include: {
+              dsaSession: {
+                include: { problems: { orderBy: { index: "asc" } } },
+              },
+            },
+          });
+          const dsaHistoryEntries = pastDsaInterviews.map((iv) => ({
+            date: iv.createdAt.toISOString().slice(0, 10),
+            overallScore: iv.overallScore,
+            problemScores:
+              iv.dsaSession?.problems.map((p) => ({
+                title: p.title,
+                score: p.score,
+              })) ?? [],
+          }));
+          const dsaScored = await prisma.interviewSession.findMany({
+            where: {
+              userId: interview.userId,
+              mode: "DSA",
+              status: "COMPLETED",
+              overallScore: { not: null },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 5,
+            select: { overallScore: true },
+          });
+          const dsaScores = dsaScored.map((i) => i.overallScore!).reverse();
+          const dsaScoreTrend: "improving" | "stable" | "declining" | null =
+            dsaScores.length < 2
+              ? null
+              : dsaScores[dsaScores.length - 1]! > dsaScores[0]! + 5
+                ? "improving"
+                : dsaScores[dsaScores.length - 1]! < dsaScores[0]! - 5
+                  ? "declining"
+                  : "stable";
+
           systemPrompt = buildDsaSystemPrompt(
-            enriched,
+            problems,
             dsaSession?.language ?? "python",
             {
               companyName: interview.companyName,
@@ -701,6 +784,12 @@ export class InterviewConnection {
               position: interview.position,
               interviewDepth: (interview as { interviewDepth?: string | null })
                 .interviewDepth,
+            },
+            {
+              pastSessions: dsaHistoryEntries,
+              scoreTrendLast5: dsaScoreTrend,
+              mostImproved: skillProfile?.mostImprovedSkill ?? null,
+              weakest: skillProfile?.weakestSkill ?? null,
             },
           );
         } else {
@@ -904,6 +993,36 @@ export class InterviewConnection {
         break;
       }
 
+      case "code_preview": {
+        // Forwards to Gemini only — no DB persistence
+        if (!this.gemini || this.closingMode) return;
+        const prevMsg = msg as {
+          code?: string;
+          language?: string;
+          questionIndex?: number;
+          phase?: string;
+        };
+        if (prevMsg.code === undefined) break;
+        this.gemini.send(
+          JSON.stringify({
+            clientContent: {
+              turns: [
+                {
+                  role: "user",
+                  parts: [
+                    {
+                      text: `[Code Preview — Question ${prevMsg.questionIndex ?? 0}, ${prevMsg.phase ?? "implementation"} phase, not yet saved]\n\n\`\`\`${prevMsg.language ?? "python"}\n${prevMsg.code}\n\`\`\``,
+                    },
+                  ],
+                },
+              ],
+              turnComplete: true,
+            },
+          }),
+        );
+        break;
+      }
+
       case "code_snapshot": {
         if (!this.gemini || this.closingMode) return;
         const codeMsg = msg as {
@@ -931,22 +1050,22 @@ export class InterviewConnection {
           }),
         );
 
-        // Persist code snapshot to the DSA attempt
+        // Persist code snapshot to the DSA problem
         if (this.interviewId && codeMsg.code !== undefined) {
           try {
             const dsaSession = await prisma.dsaSession.findUnique({
               where: { interviewId: this.interviewId },
-              include: { attempts: { orderBy: { index: "asc" } } },
+              include: { problems: { orderBy: { index: "asc" } } },
             });
             if (dsaSession) {
-              const attempt = dsaSession.attempts[codeMsg.questionIndex ?? 0];
-              if (attempt) {
+              const problem = dsaSession.problems[codeMsg.questionIndex ?? 0];
+              if (problem) {
                 const phase = codeMsg.phase ?? "implementation";
-                const currentSnapshots = (attempt.codeSnapshots ??
+                const currentSnapshots = (problem.codeSnapshots ??
                   {}) as Record<string, string>;
                 currentSnapshots[phase] = codeMsg.code ?? "";
-                await prisma.dsaQuestionAttempt.update({
-                  where: { id: attempt.id },
+                await prisma.dsaProblem.update({
+                  where: { id: problem.id },
                   data: {
                     code: codeMsg.code,
                     codeSnapshots: currentSnapshots,

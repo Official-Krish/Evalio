@@ -16,7 +16,6 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
         async ({ user, body, set }) => {
           const { interviewId, language, questionCount } = body;
 
-          // Validate interview
           const interview = await prisma.interviewSession.findUnique({
             where: { id: interviewId },
           });
@@ -29,59 +28,14 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
             return { error: "Interview is not in DSA mode" };
           }
 
-          // Check if DSA session already exists
           const existing = await prisma.dsaSession.findUnique({
             where: { interviewId },
             include: {
-              attempts: { orderBy: { index: "asc" } },
+              problems: { orderBy: { index: "asc" } },
             },
           });
-          if (existing) {
-            const existingQuestions = existing.questions as Array<{
-              dbId?: string;
-              id?: number;
-              leetcodeId?: number;
-              title: string;
-              slug: string;
-              difficulty: string;
-              description?: string;
-              testCases?: {
-                input: string;
-                output: string;
-                explanation?: string;
-              }[];
-            }>;
+          if (existing) return { session: existing };
 
-            const enrichedExisting = await Promise.all(
-              existingQuestions.map(async (q) => {
-                if (q.description) return q;
-                const dbQ = q.leetcodeId
-                  ? await prisma.leetCodeQuestion.findUnique({
-                      where: { leetcodeId: q.leetcodeId },
-                      select: { description: true, id: true, leetcodeId: true },
-                    })
-                  : await prisma.leetCodeQuestion.findFirst({
-                      where: { slug: q.slug },
-                      select: { description: true, id: true, leetcodeId: true },
-                    });
-                return {
-                  ...q,
-                  description: dbQ?.description ?? "",
-                  dbId: dbQ?.id ?? q.dbId,
-                  leetcodeId: q.leetcodeId ?? dbQ?.leetcodeId,
-                };
-              }),
-            );
-
-            return {
-              session: {
-                ...existing,
-                questions: enrichedExisting,
-              },
-            };
-          }
-
-          // Fetch questions
           if (!interview.companyId) {
             set.status = 400;
             return { error: "Interview has no company assigned" };
@@ -110,7 +64,6 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
             return { error: "No questions found for this company" };
           }
 
-          // Upsert questions into DB and fetch descriptions
           const enriched = await Promise.all(
             questions.map((q) =>
               getOrCreateQuestion(
@@ -119,75 +72,37 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
                 q.difficulty as "EASY" | "MEDIUM" | "HARD",
                 q.acceptanceRate,
               ).then((dbQ) => ({
-                dbId: dbQ.id,
-                leetcodeId: dbQ.leetcodeId,
                 title: dbQ.title,
                 slug: dbQ.slug,
                 difficulty: dbQ.difficulty,
                 description: dbQ.description ?? "",
-                testCases:
-                  (
-                    dbQ as {
-                      testCases?: {
-                        input: string;
-                        output: string;
-                        explanation?: string;
-                      }[];
-                    }
-                  ).testCases ?? [],
               })),
             ),
           );
 
-          // Create DSA session
           const session = await prisma.dsaSession.create({
             data: {
               interviewId,
               userId: user.id,
               language: language ?? "python",
-              questions: enriched.map((q) => ({
-                dbId: q.dbId,
-                leetcodeId: q.leetcodeId,
-                title: q.title,
-                slug: q.slug,
-                difficulty: q.difficulty,
-                description: q.description,
-                testCases: q.testCases,
-              })),
-            },
-            include: {
-              attempts: { orderBy: { index: "asc" } },
-            },
-          });
-
-          // Create empty attempts for each question
-          await Promise.all(
-            enriched.map((q, idx) =>
-              prisma.dsaQuestionAttempt.create({
-                data: {
-                  dsaSessionId: session.id,
-                  questionId: q.dbId,
+              problems: {
+                create: enriched.map((q, idx) => ({
                   index: idx,
+                  title: q.title,
+                  slug: q.slug,
+                  difficulty: q.difficulty,
+                  description: q.description,
                   currentPhase: "understanding",
                   phasesCompleted: [],
-                },
-              }),
-            ),
-          );
-
-          const withAttempts = await prisma.dsaSession.findUnique({
-            where: { id: session.id },
+                })),
+              },
+            },
             include: {
-              attempts: { orderBy: { index: "asc" } },
+              problems: { orderBy: { index: "asc" } },
             },
           });
 
-          return {
-            session: {
-              ...withAttempts!,
-              questions: enriched,
-            },
-          };
+          return { session };
         },
         {
           body: t.Object({
@@ -204,36 +119,35 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
 
           const session = await prisma.dsaSession.findUnique({
             where: { id: sessionId },
+            include: { problems: { orderBy: { index: "asc" } } },
           });
           if (!session || session.userId !== user.id) {
             set.status = 404;
             return { error: "Session not found" };
           }
 
-          const attempt = await prisma.dsaQuestionAttempt.findFirst({
-            where: { dsaSessionId: sessionId, index },
-          });
-          if (!attempt) {
+          const problem = session.problems[index];
+          if (!problem) {
             set.status = 404;
-            return { error: "Question attempt not found" };
+            return { error: "Problem not found" };
           }
 
           const updateData: Record<string, unknown> = {};
 
           if (code !== undefined) {
             updateData.code = code;
-            const currentSnapshots = (attempt.codeSnapshots ?? {}) as Record<
+            const currentSnapshots = (problem.codeSnapshots ?? {}) as Record<
               string,
               string
             >;
-            const currentPhase = phase ?? attempt.currentPhase;
+            const currentPhase = phase ?? problem.currentPhase;
             currentSnapshots[currentPhase] = code;
             updateData.codeSnapshots = currentSnapshots;
           }
 
           if (phase) {
             updateData.currentPhase = phase;
-            const completed = [...attempt.phasesCompleted];
+            const completed = [...problem.phasesCompleted];
             const phaseIdx = DSA_PHASES.indexOf(
               phase as (typeof DSA_PHASES)[number],
             );
@@ -262,23 +176,23 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
             updateData.timeTaken = timeTaken;
           }
 
-          const updated = await prisma.dsaQuestionAttempt.update({
-            where: { id: attempt.id },
+          await prisma.dsaProblem.update({
+            where: { id: problem.id },
             data: updateData,
           });
 
-          // If this question is completed, increment currentIndex
           if (phase === "review") {
             await prisma.dsaSession.update({
               where: { id: sessionId },
               data: {
-                currentIndex: Math.min(
-                  index + 1,
-                  (session.questions as Array<unknown>).length - 1,
-                ),
+                currentIndex: Math.min(index + 1, session.problems.length - 1),
               },
             });
           }
+
+          const updated = await prisma.dsaProblem.findUnique({
+            where: { id: problem.id },
+          });
 
           return { attempt: updated };
         },
@@ -296,30 +210,14 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
         const session = await prisma.dsaSession.findUnique({
           where: { id },
           include: {
-            attempts: { orderBy: { index: "asc" } },
+            problems: { orderBy: { index: "asc" } },
           },
         });
         if (!session || session.userId !== user.id) {
           set.status = 404;
           return { error: "Session not found" };
         }
-        return {
-          session: {
-            ...session,
-            questions: session.questions as Array<{
-              dbId: string;
-              leetcodeId: number;
-              title: string;
-              slug: string;
-              difficulty: string;
-              testCases?: {
-                input: string;
-                output: string;
-                explanation?: string;
-              }[];
-            }>,
-          },
-        };
+        return { session };
       })
       .post(
         "/evaluate",
@@ -328,16 +226,13 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
 
           const session = await prisma.dsaSession.findUnique({
             where: { id: sessionId },
-            include: {
-              attempts: { orderBy: { index: "asc" } },
-            },
+            include: { problems: { orderBy: { index: "asc" } } },
           });
           if (!session || session.userId !== user.id) {
             set.status = 404;
             return { error: "Session not found" };
           }
 
-          // Mark session as submitted
           await prisma.dsaSession.update({
             where: { id: sessionId },
             data: { status: "SUBMITTED", submittedAt: new Date() },
