@@ -1,35 +1,17 @@
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { useSession } from "@/lib/auth";
-import { IconHistory } from "./svg/IconHistory";
-import { IconTrendingUp } from "./svg/IconTrendingUp";
-import { IconFingerprint } from "./svg/IconFingerprint";
 
-const FEATURES = [
-  {
-    icon: IconHistory,
-    text: "How you think",
-    desc: "See how you structure ambiguity and reason under pressure",
-  },
-  {
-    icon: IconTrendingUp,
-    text: "How you communicate",
-    desc: "Understand your clarity, confidence, and signal strength",
-  },
-  {
-    icon: IconFingerprint,
-    text: "How you decide",
-    desc: "Reveal how you adapt, make trade-offs, and take ownership",
-  },
-];
+const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Opening() {
   const { data: session } = useSession();
   const user = session?.user ?? null;
 
   return (
-    <section className="landing-hero relative flex min-h-svh flex-col items-center overflow-hidden border-b">
-      <div className="landing-orb-container pointer-events-none absolute inset-0 flex items-center justify-center">
+    <section className="opening-hero">
+      {/* Background orb — sits behind everything */}
+      <div className="opening-orb" aria-hidden>
         <div className="landing-orb-inner">
           <img
             src="https://cdn.krishlabs.tech/evalio/public/hero-orb.png"
@@ -40,134 +22,150 @@ export function Opening() {
         </div>
       </div>
 
-      {/* Vignette — pulls the glow back in well before the viewport edge */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 48%, transparent 0%, transparent 18%, var(--landing-bg) 54%)",
-        }}
-      />
+      {/* Concentric rings — radiating from center, gives depth beyond the orb */}
+      <div className="opening-rings" aria-hidden>
+        <div className="opening-ring opening-ring-1" />
+        <div className="opening-ring opening-ring-2" />
+        <div className="opening-ring opening-ring-3" />
+      </div>
 
-      {/* Text scrim — ensures readability over the orb's bright core */}
-      <div className="hero-text-scrim pointer-events-none absolute left-1/2 top-1/2 z-[1] h-[70vh] w-[90vw] max-w-[840px] -translate-x-1/2 -translate-y-1/2" />
+      {/* Ambient dot grid — subtle texture across the full viewport */}
+      <div className="opening-dot-grid" aria-hidden />
+
+      {/* Dual aurora glows — warm gold top-left, cool violet bottom-right */}
+      <div className="opening-aurora" aria-hidden />
+
+      {/* Radial vignette to soften edges */}
+      <div className="opening-vignette" aria-hidden />
+
+      {/* Scrim for text readability */}
+      <div className="opening-scrim" aria-hidden />
+
+      {/* Corner ticks — editorial framing */}
+      <div className="opening-corners" aria-hidden>
+        <span className="opening-corner opening-corner-tl" />
+        <span className="opening-corner opening-corner-tr" />
+        <span className="opening-corner opening-corner-bl" />
+        <span className="opening-corner opening-corner-br" />
+      </div>
+
+      {/* Horizon line — thin accent across center */}
+      <div className="opening-horizon" aria-hidden />
 
       {/* Content */}
-      <div className="landing-hero-content relative z-10 flex w-full flex-col items-center px-5 text-center sm:px-8">
+      <div className="opening-content">
         {/* Badge */}
         <motion.div
-          initial={{ opacity: 0, y: -8 }}
+          initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.7, ease }}
+          className="opening-badge-wrap"
         >
-          <span className="landing-early-access-badge">
-            <span className="landing-early-access-dot" />
-            <span className="landing-early-access-label">Early Access</span>
-            <span className="landing-early-access-divider" />
-            <span className="landing-early-access-slots">
-              Limited spots open
-            </span>
+          <span className="opening-badge">
+            <span className="opening-badge-dot" />
+            <span className="opening-badge-label">Early Access</span>
+            <span className="opening-badge-sep" />
+            <span className="opening-badge-meta">Limited spots open</span>
           </span>
+          <div className="opening-badge-connector" aria-hidden />
         </motion.div>
 
-        {/* Eyebrow label */}
+        {/* Eyebrow */}
         <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-          className="landing-hero-eyebrow"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 0.15, ease }}
+          className="opening-eyebrow"
         >
-          Interview identity
+          ADAPTIVE AI INTERVIEWER • INTERVIEW IDENTITY
         </motion.p>
 
-        {/* Hero statement */}
+        {/* Headline */}
         <motion.h1
-          initial={{ opacity: 0, y: 28 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="landing-hero-drama landing-serif"
+          transition={{ duration: 1.1, delay: 0.2, ease }}
+          className="opening-headline"
         >
-          The profile you can&apos;t fake.
+          <span className="opening-headline-line">Every interview</span>
+          <span className="opening-headline-line opening-headline-italic">
+            leaves a <span className="opening-headline-dot">fingerprint.</span>
+          </span>
         </motion.h1>
 
-        {/* Subhead — concrete mechanism, below the blob's brightest zone */}
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="landing-hero-subhead"
-        >
-          <span>Scripts fall apart under follow-up.</span>
-          <span>
-            Evalio learns how you really think and the profile only gets sharper
-            with time.
-          </span>
-        </motion.p>
-
-        {/* Feature row — 3 columns with icons */}
+        {/* Description — editorial pull-quote style */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="landing-hero-features"
+          transition={{ duration: 0.9, delay: 0.45, ease }}
+          className="opening-description"
         >
-          {FEATURES.map(({ icon: Icon, text, desc }, i) => (
-            <div
-              key={text}
-              className="landing-hero-feature"
-              data-last={i === FEATURES.length - 1 ? "true" : undefined}
-            >
-              <span className="landing-hero-feature-icon" aria-hidden="true">
-                <Icon size={19} strokeWidth={1.4} />
-              </span>
-              <p className="landing-hero-feature-title">{text}</p>
-              <p className="landing-hero-feature-description">{desc}</p>
-            </div>
-          ))}
+          <div className="opening-desc-rule" aria-hidden />
+          <p className="opening-desc-lead">
+            An AI interviewer that remembers every session and builds a profile
+            of how you perform under pressure.
+          </p>
         </motion.div>
 
         {/* CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="landing-hero-action"
+          transition={{ duration: 0.9, delay: 0.6, ease }}
+          className="opening-cta-area"
         >
-          <Link
-            to={user ? "/dashboard" : "/signup"}
-            className="landing-cta-primary landing-cta-sharp landing-hero-cta group relative overflow-hidden"
-          >
-            <span className="relative z-10">
-              {user ? "Go to dashboard" : "Start Interviewing"}
+          <Link to={user ? "/dashboard" : "/signup"} className="opening-cta">
+            <span className="opening-cta-label">
+              {user ? "Go to dashboard" : "Start a session"}
             </span>
-            <motion.span
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
-              initial={{ x: "-100%" }}
-              whileHover={{ x: "200%" }}
-              transition={{ duration: 0.6 }}
-              aria-hidden
-            />
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-              aria-hidden
-            >
-              <path
-                d="M3 7h8M8 4l3 3-3 3"
-                stroke="currentColor"
-                strokeWidth="1.25"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <span className="opening-cta-arrow" aria-hidden>
+              →
+            </span>
           </Link>
 
-          <p className="landing-hero-assurance">
-            No credit card <span aria-hidden="true">·</span> Free during early
-            access <span aria-hidden="true">·</span> 3 sessions/week
-          </p>
+          <div className="opening-assurance">
+            <span>No credit card</span>
+            <span className="opening-assurance-dot" />
+            <span>Free during early access</span>
+            <span className="opening-assurance-dot" />
+            <span>3 sessions / week</span>
+          </div>
+        </motion.div>
+
+        {/* Metrics strip */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.8, ease }}
+          className="opening-metrics"
+        >
+          <div className="opening-metric">
+            <span className="opening-metric-num">01</span>
+            <div className="opening-metric-body">
+              <span className="opening-metric-title">How you think</span>
+              <span className="opening-metric-desc">
+                Structuring ambiguity under pressure
+              </span>
+            </div>
+          </div>
+          <div className="opening-metric">
+            <span className="opening-metric-num">02</span>
+            <div className="opening-metric-body">
+              <span className="opening-metric-title">How you communicate</span>
+              <span className="opening-metric-desc">
+                Clarity, confidence, signal strength
+              </span>
+            </div>
+          </div>
+          <div className="opening-metric">
+            <span className="opening-metric-num">03</span>
+            <div className="opening-metric-body">
+              <span className="opening-metric-title">How you decide</span>
+              <span className="opening-metric-desc">
+                Trade-offs, adaptability, ownership
+              </span>
+            </div>
+          </div>
         </motion.div>
       </div>
 
@@ -176,43 +174,12 @@ export function Opening() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.4, duration: 1 }}
-        className="landing-hero-scroll"
+        className="opening-scroll"
       >
-        <span className="text-[10px] uppercase tracking-[0.2em]">Scroll</span>
-        <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden>
-          <rect
-            x="4.5"
-            y="2"
-            width="3"
-            height="6"
-            rx="1.5"
-            fill="currentColor"
-            opacity="0.4"
-          >
-            <animate
-              attributeName="y"
-              values="2;6;2"
-              dur="2s"
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="opacity"
-              values="0.4;0.8;0.4"
-              dur="2s"
-              repeatCount="indefinite"
-            />
-          </rect>
-          <rect
-            x="1"
-            y="1"
-            width="10"
-            height="18"
-            rx="5"
-            stroke="currentColor"
-            strokeWidth="0.75"
-            opacity="0.25"
-          />
-        </svg>
+        <span>Scroll</span>
+        <div className="opening-scroll-track">
+          <div className="opening-scroll-thumb" />
+        </div>
       </motion.div>
     </section>
   );
