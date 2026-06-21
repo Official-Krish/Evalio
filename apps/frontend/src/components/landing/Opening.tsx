@@ -1,192 +1,174 @@
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { InterviewSystem } from "./InterviewSystem";
 import { useSession } from "@/lib/auth";
+import { IconHistory } from "./svg/IconHistory";
+import { IconTrendingUp } from "./svg/IconTrendingUp";
+import { IconFingerprint } from "./svg/IconFingerprint";
 
-const PILLARS = [
-  "Remembers every answer you gave.",
-  "Tracks how you've changed.",
-  "Builds your interview identity.",
+const FEATURES = [
+  {
+    icon: IconHistory,
+    text: "How you think",
+    desc: "See how you structure ambiguity and reason under pressure",
+  },
+  {
+    icon: IconTrendingUp,
+    text: "How you communicate",
+    desc: "Understand your clarity, confidence, and signal strength",
+  },
+  {
+    icon: IconFingerprint,
+    text: "How you decide",
+    desc: "Reveal how you adapt, make trade-offs, and take ownership",
+  },
 ];
 
 export function Opening() {
   const { data: session } = useSession();
   const user = session?.user ?? null;
+
   return (
-    <section className="landing-hero relative flex flex-col justify-center overflow-hidden border-b">
-      {/* Full-bleed ambient constellation */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Horizontal scan ghost */}
-        <motion.div
-          className="absolute left-0 right-0 h-px"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, var(--landing-accent) 40%, transparent)",
-          }}
-          initial={{ top: "110%", opacity: 0 }}
-          animate={{ top: ["110%", "-10%"], opacity: [0, 0.06, 0] }}
-          transition={{
-            duration: 7,
-            delay: 1.5,
-            repeat: Infinity,
-            repeatDelay: 12,
-            ease: "linear",
-          }}
-        />
+    <section className="landing-hero relative flex min-h-svh flex-col items-center overflow-hidden border-b">
+      <div className="landing-orb-container pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="landing-orb-inner">
+          <img
+            src="https://cdn.krishlabs.tech/evalio/public/hero-orb.png"
+            alt=""
+            aria-hidden
+            className="landing-orb-img"
+          />
+        </div>
       </div>
 
-      <div className="landing-hero-grid py-8 lg:mt-26 md:mt-46 sm:mt-34 max-sm:mt-[72px]">
-        {/* Copy — 65% */}
-        <div className="relative z-10 landing-hero-copy">
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="mb-6 lg:mb-8"
-          >
-            <span className="landing-early-access-badge">
-              <span className="landing-early-access-dot" />
-              <span className="landing-early-access-label">Early Access</span>
-              <span className="landing-early-access-divider" />
-              <span className="landing-early-access-slots">
-                Limited spots open
-              </span>
+      {/* Vignette — pulls the glow back in well before the viewport edge */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 48%, transparent 0%, transparent 18%, var(--landing-bg) 54%)",
+        }}
+      />
+
+      {/* Text scrim — ensures readability over the orb's bright core */}
+      <div className="hero-text-scrim pointer-events-none absolute left-1/2 top-1/2 z-[1] h-[70vh] w-[90vw] max-w-[840px] -translate-x-1/2 -translate-y-1/2" />
+
+      {/* Content */}
+      <div className="landing-hero-content relative z-10 flex w-full flex-col items-center px-5 text-center sm:px-8">
+        {/* Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <span className="landing-early-access-badge">
+            <span className="landing-early-access-dot" />
+            <span className="landing-early-access-label">Early Access</span>
+            <span className="landing-early-access-divider" />
+            <span className="landing-early-access-slots">
+              Limited spots open
             </span>
-          </motion.div>
+          </span>
+        </motion.div>
 
-          {/* Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-            className="landing-hero-headline pb-4"
-          >
-            <span className="landing-hero-lead block">The interviewer</span>
-            <motion.span className="landing-hero-drama landing-serif italic block">
-              that
-              <br />
-              remembers.
-            </motion.span>
-          </motion.h1>
+        {/* Eyebrow label */}
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+          className="landing-hero-eyebrow"
+        >
+          Interview identity
+        </motion.p>
 
-          {/* Sub-statement */}
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: 0.38,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="mt-4 text-[15px] leading-[1.7] text-[var(--landing-fg-muted)] max-w-[440px]"
-          >
-            Practice is temporary.{" "}
-            <span className="text-[var(--landing-fg)]">
-              Identity is persistent.
-            </span>
-          </motion.p>
+        {/* Hero statement */}
+        <motion.h1
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          className="landing-hero-drama landing-serif"
+        >
+          The profile you can&apos;t fake.
+        </motion.h1>
 
-          {/* Pillars */}
-          <motion.ul
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: 0.48,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="landing-punch-lines mt-8 lg:mt-10"
-          >
-            {PILLARS.map((line, i) => (
-              <motion.li
-                key={line}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.55 + i * 0.1 }}
-              >
-                {line}
-              </motion.li>
-            ))}
-          </motion.ul>
+        {/* Subhead — concrete mechanism, below the blob's brightest zone */}
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="landing-hero-subhead"
+        >
+          <span>Scripts fall apart under follow-up.</span>
+          <span>
+            Evalio learns how you really think and the profile only gets sharper
+            with time.
+          </span>
+        </motion.p>
 
-          {/* CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-10 lg:mt-12 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6"
-          >
-            <Link
-              to={user ? "/dashboard" : "/signup"}
-              className="landing-cta-primary landing-cta-sharp group relative overflow-hidden"
+        {/* Feature row — 3 columns with icons */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className="landing-hero-features"
+        >
+          {FEATURES.map(({ icon: Icon, text, desc }, i) => (
+            <div
+              key={text}
+              className="landing-hero-feature"
+              data-last={i === FEATURES.length - 1 ? "true" : undefined}
             >
-              <span className="relative z-10">
-                {user ? "Go to dashboard" : "Start Interviewing"}
+              <span className="landing-hero-feature-icon" aria-hidden="true">
+                <Icon size={19} strokeWidth={1.4} />
               </span>
-              {/* Shimmer sweep */}
-              <motion.span
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
-                initial={{ x: "-100%" }}
-                whileHover={{ x: "200%" }}
-                transition={{ duration: 0.6 }}
-                aria-hidden
-              />
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 14 14"
-                fill="none"
-                aria-hidden
-              >
-                <path
-                  d="M3 7h8M8 4l3 3-3 3"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
-            <div className="flex flex-col gap-1">
-              <span className="landing-early-access-note">
-                No credit card required
-              </span>
-              <span className="landing-early-access-note">
-                Free during early access · 3 sessions/week
-              </span>
+              <p className="landing-hero-feature-title">{text}</p>
+              <p className="landing-hero-feature-description">{desc}</p>
             </div>
-          </motion.div>
+          ))}
+        </motion.div>
 
-          {/* Social proof */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.1, duration: 0.8 }}
-            className="mt-8 flex items-center gap-3"
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="landing-hero-action"
+        >
+          <Link
+            to={user ? "/dashboard" : "/signup"}
+            className="landing-cta-primary landing-cta-sharp landing-hero-cta group relative overflow-hidden"
           >
-            {/* Session counter dots */}
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <motion.span
-                  key={i}
-                  className="block w-1.5 h-1.5 rounded-full bg-[var(--landing-accent)]"
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 0.3 + i * 0.12, scale: 1 }}
-                  transition={{ delay: 1.2 + i * 0.08 }}
-                />
-              ))}
-            </div>
-            <span className="text-[12px] text-[var(--landing-fg-faint)]">
-              AI calibrated to real interviewers at every stage
+            <span className="relative z-10">
+              {user ? "Go to dashboard" : "Start Interviewing"}
             </span>
-          </motion.div>
-        </div>
+            <motion.span
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
+              initial={{ x: "-100%" }}
+              whileHover={{ x: "200%" }}
+              transition={{ duration: 0.6 }}
+              aria-hidden
+            />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden
+            >
+              <path
+                d="M3 7h8M8 4l3 3-3 3"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </Link>
 
-        {/* Interview system — 35% */}
-        <div className="landing-hero-stage">
-          <InterviewSystem />
-        </div>
+          <p className="landing-hero-assurance">
+            No credit card <span aria-hidden="true">·</span> Free during early
+            access <span aria-hidden="true">·</span> 3 sessions/week
+          </p>
+        </motion.div>
       </div>
 
       {/* Scroll indicator */}
@@ -194,9 +176,9 @@ export function Opening() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.4, duration: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[var(--landing-fg-faint)]"
+        className="landing-hero-scroll"
       >
-        <span className="text-[10px] tracking-[0.2em] uppercase">Scroll</span>
+        <span className="text-[10px] uppercase tracking-[0.2em]">Scroll</span>
         <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden>
           <rect
             x="4.5"

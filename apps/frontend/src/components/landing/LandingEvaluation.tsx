@@ -74,7 +74,7 @@ export function LandingEvaluation() {
         transition={{ duration: 0.8 }}
         className="mb-12 max-w-xl"
       >
-        <span className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-faint)] mb-8">
+        <span className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-muted)] mb-8">
           <span className="w-8 h-px bg-[var(--landing-line)]" aria-hidden />
           Chapter V · The reflection
         </span>
@@ -160,7 +160,7 @@ export function LandingEvaluation() {
                   <p className="text-[10px] tracking-[0.14em] uppercase text-[var(--landing-accent)] mb-1.5">
                     {d.label}
                   </p>
-                  <p className="landing-display text-[15px] text-[var(--landing-fg)] mb-2 tracking-tight">
+                  <p className="landing-display text-[15px] text-[var(--landing-muted)] mb-2 tracking-tight">
                     {d.short}
                   </p>
                   <p className="text-[13px] leading-[1.7] text-[var(--landing-fg-muted)] max-w-md">

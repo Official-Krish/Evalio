@@ -381,9 +381,36 @@ export function RoundPicker({
                         fontWeight: 600,
                         color: "var(--color-text)",
                         margin: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
                       }}
                     >
                       {round}
+                      {round === "Coding Round (DSA)" && (
+                        <span
+                          className="inline-flex items-center gap-1"
+                          style={{
+                            fontSize: "9px",
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                            color: "rgba(160,200,160,0.9)",
+                            border: "1px solid rgba(160,200,160,0.25)",
+                            borderRadius: 3,
+                            padding: "1px 5px",
+                            lineHeight: "14px",
+                          }}
+                        >
+                          <span
+                            className="w-1 h-1 rounded-full"
+                            style={{
+                              background: "rgba(160,200,160,0.9)",
+                              boxShadow: "0 0 4px rgba(160,200,160,0.5)",
+                            }}
+                          />
+                          Live
+                        </span>
+                      )}
                     </p>
                     <p
                       style={{

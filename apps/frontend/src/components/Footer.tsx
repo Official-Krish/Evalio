@@ -6,7 +6,7 @@ const linkClass =
 
 export function Footer() {
   return (
-    <footer className="border-t border-[var(--landing-line)]">
+    <footer className="relative z-[1] border-t border-[var(--landing-line)]">
       <div className="landing-container py-16">
         {/* main grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-10 sm:gap-12">

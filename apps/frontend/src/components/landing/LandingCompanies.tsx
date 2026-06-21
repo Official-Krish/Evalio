@@ -42,7 +42,7 @@ export function LandingCompanies() {
             initial={{ opacity: 0, x: -8 }}
             animate={visible ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.7 }}
-            className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-faint)] mb-8"
+            className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-muted)] mb-8"
           >
             <span className="w-8 h-px bg-[var(--landing-line)]" aria-hidden />
             Chapter III · The room

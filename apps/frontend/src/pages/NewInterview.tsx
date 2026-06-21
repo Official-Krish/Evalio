@@ -328,118 +328,137 @@ export function NewInterviewPage() {
   };
 
   return (
-    <div
-      className="max-w-2xl mx-auto"
-      style={{ paddingBottom: step === 4 ? "0" : "160px" }}
-    >
-      <ResumePreview
-        resumeId={previewResumeId}
-        open={!!previewResumeId}
-        onClose={() => setPreviewResumeId(null)}
-      />
+    <div className="relative">
+      <span
+        className="inline-flex items-center gap-1.5 absolute top-0 -right-20 text-[10px] tracking-[0.12em] uppercase px-2 py-1"
+        style={{
+          color: "rgba(160,200,160,0.9)",
+          border: "1px solid rgba(160,200,160,0.25)",
+          borderRadius: 3,
+        }}
+      >
+        <span
+          className="w-1.5 h-1.5 rounded-full"
+          style={{
+            background: "rgba(160,200,160,0.9)",
+            boxShadow: "0 0 6px rgba(160,200,160,0.5)",
+          }}
+        />
+        DSA round is live now
+      </span>
+      <div
+        className="max-w-2xl mx-auto"
+        style={{ paddingBottom: step === 4 ? "0" : "160px" }}
+      >
+        <ResumePreview
+          resumeId={previewResumeId}
+          open={!!previewResumeId}
+          onClose={() => setPreviewResumeId(null)}
+        />
 
-      <ProgressStepper
-        current={step}
-        onStepClick={(s) => s < step && setStep(s)}
-      />
+        <ProgressStepper
+          current={step}
+          onStepClick={(s) => s < step && setStep(s)}
+        />
 
-      <AnimatePresence mode="wait">
-        {step === 0 && (
-          <StepCompany
-            selectedCompanyId={selectedCompanyId}
-            customCompanyName={customCompanyName}
-            onSelectCompany={(id) => {
-              setSelectedCompanyId(id);
-              if (id !== "__custom__") setCustomCompanyName("");
-            }}
-            onCustomCompanyChange={setCustomCompanyName}
-            onContinue={() => setStep(1)}
-            onSkip={() => setStep(4)}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          {step === 0 && (
+            <StepCompany
+              selectedCompanyId={selectedCompanyId}
+              customCompanyName={customCompanyName}
+              onSelectCompany={(id) => {
+                setSelectedCompanyId(id);
+                if (id !== "__custom__") setCustomCompanyName("");
+              }}
+              onCustomCompanyChange={setCustomCompanyName}
+              onContinue={() => setStep(1)}
+              onSkip={() => setStep(4)}
+            />
+          )}
 
-        {step === 1 && (
-          <StepRole
-            companyId={selectedCompanyId}
-            companyName={selectedCompany?.name ?? null}
-            selectedRoleTitle={selectedRoleTitle}
-            customRole={customRole}
-            effectivePosition={effectivePosition}
-            onSelectRole={setSelectedRoleTitle}
-            onCustomRoleChange={setCustomRole}
-            onContinue={() => setStep(2)}
-            onBack={() => setStep(0)}
-          />
-        )}
+          {step === 1 && (
+            <StepRole
+              companyId={selectedCompanyId}
+              companyName={selectedCompany?.name ?? null}
+              selectedRoleTitle={selectedRoleTitle}
+              customRole={customRole}
+              effectivePosition={effectivePosition}
+              onSelectRole={setSelectedRoleTitle}
+              onCustomRoleChange={setCustomRole}
+              onContinue={() => setStep(2)}
+              onBack={() => setStep(0)}
+            />
+          )}
 
-        {step === 2 && (
-          <StepRound
-            companyId={selectedCompanyId}
-            companyName={selectedCompany?.name ?? null}
-            roleTitle={selectedRoleTitle}
-            selectedRound={selectedRound}
-            customRound={customRound}
-            onSelectRound={setSelectedRound}
-            onCustomRoundChange={setCustomRound}
-            onContinue={() => setStep(3)}
-            onBack={() => setStep(1)}
-            onSkip={() => {
-              setStep(3);
-              setSelectedRound(null);
-              setCustomRound("");
-            }}
-          />
-        )}
+          {step === 2 && (
+            <StepRound
+              companyId={selectedCompanyId}
+              companyName={selectedCompany?.name ?? null}
+              roleTitle={selectedRoleTitle}
+              selectedRound={selectedRound}
+              customRound={customRound}
+              onSelectRound={setSelectedRound}
+              onCustomRoundChange={setCustomRound}
+              onContinue={() => setStep(3)}
+              onBack={() => setStep(1)}
+              onSkip={() => {
+                setStep(3);
+                setSelectedRound(null);
+                setCustomRound("");
+              }}
+            />
+          )}
 
-        {step === 3 && (
-          <StepStyle
-            style={interviewStyle}
-            depth={interviewDepth}
-            onStyleChange={setInterviewStyle}
-            onDepthChange={setInterviewDepth}
-            onContinue={() => setStep(4)}
-            onBack={() => setStep(2)}
-          />
-        )}
+          {step === 3 && (
+            <StepStyle
+              style={interviewStyle}
+              depth={interviewDepth}
+              onStyleChange={setInterviewStyle}
+              onDepthChange={setInterviewDepth}
+              onContinue={() => setStep(4)}
+              onBack={() => setStep(2)}
+            />
+          )}
 
-        {step === 4 && (
-          <StepResume
-            resumes={resumes ?? []}
-            effectiveResumeId={effectiveResumeId}
-            githubUrl={effectiveGithubUrl}
-            githubOpen={githubOpen}
-            githubProfile={githubProfile ?? null}
-            useConnectedGithub={useConnectedGithub}
-            interviewMode={interviewMode}
-            interviewStyle={interviewStyle}
-            interviewDepth={interviewDepth}
-            jobDescription={jobDescription}
-            selectedCompany={selectedCompany}
-            selectedRole={selectedRole}
-            customRole={customRole}
-            effectivePosition={effectivePosition}
-            isPending={createMutation.isPending}
-            onResumeSelect={setSelectedResumeId}
-            onPreviewResume={setPreviewResumeId}
-            onResumesRefetch={() => refetchResumes()}
-            onGithubUrlChange={(url) => {
-              setGithubUrl(url);
-              setUseConnectedGithub(false);
-            }}
-            onGithubToggle={() => setGithubOpen((p) => !p)}
-            onUseConnectedGithub={() => {
-              setUseConnectedGithub(true);
-              setGithubOpen(false);
-              if (githubProfile?.username) {
-                setGithubUrl(`https://github.com/${githubProfile.username}`);
-              }
-            }}
-            onJobDescriptionChange={setJobDescription}
-            onBack={() => setStep(3)}
-            onCreate={handleCreate}
-          />
-        )}
-      </AnimatePresence>
+          {step === 4 && (
+            <StepResume
+              resumes={resumes ?? []}
+              effectiveResumeId={effectiveResumeId}
+              githubUrl={effectiveGithubUrl}
+              githubOpen={githubOpen}
+              githubProfile={githubProfile ?? null}
+              useConnectedGithub={useConnectedGithub}
+              interviewMode={interviewMode}
+              interviewStyle={interviewStyle}
+              interviewDepth={interviewDepth}
+              jobDescription={jobDescription}
+              selectedCompany={selectedCompany}
+              selectedRole={selectedRole}
+              customRole={customRole}
+              effectivePosition={effectivePosition}
+              isPending={createMutation.isPending}
+              onResumeSelect={setSelectedResumeId}
+              onPreviewResume={setPreviewResumeId}
+              onResumesRefetch={() => refetchResumes()}
+              onGithubUrlChange={(url) => {
+                setGithubUrl(url);
+                setUseConnectedGithub(false);
+              }}
+              onGithubToggle={() => setGithubOpen((p) => !p)}
+              onUseConnectedGithub={() => {
+                setUseConnectedGithub(true);
+                setGithubOpen(false);
+                if (githubProfile?.username) {
+                  setGithubUrl(`https://github.com/${githubProfile.username}`);
+                }
+              }}
+              onJobDescriptionChange={setJobDescription}
+              onBack={() => setStep(3)}
+              onCreate={handleCreate}
+            />
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
