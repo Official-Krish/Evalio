@@ -16,6 +16,30 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
         async ({ user, body, set }) => {
           const { interviewId, language, questionCount } = body;
 
+          // Validate inputs
+          const count =
+            typeof questionCount === "number" &&
+            Number.isInteger(questionCount) &&
+            questionCount >= 1 &&
+            questionCount <= 5
+              ? questionCount
+              : 3;
+          const validLangs = [
+            "python",
+            "javascript",
+            "typescript",
+            "java",
+            "cpp",
+            "go",
+            "rust",
+            "swift",
+            "kotlin",
+          ];
+          const lang =
+            typeof language === "string" && validLangs.includes(language)
+              ? language
+              : "python";
+
           const interview = await prisma.interviewSession.findUnique({
             where: { id: interviewId },
           });
@@ -41,7 +65,6 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
             return { error: "Interview has no company assigned" };
           }
 
-          const count = questionCount ?? 3;
           let questions: Array<{
             id: number;
             title: string;
@@ -52,11 +75,9 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
 
           try {
             questions = await fetchCompanyQuestions(interview.companyId, count);
-          } catch (err) {
+          } catch {
             set.status = 502;
-            return {
-              error: `Failed to fetch questions: ${(err as Error).message}`,
-            };
+            return { error: "Failed to fetch questions. Please try again." };
           }
 
           if (questions.length === 0) {
@@ -84,7 +105,7 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
             data: {
               interviewId,
               userId: user.id,
-              language: language ?? "python",
+              language: lang,
               problems: {
                 create: enriched.map((q, idx) => ({
                   index: idx,
@@ -140,12 +161,18 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
               string,
               string
             >;
-            const currentPhase = phase ?? problem.currentPhase;
+            const currentPhase =
+              phase && DSA_PHASES.includes(phase as (typeof DSA_PHASES)[number])
+                ? phase
+                : problem.currentPhase;
             currentSnapshots[currentPhase] = code;
             updateData.codeSnapshots = currentSnapshots;
           }
 
-          if (phase) {
+          if (
+            phase &&
+            DSA_PHASES.includes(phase as (typeof DSA_PHASES)[number])
+          ) {
             updateData.currentPhase = phase;
             const completed = [...problem.phasesCompleted];
             const phaseIdx = DSA_PHASES.indexOf(

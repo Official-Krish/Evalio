@@ -13,6 +13,7 @@ import {
 } from "../lib/queue";
 import { dedupAppend } from "./dedup";
 import { finalizeInterview } from "./finalize";
+import { DSA_PHASES } from "../services/dsaPrompt";
 
 const SECRET = Bun.env.JWT_SECRET;
 const encoder = new TextEncoder();
@@ -50,6 +51,22 @@ export class InterviewConnection {
   private isDsaMode = false;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private pongTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  // Rate limiter: max 20 WS messages per second per connection
+  private messageTimestamps: number[] = [];
+  private readonly MAX_WS_MSGS_PER_SEC = 20;
+
+  private isRateLimited(): boolean {
+    const now = Date.now();
+    this.messageTimestamps = this.messageTimestamps.filter(
+      (t) => now - t < 1000,
+    );
+    if (this.messageTimestamps.length >= this.MAX_WS_MSGS_PER_SEC) {
+      return true;
+    }
+    this.messageTimestamps.push(now);
+    return false;
+  }
 
   constructor(
     private client: WsWebSocket,
@@ -395,9 +412,20 @@ export class InterviewConnection {
             `[gemini] \u2192 ${label}${hasAudio ? " (with audio)" : ""} turnComplete=${!!parsed.serverContent?.turnComplete}`,
           );
         } else if (!parsed.setupComplete) {
+          const sanitized = { ...parsed };
+          if (
+            typeof sanitized.clientContent === "object" &&
+            sanitized.clientContent
+          ) {
+            (sanitized.clientContent as Record<string, unknown>).turns =
+              "[redacted]";
+          }
+          if (sanitized.realtimeInput) {
+            sanitized.realtimeInput = "[redacted]";
+          }
           console.log(
             "[gemini] \u2192 other message:",
-            JSON.stringify(parsed).slice(0, 300),
+            JSON.stringify(sanitized).slice(0, 300),
           );
         }
 
@@ -600,6 +628,10 @@ export class InterviewConnection {
   }
 
   private async handleMessage(msg: Record<string, unknown>) {
+    if (this.isRateLimited()) {
+      this.safeSend({ error: "Too many messages. Slow down." });
+      return;
+    }
     switch (msg.type) {
       case "init": {
         const token = msg.token as string | undefined;
@@ -994,7 +1026,6 @@ export class InterviewConnection {
       }
 
       case "code_preview": {
-        // Forwards to Gemini only — no DB persistence
         if (!this.gemini || this.closingMode) return;
         const prevMsg = msg as {
           code?: string;
@@ -1002,7 +1033,9 @@ export class InterviewConnection {
           questionIndex?: number;
           phase?: string;
         };
-        if (prevMsg.code === undefined) break;
+        if (prevMsg.code === undefined || prevMsg.code.length > 100000) break;
+        const idx = safeIndex(prevMsg.questionIndex);
+        const phase = safePhase(prevMsg.phase);
         this.gemini.send(
           JSON.stringify({
             clientContent: {
@@ -1011,7 +1044,7 @@ export class InterviewConnection {
                   role: "user",
                   parts: [
                     {
-                      text: `[Code Preview — Question ${prevMsg.questionIndex ?? 0}, ${prevMsg.phase ?? "implementation"} phase, not yet saved]\n\n\`\`\`${prevMsg.language ?? "python"}\n${prevMsg.code}\n\`\`\``,
+                      text: `[Code Preview — Question ${idx}, ${phase} phase, not yet saved]\n\n\`\`\`${prevMsg.language ?? "python"}\n${prevMsg.code}\n\`\`\``,
                     },
                   ],
                 },
@@ -1031,7 +1064,10 @@ export class InterviewConnection {
           questionIndex?: number;
           phase?: string;
         };
-        const codeText = `\`\`\`${codeMsg.language ?? "python"}\n${codeMsg.code ?? ""}\n\`\`\``;
+        if (codeMsg.code === undefined || codeMsg.code.length > 100000) break;
+        const idx = safeIndex(codeMsg.questionIndex);
+        const phase = safePhase(codeMsg.phase);
+        const codeText = `\`\`\`${codeMsg.language ?? "python"}\n${codeMsg.code}\n\`\`\``;
         this.gemini.send(
           JSON.stringify({
             clientContent: {
@@ -1040,7 +1076,7 @@ export class InterviewConnection {
                   role: "user",
                   parts: [
                     {
-                      text: `[Code Snapshot for Question ${codeMsg.questionIndex ?? 0} during ${codeMsg.phase ?? "implementation"} phase]\n\n${codeText}`,
+                      text: `[Code Snapshot for Question ${idx} during ${phase} phase]\n\n${codeText}`,
                     },
                   ],
                 },
@@ -1051,19 +1087,18 @@ export class InterviewConnection {
         );
 
         // Persist code snapshot to the DSA problem
-        if (this.interviewId && codeMsg.code !== undefined) {
+        if (this.interviewId) {
           try {
             const dsaSession = await prisma.dsaSession.findUnique({
               where: { interviewId: this.interviewId },
               include: { problems: { orderBy: { index: "asc" } } },
             });
-            if (dsaSession) {
-              const problem = dsaSession.problems[codeMsg.questionIndex ?? 0];
+            if (dsaSession && idx < dsaSession.problems.length) {
+              const problem = dsaSession.problems[idx];
               if (problem) {
-                const phase = codeMsg.phase ?? "implementation";
                 const currentSnapshots = (problem.codeSnapshots ??
                   {}) as Record<string, string>;
-                currentSnapshots[phase] = codeMsg.code ?? "";
+                currentSnapshots[phase] = codeMsg.code;
                 await prisma.dsaProblem.update({
                   where: { id: problem.id },
                   data: {
@@ -1084,6 +1119,7 @@ export class InterviewConnection {
         if (this.closingMode) return;
         const phaseMsg = msg as { phase?: string; questionIndex?: number };
         if (this.gemini) {
+          const idx = safeIndex(phaseMsg.questionIndex);
           this.gemini.send(
             JSON.stringify({
               clientContent: {
@@ -1092,7 +1128,7 @@ export class InterviewConnection {
                     role: "user",
                     parts: [
                       {
-                        text: `[Phase Update] Moving to "${phaseMsg.phase}" phase for question ${phaseMsg.questionIndex ?? 0}.`,
+                        text: `[Phase Update] Moving to "${safePhase(phaseMsg.phase)}" phase for question ${idx}.`,
                       },
                     ],
                   },
@@ -1108,6 +1144,7 @@ export class InterviewConnection {
       case "request_hint": {
         if (!this.gemini || this.closingMode || !this.isDsaMode) return;
         const hintMsg = msg as { questionIndex?: number };
+        const idx = safeIndex(hintMsg.questionIndex);
         this.gemini.send(
           JSON.stringify({
             clientContent: {
@@ -1116,7 +1153,7 @@ export class InterviewConnection {
                   role: "user",
                   parts: [
                     {
-                      text: `[Hint Request] The candidate is asking for a hint on Question ${hintMsg.questionIndex ?? 0}. Provide a subtle hint that guides them toward the solution without giving it away. Use a Socratic approach — ask a leading question or point them toward the relevant data structure/algorithm to consider.`,
+                      text: `[Hint Request] The candidate is asking for a hint on Question ${idx}. Provide a subtle hint that guides them toward the solution without giving it away. Use a Socratic approach — ask a leading question or point them toward the relevant data structure/algorithm to consider.`,
                     },
                   ],
                 },
@@ -1176,4 +1213,18 @@ export class InterviewConnection {
         });
     }
   }
+}
+
+// Safe index: defaults to 0, clamped to non-negative, capped at sane max
+function safeIndex(n: unknown): number {
+  if (typeof n !== "number" || !Number.isInteger(n) || n < 0) return 0;
+  return Math.min(n, 20);
+}
+
+// Safe phase: must be one of the known DSA_PHASES, else "implementation"
+function safePhase(p: unknown): string {
+  if (typeof p !== "string") return "implementation";
+  return DSA_PHASES.includes(p as (typeof DSA_PHASES)[number])
+    ? p
+    : "implementation";
 }

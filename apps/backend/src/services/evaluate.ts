@@ -141,7 +141,7 @@ Also analyze the candidate's resume briefly — what are its strongest points (r
 async function generateEvaluation(
   prompt: string,
 ): Promise<EvaluationResult | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = Bun.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY env not set");
 
   const ai = new GoogleGenAI({ apiKey });

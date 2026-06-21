@@ -236,18 +236,6 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
                 startedAt: body.startedAt,
               }),
               ...(body.endedAt !== undefined && { endedAt: body.endedAt }),
-              ...(body.overallScore !== undefined && {
-                overallScore: body.overallScore,
-              }),
-              ...(body.communicationScore !== undefined && {
-                communicationScore: body.communicationScore,
-              }),
-              ...(body.technicalScore !== undefined && {
-                technicalScore: body.technicalScore,
-              }),
-              ...(body.problemSolvingScore !== undefined && {
-                problemSolvingScore: body.problemSolvingScore,
-              }),
               ...(body.durationSeconds !== undefined && {
                 durationSeconds: body.durationSeconds,
               }),
@@ -268,10 +256,6 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
             ),
             startedAt: t.Optional(t.Nullable(t.Date())),
             endedAt: t.Optional(t.Nullable(t.Date())),
-            overallScore: t.Optional(t.Nullable(t.Number())),
-            communicationScore: t.Optional(t.Nullable(t.Number())),
-            technicalScore: t.Optional(t.Nullable(t.Number())),
-            problemSolvingScore: t.Optional(t.Nullable(t.Number())),
             durationSeconds: t.Optional(t.Nullable(t.Number())),
           }),
         },

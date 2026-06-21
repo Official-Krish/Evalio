@@ -474,9 +474,11 @@ function ProblemDescription({
           >
             <div
               dangerouslySetInnerHTML={{
-                __html: showAllDescription
-                  ? descriptionHtml
-                  : descriptionHtml.slice(0, 2000),
+                __html: DOMPurify.sanitize(
+                  showAllDescription
+                    ? descriptionHtml
+                    : descriptionHtml.slice(0, 2000),
+                ),
               }}
             />
             {descriptionHtml.length > 2000 && (

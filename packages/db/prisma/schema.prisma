@@ -133,38 +133,41 @@ model LeetCodeQuestion {
 }
 
 model DsaSession {
-  id              String              @id @default(cuid())
-  interviewId     String?             @unique
+  id              String       @id @default(cuid())
+  interviewId     String?      @unique
   userId          String
-  status          String              @default("IN_PROGRESS")
-  language        String              @default("python")
-  questions       Json
-  currentIndex    Int                 @default(0)
+  status          String       @default("IN_PROGRESS")
+  language        String       @default("python")
+  currentIndex    Int          @default(0)
   timeTaken       Int?
-  createdAt       DateTime            @default(now())
+  createdAt       DateTime     @default(now())
   submittedAt     DateTime?
-  user            User                @relation(fields: [userId], references: [id])
-  interview       InterviewSession?   @relation(fields: [interviewId], references: [id])
-  attempts        DsaQuestionAttempt[]
+  user            User         @relation(fields: [userId], references: [id])
+  interview       InterviewSession? @relation(fields: [interviewId], references: [id])
+  problems        DsaProblem[]
 
   @@index([userId])
 }
 
-model DsaQuestionAttempt {
-  id              String              @id @default(cuid())
+model DsaProblem {
+  id              String   @id @default(cuid())
   dsaSessionId    String
-  questionId      String
   index           Int
-  code            String?             @db.Text
+  title           String
+  slug            String
+  difficulty      String
+  description     String   @db.Text
+  code            String?  @db.Text
   codeSnapshots   Json?
-  currentPhase    String              @default("understanding")
+  currentPhase    String   @default("understanding")
   phasesCompleted String[]
   score           Float?
-  feedback        String?             @db.Text
+  feedback        String?  @db.Text
   complexity      String?
   timeTaken       Int?
   completedAt     DateTime?
-  dsaSession      DsaSession          @relation(fields: [dsaSessionId], references: [id])
+  createdAt       DateTime @default(now())
+  dsaSession      DsaSession @relation(fields: [dsaSessionId], references: [id])
 
   @@index([dsaSessionId])
 }
