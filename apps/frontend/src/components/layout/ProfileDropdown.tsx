@@ -373,20 +373,6 @@ function AvatarRing({
         justifyContent: "center",
       }}
     >
-      {/* Spinning conic gradient ring */}
-      <span
-        style={{
-          position: "absolute",
-          inset: -1.5,
-          borderRadius: "50%",
-          background: active
-            ? "conic-gradient(from 0deg, var(--app-accent), transparent 40%, var(--app-accent) 100%)"
-            : "conic-gradient(from 0deg, var(--color-border), transparent 50%, var(--color-border) 100%)",
-          animation: active ? "shimmer-spin 3s linear infinite" : "none",
-          opacity: active ? 1 : 0.5,
-          transition: "opacity 0.3s",
-        }}
-      />
       {/* Mask to make it look like a ring */}
       <span
         style={{
