@@ -189,7 +189,7 @@ export function SkillProfileCard({ profile, loading }: SkillProfileCardProps) {
   }
 
   const skillCards = [
-    { label: "Communication", key: "communication", color: "#3b82f6" },
+    { label: "Communication", key: "communication", color: "#b8a88a" },
     { label: "Technical Depth", key: "technicalDepth", color: "#b8a88a" },
     { label: "Problem Solving", key: "problemSolving", color: "#10b981" },
     { label: "Leadership", key: "leadership", color: "#8b5cf6" },

@@ -117,9 +117,10 @@ export function StyleDepthPicker({
                     borderRadius: "50%",
                     border: active
                       ? "5px solid var(--app-accent, #b8a88a)"
-                      : "2px solid var(--color-border)",
+                      : "2px solid var(--color-text-muted)",
                     flexShrink: 0,
                     transition: "all 0.15s",
+                    opacity: active ? 1 : 0.5,
                   }}
                 />
                 <div>
@@ -197,9 +198,10 @@ export function StyleDepthPicker({
                     borderRadius: "50%",
                     border: active
                       ? "5px solid var(--app-accent, #b8a88a)"
-                      : "2px solid var(--color-border)",
+                      : "2px solid var(--color-text-muted)",
                     flexShrink: 0,
                     transition: "all 0.15s",
+                    opacity: active ? 1 : 0.5,
                   }}
                 />
                 <div>

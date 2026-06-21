@@ -12,6 +12,7 @@ import { companyRoutes } from "./routes/company";
 import { profileRoutes } from "./routes/profile";
 import { contactRoutes } from "./routes/contact";
 import { feedbackRoutes } from "./routes/feedback";
+import { dsaRoutes } from "./routes/dsa";
 import { globalRateLimit } from "./middleware/rateLimit";
 
 const JWT_SECRET = Bun.env.JWT_SECRET;
@@ -47,5 +48,6 @@ export const app = new Elysia()
       .use(companyRoutes)
       .use(profileRoutes)
       .use(contactRoutes)
-      .use(feedbackRoutes),
+      .use(feedbackRoutes)
+      .use(dsaRoutes),
   );

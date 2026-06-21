@@ -194,7 +194,25 @@ export function CompanyGrid({ selectedCompanyId, onSelect }: CompanyGridProps) {
 
       <motion.button
         onClick={() => onSelect("__custom__")}
+        whileHover={{
+          scale: 1.02,
+          borderColor: "var(--app-accent, #b8a88a)",
+          color: "var(--app-accent, #b8a88a)",
+        }}
         whileTap={{ scale: 0.99 }}
+        onMouseEnter={(e) => {
+          if (selectedCompanyId !== "__custom__") {
+            e.currentTarget.style.borderColor = "var(--app-accent, #b8a88a)";
+            e.currentTarget.style.background =
+              "var(--app-accent-bg, rgba(184,168,138,0.04))";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (selectedCompanyId !== "__custom__") {
+            e.currentTarget.style.borderColor = "var(--color-border)";
+            e.currentTarget.style.background = "transparent";
+          }
+        }}
         style={{
           marginTop: "16px",
           padding: "12px 20px",

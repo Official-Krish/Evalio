@@ -1,192 +1,172 @@
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { InterviewSystem } from "./InterviewSystem";
 import { useSession } from "@/lib/auth";
 
-const PILLARS = [
-  "Remembers every answer you gave.",
-  "Tracks how you've changed.",
-  "Builds your interview identity.",
-];
+const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Opening() {
   const { data: session } = useSession();
   const user = session?.user ?? null;
+
   return (
-    <section className="landing-hero relative flex flex-col justify-center overflow-hidden border-b">
-      {/* Full-bleed ambient constellation */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Horizontal scan ghost */}
-        <motion.div
-          className="absolute left-0 right-0 h-px"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, var(--landing-accent) 40%, transparent)",
-          }}
-          initial={{ top: "110%", opacity: 0 }}
-          animate={{ top: ["110%", "-10%"], opacity: [0, 0.06, 0] }}
-          transition={{
-            duration: 7,
-            delay: 1.5,
-            repeat: Infinity,
-            repeatDelay: 12,
-            ease: "linear",
-          }}
-        />
+    <section className="opening-hero">
+      {/* Background orb — sits behind everything */}
+      <div className="opening-orb" aria-hidden>
+        <div className="landing-orb-inner">
+          <img
+            src="https://cdn.krishlabs.tech/evalio/public/hero-orb.png"
+            alt=""
+            aria-hidden
+            className="landing-orb-img"
+          />
+        </div>
       </div>
 
-      <div className="landing-hero-grid py-8 lg:mt-26 md:mt-46 sm:mt-34 max-sm:mt-[72px]">
-        {/* Copy — 65% */}
-        <div className="relative z-10 landing-hero-copy">
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="mb-6 lg:mb-8"
-          >
-            <span className="landing-early-access-badge">
-              <span className="landing-early-access-dot" />
-              <span className="landing-early-access-label">Early Access</span>
-              <span className="landing-early-access-divider" />
-              <span className="landing-early-access-slots">
-                Limited spots open
-              </span>
+      {/* Concentric rings — radiating from center, gives depth beyond the orb */}
+      <div className="opening-rings" aria-hidden>
+        <div className="opening-ring opening-ring-1" />
+        <div className="opening-ring opening-ring-2" />
+        <div className="opening-ring opening-ring-3" />
+      </div>
+
+      {/* Ambient dot grid — subtle texture across the full viewport */}
+      <div className="opening-dot-grid" aria-hidden />
+
+      {/* Dual aurora glows — warm gold top-left, cool violet bottom-right */}
+      <div className="opening-aurora" aria-hidden />
+
+      {/* Radial vignette to soften edges */}
+      <div className="opening-vignette" aria-hidden />
+
+      {/* Scrim for text readability */}
+      <div className="opening-scrim" aria-hidden />
+
+      {/* Corner ticks — editorial framing */}
+      <div className="opening-corners" aria-hidden>
+        <span className="opening-corner opening-corner-tl" />
+        <span className="opening-corner opening-corner-tr" />
+        <span className="opening-corner opening-corner-bl" />
+        <span className="opening-corner opening-corner-br" />
+      </div>
+
+      {/* Horizon line — thin accent across center */}
+      <div className="opening-horizon" aria-hidden />
+
+      {/* Content */}
+      <div className="opening-content">
+        {/* Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease }}
+          className="opening-badge-wrap"
+        >
+          <span className="opening-badge">
+            <span className="opening-badge-dot" />
+            <span className="opening-badge-label">Early Access</span>
+            <span className="opening-badge-sep" />
+            <span className="opening-badge-meta">Limited spots open</span>
+          </span>
+          <div className="opening-badge-connector" aria-hidden />
+        </motion.div>
+
+        {/* Eyebrow */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 0.15, ease }}
+          className="opening-eyebrow"
+        >
+          ADAPTIVE AI INTERVIEWER • INTERVIEW IDENTITY
+        </motion.p>
+
+        {/* Headline */}
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.1, delay: 0.2, ease }}
+          className="opening-headline"
+        >
+          <span className="opening-headline-line">Every interview</span>
+          <span className="opening-headline-line opening-headline-italic">
+            leaves a <span className="opening-headline-dot">fingerprint.</span>
+          </span>
+        </motion.h1>
+
+        {/* Description — editorial pull-quote style */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.45, ease }}
+          className="opening-description"
+        >
+          <div className="opening-desc-rule" aria-hidden />
+          <p className="opening-desc-lead">
+            An AI interviewer that remembers every session and builds a profile
+            of how you perform under pressure.
+          </p>
+        </motion.div>
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.6, ease }}
+          className="opening-cta-area"
+        >
+          <Link to={user ? "/dashboard" : "/signup"} className="opening-cta">
+            <span className="opening-cta-label">
+              {user ? "Go to dashboard" : "Start a session"}
             </span>
-          </motion.div>
-
-          {/* Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-            className="landing-hero-headline pb-4"
-          >
-            <span className="landing-hero-lead block">The interviewer</span>
-            <motion.span className="landing-hero-drama landing-serif italic block">
-              that
-              <br />
-              remembers.
-            </motion.span>
-          </motion.h1>
-
-          {/* Sub-statement */}
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: 0.38,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="mt-4 text-[15px] leading-[1.7] text-[var(--landing-fg-muted)] max-w-[440px]"
-          >
-            Practice is temporary.{" "}
-            <span className="text-[var(--landing-fg)]">
-              Identity is persistent.
+            <span className="opening-cta-arrow" aria-hidden>
+              →
             </span>
-          </motion.p>
+          </Link>
 
-          {/* Pillars */}
-          <motion.ul
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: 0.48,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="landing-punch-lines mt-8 lg:mt-10"
-          >
-            {PILLARS.map((line, i) => (
-              <motion.li
-                key={line}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.55 + i * 0.1 }}
-              >
-                {line}
-              </motion.li>
-            ))}
-          </motion.ul>
+          <div className="opening-assurance">
+            <span>No credit card</span>
+            <span className="opening-assurance-dot" />
+            <span>Free during early access</span>
+            <span className="opening-assurance-dot" />
+            <span>3 sessions / week</span>
+          </div>
+        </motion.div>
 
-          {/* CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-10 lg:mt-12 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6"
-          >
-            <Link
-              to={user ? "/dashboard" : "/signup"}
-              className="landing-cta-primary landing-cta-sharp group relative overflow-hidden"
-            >
-              <span className="relative z-10">
-                {user ? "Go to dashboard" : "Start Interviewing"}
-              </span>
-              {/* Shimmer sweep */}
-              <motion.span
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
-                initial={{ x: "-100%" }}
-                whileHover={{ x: "200%" }}
-                transition={{ duration: 0.6 }}
-                aria-hidden
-              />
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 14 14"
-                fill="none"
-                aria-hidden
-              >
-                <path
-                  d="M3 7h8M8 4l3 3-3 3"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
-            <div className="flex flex-col gap-1">
-              <span className="landing-early-access-note">
-                No credit card required
-              </span>
-              <span className="landing-early-access-note">
-                Free during early access · 3 sessions/week
+        {/* Metrics strip */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.8, ease }}
+          className="opening-metrics"
+        >
+          <div className="opening-metric">
+            <span className="opening-metric-num">01</span>
+            <div className="opening-metric-body">
+              <span className="opening-metric-title">How you think</span>
+              <span className="opening-metric-desc">
+                Structuring ambiguity under pressure
               </span>
             </div>
-          </motion.div>
-
-          {/* Social proof */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.1, duration: 0.8 }}
-            className="mt-8 flex items-center gap-3"
-          >
-            {/* Session counter dots */}
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <motion.span
-                  key={i}
-                  className="block w-1.5 h-1.5 rounded-full bg-[var(--landing-accent)]"
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 0.3 + i * 0.12, scale: 1 }}
-                  transition={{ delay: 1.2 + i * 0.08 }}
-                />
-              ))}
+          </div>
+          <div className="opening-metric">
+            <span className="opening-metric-num">02</span>
+            <div className="opening-metric-body">
+              <span className="opening-metric-title">How you communicate</span>
+              <span className="opening-metric-desc">
+                Clarity, confidence, signal strength
+              </span>
             </div>
-            <span className="text-[12px] text-[var(--landing-fg-faint)]">
-              AI calibrated to real interviewers at every stage
-            </span>
-          </motion.div>
-        </div>
-
-        {/* Interview system — 35% */}
-        <div className="landing-hero-stage">
-          <InterviewSystem />
-        </div>
+          </div>
+          <div className="opening-metric">
+            <span className="opening-metric-num">03</span>
+            <div className="opening-metric-body">
+              <span className="opening-metric-title">How you decide</span>
+              <span className="opening-metric-desc">
+                Trade-offs, adaptability, ownership
+              </span>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Scroll indicator */}
@@ -194,43 +174,12 @@ export function Opening() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.4, duration: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[var(--landing-fg-faint)]"
+        className="opening-scroll"
       >
-        <span className="text-[10px] tracking-[0.2em] uppercase">Scroll</span>
-        <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden>
-          <rect
-            x="4.5"
-            y="2"
-            width="3"
-            height="6"
-            rx="1.5"
-            fill="currentColor"
-            opacity="0.4"
-          >
-            <animate
-              attributeName="y"
-              values="2;6;2"
-              dur="2s"
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="opacity"
-              values="0.4;0.8;0.4"
-              dur="2s"
-              repeatCount="indefinite"
-            />
-          </rect>
-          <rect
-            x="1"
-            y="1"
-            width="10"
-            height="18"
-            rx="5"
-            stroke="currentColor"
-            strokeWidth="0.75"
-            opacity="0.25"
-          />
-        </svg>
+        <span>Scroll</span>
+        <div className="opening-scroll-track">
+          <div className="opening-scroll-thumb" />
+        </div>
       </motion.div>
     </section>
   );

@@ -30,6 +30,7 @@ model User {
   resumes             Resume[]
   githubProfile       GithubProfile?
   interviews          InterviewSession[]
+  dsaSessions         DsaSession[]
   feedbacks           Feedback[]
 }
 
@@ -91,6 +92,7 @@ model InterviewSession {
   id                  String         @id @default(cuid())
   userId              String
   status              InterviewStatus
+  mode                InterviewMode  @default(VOICE)
   interviewStyle      InterviewStyle @default(PROFESSIONAL)
   interviewDepth      InterviewDepth @default(STANDARD)
   companyId           String?
@@ -110,8 +112,64 @@ model InterviewSession {
   resume              Resume?        @relation(fields: [resumeId], references: [id])
   summary             InterviewSummary?
   turns               InterviewTurn[]
+  dsaSession          DsaSession?
   createdAt           DateTime       @default(now())
   user                User           @relation(fields: [userId], references: [id])
+}
+
+model LeetCodeQuestion {
+  id             String              @id @default(cuid())
+  leetcodeId     Int                 @unique
+  title          String
+  slug           String
+  difficulty     LeetCodeDifficulty
+  acceptanceRate Float
+  frequency      Float               @default(0)
+  companies      String[]
+  description    String?             @db.Text
+  expectedTopics String[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model DsaSession {
+  id              String       @id @default(cuid())
+  interviewId     String?      @unique
+  userId          String
+  status          String       @default("IN_PROGRESS")
+  language        String       @default("python")
+  currentIndex    Int          @default(0)
+  timeTaken       Int?
+  createdAt       DateTime     @default(now())
+  submittedAt     DateTime?
+  user            User         @relation(fields: [userId], references: [id])
+  interview       InterviewSession? @relation(fields: [interviewId], references: [id])
+  problems        DsaProblem[]
+
+  @@index([userId])
+}
+
+model DsaProblem {
+  id              String   @id @default(cuid())
+  dsaSessionId    String
+  index           Int
+  title           String
+  slug            String
+  difficulty      String
+  description     String   @db.Text
+  code            String?  @db.Text
+  codeSnapshots   Json?
+  currentPhase    String   @default("understanding")
+  phasesCompleted String[]
+  score           Float?
+  feedback        String?  @db.Text
+  complexity      String?
+  timeTaken       Int?
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+  dsaSession      DsaSession @relation(fields: [dsaSessionId], references: [id])
+
+  @@index([dsaSessionId])
 }
 
 model InterviewTurn {
@@ -182,4 +240,15 @@ enum InterviewDepth {
   PROBING
   CHALLENGE
   BAR_RAISER
+}
+
+enum InterviewMode {
+  VOICE
+  DSA
+}
+
+enum LeetCodeDifficulty {
+  EASY
+  MEDIUM
+  HARD
 }

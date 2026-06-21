@@ -129,12 +129,12 @@ function CodeEditor({ visible }: { visible: boolean }) {
           <span className="w-2.5 h-2.5 rounded-full bg-[rgba(255,200,80,0.35)]" />
           <span className="w-2.5 h-2.5 rounded-full bg-[rgba(100,200,100,0.35)]" />
         </div>
-        <span className="text-[9px] tracking-[0.12em] text-[var(--landing-fg-faint)] flex items-center gap-1.5">
+        <span className="text-[9px] tracking-[0.12em] text-[var(--landing-fg-muted)] flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--landing-accent)] opacity-60" />
           two_sum.py
         </span>
         <div className="flex items-center gap-3">
-          <span className="text-[9px] text-[var(--landing-fg-faint)] tabular-nums">
+          <span className="text-[9px] text-[var(--landing-fg-muted)] tabular-nums">
             24:58
           </span>
           <span
@@ -166,7 +166,7 @@ function CodeEditor({ visible }: { visible: boolean }) {
             style={{
               opacity: i === 3 ? 1 : 0.3,
               color:
-                i === 3 ? "var(--landing-accent)" : "var(--landing-fg-faint)",
+                i === 3 ? "var(--landing-accent)" : "var(--landing-fg-muted)",
             }}
           >
             {p}
@@ -246,7 +246,7 @@ function CodeEditor({ visible }: { visible: boolean }) {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            <span className="text-[9px] tracking-[0.14em] uppercase text-[var(--landing-fg-faint)] block mb-2">
+            <span className="text-[9px] tracking-[0.14em] uppercase text-[var(--landing-fg-muted)] block mb-2">
               Test output
             </span>
             {[
@@ -267,7 +267,7 @@ function CodeEditor({ visible }: { visible: boolean }) {
                 >
                   {pass ? "✓" : "✗"}
                 </span>
-                <span className="text-[var(--landing-fg-faint)]">{c}</span>
+                <span className="text-[var(--landing-fg-muted)]">{c}</span>
                 <span className="text-[var(--landing-fg-muted)] ml-auto">
                   {result}
                 </span>
@@ -367,16 +367,6 @@ export function DSACoding() {
       >
         {/* ── Left: Copy ─────────────────────────────────────────────────── */}
         <div className="lg:sticky lg:top-28">
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={visible ? { opacity: 1 } : {}}
-            transition={{ duration: 0.7 }}
-            className="text-[11px] tracking-[0.22em] uppercase text-[var(--landing-fg-faint)] mb-6 flex items-center gap-2"
-          >
-            <span className="w-8 h-px bg-[var(--landing-line)]" aria-hidden />
-            Coming Soon
-          </motion.p>
-
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={visible ? { opacity: 1, y: 0 } : {}}
@@ -386,6 +376,23 @@ export function DSACoding() {
             Not just talking.{" "}
             <span className="block landing-serif italic text-[var(--landing-accent)]">
               Real coding interviews.
+            </span>
+            <span
+              className="inline-flex items-center gap-1.5 mt-3 text-[10px] tracking-[0.12em] uppercase px-2 py-1"
+              style={{
+                color: "rgba(160,200,160,0.9)",
+                border: "1px solid rgba(160,200,160,0.25)",
+                borderRadius: 3,
+              }}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{
+                  background: "rgba(160,200,160,0.9)",
+                  boxShadow: "0 0 6px rgba(160,200,160,0.5)",
+                }}
+              />
+              Live now
             </span>
           </motion.h2>
 
@@ -425,7 +432,7 @@ export function DSACoding() {
                       color:
                         activePhase === i
                           ? "var(--landing-accent)"
-                          : "var(--landing-fg-faint)",
+                          : "var(--landing-fg-muted)",
                     }}
                     transition={{ duration: 0.3 }}
                   >
@@ -437,7 +444,7 @@ export function DSACoding() {
                       color:
                         activePhase === i
                           ? "var(--landing-fg)"
-                          : "var(--landing-fg-faint)",
+                          : "var(--landing-fg-muted)",
                       opacity: activePhase === i ? 1 : 0.5,
                     }}
                     transition={{ duration: 0.3 }}
@@ -471,12 +478,12 @@ export function DSACoding() {
             {[
               "Monaco Editor",
               "Python · C++ · TypeScript",
-              "25 min timer",
+              "30 min timer",
               "1,900+ companies",
             ].map((tag) => (
               <span
                 key={tag}
-                className="text-[10px] tracking-[0.05em] px-2.5 py-1 border border-[var(--landing-line)] text-[var(--landing-fg-faint)]"
+                className="text-[10px] tracking-[0.05em] px-2.5 py-1 border border-[var(--landing-line)] text-[var(--landing-fg-muted)]"
                 style={{ borderRadius: 3 }}
               >
                 {tag}

@@ -239,4 +239,13 @@ export const api = {
       }[];
     };
   },
+
+  startDsaSession: async (interviewId: string, language?: string) => {
+    const { data, error } = await client.api.dsa.start.post({
+      interviewId,
+      language,
+    });
+    if (error) throw new Error(errorMessage(error.value));
+    return data as unknown as { session: Record<string, unknown> };
+  },
 };

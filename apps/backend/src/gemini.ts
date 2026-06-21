@@ -11,7 +11,7 @@ export interface GeminiSession {
 }
 
 const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
+  apiKey: Bun.env.GEMINI_API_KEY,
 });
 
 class GeminiSessionAdapter implements GeminiSession {
@@ -103,9 +103,20 @@ export async function createGeminiSession(systemPrompt: string) {
         } else if (message.serverContent?.turnComplete) {
           console.log("[gemini SDK] turnComplete (no parts)");
         } else {
+          const sanitized = JSON.parse(json) as Record<string, unknown>;
+          if (
+            typeof sanitized.clientContent === "object" &&
+            sanitized.clientContent
+          ) {
+            (sanitized.clientContent as Record<string, unknown>).turns =
+              "[redacted]";
+          }
+          if (sanitized.realtimeInput) {
+            sanitized.realtimeInput = "[redacted]";
+          }
           console.log(
             "[gemini SDK] message:",
-            JSON.stringify(message).slice(0, 200),
+            JSON.stringify(sanitized).slice(0, 200),
           );
         }
         bus.emit("message", Buffer.from(json));

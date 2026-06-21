@@ -1,11 +1,12 @@
 import { prisma } from "../lib/prisma";
 import { evaluateInterview } from "../services/evaluate";
+import { evaluateDsaSession } from "../services/evaluate";
 
 export async function finalizeInterview(interviewId: string) {
   try {
     const interview = await prisma.interviewSession.findUnique({
       where: { id: interviewId },
-      select: { status: true, startedAt: true },
+      select: { status: true, startedAt: true, mode: true },
     });
     if (!interview || interview.status === "COMPLETED") return;
 
@@ -27,15 +28,22 @@ export async function finalizeInterview(interviewId: string) {
     console.log(
       `[ws] finalizing interview ${interviewId}, triggering evaluation`,
     );
-    evaluateInterview(interviewId).catch((err) => {
-      console.error("Evaluation failed:", err);
-      prisma.interviewSession
-        .update({
-          where: { id: interviewId },
-          data: { status: "FAILED" },
-        })
-        .catch((e) => console.error("Failed to set FAILED status:", e));
-    });
+
+    if (interview.mode === "DSA") {
+      evaluateDsaSession(interviewId).catch((err) => {
+        console.error("DSA evaluation failed:", err);
+      });
+    } else {
+      evaluateInterview(interviewId).catch((err) => {
+        console.error("Evaluation failed:", err);
+        prisma.interviewSession
+          .update({
+            where: { id: interviewId },
+            data: { status: "FAILED" },
+          })
+          .catch((e) => console.error("Failed to set FAILED status:", e));
+      });
+    }
   } catch (err) {
     console.error("finalizeInterview error:", err);
   }

@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { motion, AnimatePresence } from "motion/react"
-import { useLogout } from "../../lib/auth"
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
+import { useLogout } from "../../lib/auth";
 
 function initials(name: string) {
   return name
@@ -9,191 +9,609 @@ function initials(name: string) {
     .map((n) => n[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2)
+    .slice(0, 2);
 }
 
-const items = [
-  { label: "Profile", path: "/profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" },
-  { label: "Pricing", path: "/pricing", icon: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z M12 6v12 M9 9h4a2 2 0 0 1 0 4H9" },
-]
+const navItems = [
+  {
+    label: "Profile",
+    path: "/profile",
+    icon: (
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+      </svg>
+    ),
+    description: "View your account",
+  },
+  {
+    label: "Pricing",
+    path: "/pricing",
+    icon: (
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      </svg>
+    ),
+    description: "Plans & billing",
+  },
+];
 
-export function ProfileDropdown({ user }: { user: { name: string; email: string; role?: string } }) {
-  const navigate = useNavigate()
-  const logout = useLogout()
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+const adminItem = {
+  label: "Admin Panel",
+  path: "/admin/feedback",
+  icon: (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+    </svg>
+  ),
+  description: "Manage platform",
+};
+
+export function ProfileDropdown({
+  user,
+}: {
+  user: { name: string; email: string; role?: string };
+}) {
+  const navigate = useNavigate();
+  const logout = useLogout();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [])
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const allItems = [...navItems, ...(user.role === "ADMIN" ? [adminItem] : [])];
 
   return (
     <div className="relative" ref={ref}>
+      {/* Trigger */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[var(--landing-surface)] transition-colors duration-200"
+        aria-expanded={open}
+        aria-haspopup="true"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "5px 8px 5px 5px",
+          borderRadius: "999px",
+          border: "1px solid",
+          borderColor: open ? "var(--app-accent-border)" : "transparent",
+          background: open ? "var(--app-accent-bg)" : "transparent",
+          cursor: "pointer",
+          transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+          outline: "none",
+          position: "relative",
+        }}
+        onMouseEnter={(e) => {
+          if (!open) {
+            const el = e.currentTarget;
+            el.style.borderColor = "var(--color-border)";
+            el.style.background = "var(--color-bg-hover)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!open) {
+            const el = e.currentTarget;
+            el.style.borderColor = "transparent";
+            el.style.background = "transparent";
+          }
+        }}
       >
-        <span className="flex size-7 rounded-full items-center justify-center text-[11px] font-semibold" style={{ background: "rgba(108,99,255,0.3)", border: "1px solid rgba(108,99,255,0.5)", color: "#fff" }}>
-          {initials(user.name ?? "")}
+        <AvatarRing initials={initials(user.name ?? "")} active={open} />
+        <span
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            color: "var(--color-text-secondary)",
+            maxWidth: "80px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            display: "none",
+          }}
+          className="profile-name-label"
+        >
+          {user.name.split(" ")[0]}
         </span>
-        <svg
+        <motion.svg
           width="10"
           height="10"
           viewBox="0 0 10 10"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.5"
+          strokeWidth="1.8"
           strokeLinecap="round"
-          className={`text-[var(--landing-fg-faint)] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
         >
           <path d="M2 3.5l3 3 3-3" />
-        </svg>
+        </motion.svg>
       </button>
 
+      {/* Dropdown panel */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -3, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -3, scale: 0.97 }}
-            transition={{ duration: 0.12, ease: "easeOut" }}
-            className="absolute top-full right-0 mt-2 min-w-[200px] rounded-xl overflow-hidden"
+            initial={{ opacity: 0, scale: 0.94, y: -8, filter: "blur(4px)" }}
+            animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, scale: 0.94, y: -8, filter: "blur(4px)" }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             style={{
+              position: "absolute",
+              top: "calc(100% + 10px)",
+              right: 0,
+              width: "240px",
+              borderRadius: "18px",
+              overflow: "hidden",
               background: "var(--color-bg-elevated)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
+              backdropFilter: "blur(32px) saturate(160%)",
+              WebkitBackdropFilter: "blur(32px) saturate(160%)",
               border: "1px solid var(--color-border)",
+              boxShadow:
+                "0 0 0 0.5px var(--color-border-light), 0 24px 48px -8px rgba(0,0,0,0.22), 0 4px 16px -4px rgba(0,0,0,0.1)",
               transformOrigin: "top right",
+              zIndex: 50,
             }}
           >
-            <div className="px-4 pt-4 pb-3">
-              <div className="flex items-center gap-3">
-                <span className="flex size-8 rounded-full items-center justify-center text-[12px] font-semibold" style={{ background: "rgba(108,99,255,0.3)", border: "1px solid rgba(108,99,255,0.5)", color: "#fff" }}>
-                  {initials(user.name ?? "")}
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-[var(--landing-fg)] leading-tight">{user.name}</p>
-                  <p className="flex items-center gap-1.5 text-[11px] text-[var(--landing-fg-muted)] mt-0.5">
-                    <span className="relative flex size-1.5">
-                      <span className="absolute inline-flex size-full rounded-full bg-[#22C55E] animate-ping opacity-75" />
-                      <span className="relative inline-flex size-1.5 rounded-full bg-[#22C55E]" />
-                    </span>
+            {/* Subtle accent glow at top */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: "60%",
+                height: "1px",
+                background:
+                  "linear-gradient(90deg, transparent, var(--app-accent), transparent)",
+                opacity: 0.6,
+              }}
+            />
+
+            {/* Header */}
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05, duration: 0.2 }}
+              style={{
+                padding: "16px 16px 14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <AvatarRing
+                initials={initials(user.name ?? "")}
+                size={36}
+                active
+              />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p
+                  style={{
+                    fontSize: "13.5px",
+                    fontWeight: 600,
+                    color: "var(--color-text)",
+                    margin: 0,
+                    lineHeight: 1.3,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {user.name}
+                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    marginTop: "3px",
+                  }}
+                >
+                  <span
+                    style={{
+                      position: "relative",
+                      display: "flex",
+                      width: "6px",
+                      height: "6px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        borderRadius: "50%",
+                        background: "#22c55e",
+                        opacity: 0.5,
+                        animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite",
+                      }}
+                    />
+                    <span
+                      style={{
+                        position: "relative",
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        background: "#22c55e",
+                        flexShrink: 0,
+                      }}
+                    />
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      color: "var(--color-text-muted)",
+                      letterSpacing: "0.01em",
+                    }}
+                  >
                     Ready for Interview
-                  </p>
+                  </span>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="px-1.5 pb-1.5 space-y-0.5">
-              {items.map((item) => (
-                <DropdownItem
+            {/* Separator */}
+            <div
+              style={{
+                height: "1px",
+                background: "var(--color-border-light)",
+                margin: "0 12px",
+              }}
+            />
+
+            {/* Nav items */}
+            <div style={{ padding: "8px" }}>
+              {allItems.map((item, i) => (
+                <MenuRow
                   key={item.label}
                   label={item.label}
+                  description={item.description}
                   icon={item.icon}
+                  index={i}
                   onClick={() => {
-                    setOpen(false)
-                    navigate(item.path)
+                    setOpen(false);
+                    navigate(item.path);
                   }}
                 />
               ))}
-              {user.role === "ADMIN" && (
-                <DropdownItem
-                  label="Admin"
-                  icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2z M3.65 11.25a.5.5 0 0 0 0 .9l.2.1a2.5 2.5 0 0 1 1.25 2.15v.3a.5.5 0 0 0 .5.5h.15a2.5 2.5 0 0 1 2.15 1.25l.1.2a.5.5 0 0 0 .9 0l.1-.2a2.5 2.5 0 0 1 2.15-1.25h.15a.5.5 0 0 0 .5-.5v-.3a2.5 2.5 0 0 1 1.25-2.15l.2-.1a.5.5 0 0 0 0-.9l-.2-.1a2.5 2.5 0 0 1-1.25-2.15v-.3a.5.5 0 0 0-.5-.5h-.15a2.5 2.5 0 0 1-2.15-1.25l-.1-.2a.5.5 0 0 0-.9 0l-.1.2a2.5 2.5 0 0 1-2.15 1.25h-.15a.5.5 0 0 0-.5.5v.3a2.5 2.5 0 0 1-1.25 2.15z"
-                  onClick={() => {
-                    setOpen(false)
-                    navigate("/admin/feedback")
-                  }}
-                />
-              )}
             </div>
 
-            <div className="px-1.5 pb-1.5">
-              <DropdownItem
-                label="Sign Out"
-                icon="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9"
+            {/* Separator */}
+            <div
+              style={{
+                height: "1px",
+                background: "var(--color-border-light)",
+                margin: "0 12px",
+              }}
+            />
+
+            {/* Sign out */}
+            <div style={{ padding: "8px" }}>
+              <SignOutRow
+                index={allItems.length}
                 onClick={() => {
-                  setOpen(false)
-                  logout.mutate()
+                  setOpen(false);
+                  logout.mutate();
                 }}
-                danger
               />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <style>{`
+        @keyframes ping {
+          75%, 100% { transform: scale(2); opacity: 0; }
+        }
+        @keyframes shimmer-spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @media (min-width: 640px) {
+          .profile-name-label { display: block !important; }
+        }
+      `}</style>
     </div>
-  )
+  );
 }
 
-function DropdownItem({
-  label,
-  icon,
-  onClick,
-  danger,
+/* ─── Avatar with spinning accent ring ─────────────────────────────────── */
+function AvatarRing({
+  initials,
+  size = 28,
+  active = false,
 }: {
-  label: string
-  icon: string
-  onClick: () => void
-  danger?: boolean
+  initials: string;
+  size?: number;
+  active?: boolean;
 }) {
-  const [hovered, setHovered] = useState(false)
+  return (
+    <span
+      style={{
+        position: "relative",
+        width: size,
+        height: size,
+        flexShrink: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {/* Mask to make it look like a ring */}
+      <span
+        style={{
+          position: "absolute",
+          inset: 1,
+          borderRadius: "50%",
+          background: "var(--color-bg-elevated)",
+          zIndex: 1,
+        }}
+      />
+      {/* Inner avatar */}
+      <span
+        style={{
+          position: "relative",
+          zIndex: 2,
+          width: size - 4,
+          height: size - 4,
+          borderRadius: "50%",
+          background:
+            "linear-gradient(135deg, var(--app-accent-bg), rgba(184,168,138,0.2))",
+          border: "1px solid var(--app-accent-border)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: size * 0.38,
+          fontWeight: 700,
+          color: "var(--app-accent)",
+          letterSpacing: "-0.02em",
+          userSelect: "none",
+        }}
+      >
+        {initials}
+      </span>
+    </span>
+  );
+}
+
+/* ─── Nav menu row ──────────────────────────────────────────────────── */
+function MenuRow({
+  label,
+  description,
+  icon,
+  index,
+  onClick,
+}: {
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  index: number;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <button
+    <motion.button
+      initial={{ opacity: 0, x: -6 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{
+        delay: 0.06 + index * 0.04,
+        duration: 0.2,
+        ease: [0.16, 1, 0.3, 1],
+      }}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex items-center justify-between w-full text-left px-3 py-2 rounded-lg text-[13px] transition-colors duration-150"
       style={{
-        color: danger ? "var(--color-danger)" : "var(--color-text-secondary)",
-        background: hovered
-          ? danger
-            ? "rgba(239,68,68,0.08)"
-            : "var(--color-bg-hover)"
-          : "transparent",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        padding: "8px 10px",
+        borderRadius: "10px",
+        border: "none",
+        background: hovered ? "var(--color-bg-hover)" : "transparent",
+        cursor: "pointer",
+        textAlign: "left",
+        transition: "background 0.15s ease",
+        outline: "none",
       }}
     >
-      <span className="flex items-center gap-2.5">
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="shrink-0"
-          style={{ opacity: 0.4 }}
-        >
-          <path d={icon} />
-        </svg>
-        {label}
+      <span
+        style={{
+          width: "30px",
+          height: "30px",
+          borderRadius: "8px",
+          background: hovered
+            ? "var(--app-accent-bg)"
+            : "var(--color-bg-hover)",
+          border: "1px solid",
+          borderColor: hovered
+            ? "var(--app-accent-border)"
+            : "var(--color-border-light)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: hovered ? "var(--app-accent)" : "var(--color-text-muted)",
+          flexShrink: 0,
+          transition: "all 0.2s ease",
+        }}
+      >
+        {icon}
       </span>
-      {!danger && (
-        <motion.svg
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span
+          style={{
+            display: "block",
+            fontSize: "13px",
+            fontWeight: 500,
+            color: hovered
+              ? "var(--color-text)"
+              : "var(--color-text-secondary)",
+            lineHeight: 1.3,
+            transition: "color 0.15s",
+          }}
+        >
+          {label}
+        </span>
+        <span
+          style={{
+            display: "block",
+            fontSize: "11px",
+            color: "var(--color-text-muted)",
+            marginTop: "1px",
+          }}
+        >
+          {description}
+        </span>
+      </span>
+      <motion.span
+        animate={{ x: hovered ? 0 : -4, opacity: hovered ? 1 : 0 }}
+        transition={{ duration: 0.15 }}
+        style={{
+          color: "var(--app-accent)",
+          display: "flex",
+          flexShrink: 0,
+        }}
+      >
+        <svg
           width="12"
           height="12"
           viewBox="0 0 12 12"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.5"
+          strokeWidth="1.8"
           strokeLinecap="round"
           strokeLinejoin="round"
-          animate={{ x: hovered ? 4 : 0, opacity: hovered ? 0.6 : 0 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-          style={{ opacity: hovered ? 0.6 : 0 }}
         >
           <path d="M4 2l4 4-4 4" />
-        </motion.svg>
-      )}
-    </button>
-  )
+        </svg>
+      </motion.span>
+    </motion.button>
+  );
+}
+
+/* ─── Sign out row ──────────────────────────────────────────────────── */
+function SignOutRow({
+  index,
+  onClick,
+}: {
+  index: number;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, x: -6 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{
+        delay: 0.06 + index * 0.04,
+        duration: 0.2,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        padding: "8px 10px",
+        borderRadius: "10px",
+        border: "none",
+        background: hovered ? "rgba(239,68,68,0.07)" : "transparent",
+        cursor: "pointer",
+        textAlign: "left",
+        transition: "background 0.15s ease",
+        outline: "none",
+      }}
+    >
+      <span
+        style={{
+          width: "30px",
+          height: "30px",
+          borderRadius: "8px",
+          background: hovered
+            ? "rgba(239,68,68,0.08)"
+            : "var(--color-bg-hover)",
+          border: "1px solid",
+          borderColor: hovered
+            ? "rgba(239,68,68,0.2)"
+            : "var(--color-border-light)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: hovered ? "var(--color-danger)" : "var(--color-text-muted)",
+          flexShrink: 0,
+          transition: "all 0.2s ease",
+        }}
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+      </span>
+      <span
+        style={{
+          fontSize: "13px",
+          fontWeight: 500,
+          color: hovered
+            ? "var(--color-danger)"
+            : "var(--color-text-secondary)",
+          flex: 1,
+          transition: "color 0.15s",
+        }}
+      >
+        Sign Out
+      </span>
+    </motion.button>
+  );
 }

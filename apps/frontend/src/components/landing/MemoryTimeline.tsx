@@ -149,7 +149,7 @@ export function MemoryTimeline() {
           transition={{ duration: 0.8 }}
           className="text-center mb-[8vh]"
         >
-          <span className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-faint)] mb-8 block">
+          <span className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-muted)] mb-8 block">
             <span
               className="inline-block w-8 h-px bg-[var(--landing-line)] align-middle"
               aria-hidden

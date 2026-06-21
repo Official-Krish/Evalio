@@ -1,5 +1,5 @@
 import { fileNameFromUrl } from "./helpers";
-import type { Resume } from "@evalio/shared";
+import type { Resume, InterviewMode } from "@evalio/shared";
 
 interface SessionCardProps {
   position: string;
@@ -8,6 +8,7 @@ interface SessionCardProps {
   resumes: Resume[];
   isPending: boolean;
   onCreate: () => void;
+  mode?: InterviewMode;
 }
 
 export function SessionCard({
@@ -17,6 +18,7 @@ export function SessionCard({
   resumes,
   isPending,
   onCreate,
+  mode,
 }: SessionCardProps) {
   const selectedResume = selectedResumeId
     ? (resumes.find((r) => r.id === selectedResumeId) ?? null)
@@ -77,6 +79,7 @@ export function SessionCard({
             }}
           >
             {resumeLabel}
+            {mode === "DSA" ? " \u00B7 Coding Round" : ""}
           </span>
         </div>
       </div>

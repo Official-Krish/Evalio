@@ -12,23 +12,28 @@ const TTL = 60_000;
 
 type CacheEntry = {
   version: number;
+  role: "FREE" | "PRO" | "ADMIN";
   expiresAt: number;
 };
 
-const roleVersionCache = new Map<string, CacheEntry>();
+const roleCache = new Map<string, CacheEntry>();
 
-function getCached(id: string): number | null {
-  const entry = roleVersionCache.get(id);
+function getCached(id: string): CacheEntry | null {
+  const entry = roleCache.get(id);
   if (!entry) return null;
   if (Date.now() > entry.expiresAt) {
-    roleVersionCache.delete(id);
+    roleCache.delete(id);
     return null;
   }
-  return entry.version;
+  return entry;
 }
 
-function setCached(id: string, version: number) {
-  roleVersionCache.set(id, { version, expiresAt: Date.now() + TTL });
+function setCached(
+  id: string,
+  version: number,
+  role: "FREE" | "PRO" | "ADMIN",
+) {
+  roleCache.set(id, { version, role, expiresAt: Date.now() + TTL });
 }
 
 export const authGuard = new Elysia({ name: "auth-guard" })
@@ -50,7 +55,7 @@ export const authGuard = new Elysia({ name: "auth-guard" })
 
     const cached = getCached(uid);
     if (cached !== null) {
-      if (cached !== tokenRoleVersion) {
+      if (cached.version !== tokenRoleVersion) {
         cookie.token?.remove();
         throw new Error("Unauthorized");
       }
@@ -59,7 +64,7 @@ export const authGuard = new Elysia({ name: "auth-guard" })
           id: uid,
           email: payload.email as string,
           name: payload.name as string | undefined,
-          role: payload.role as "FREE" | "PRO" | "ADMIN",
+          role: cached.role,
         },
       };
     }
@@ -71,12 +76,12 @@ export const authGuard = new Elysia({ name: "auth-guard" })
       });
 
       if (!user) {
-        setCached(uid, -1);
+        setCached(uid, -1, "FREE");
         cookie.token?.remove();
         throw new Error("Unauthorized");
       }
 
-      setCached(uid, user.roleVersion);
+      setCached(uid, user.roleVersion, user.role);
 
       if (user.roleVersion !== tokenRoleVersion) {
         cookie.token?.remove();

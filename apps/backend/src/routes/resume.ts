@@ -3,11 +3,8 @@ import { prisma } from "../lib/prisma";
 import { authGuard } from "../middleware/auth";
 import { strictRateLimit, authRateLimit } from "../middleware/rateLimit";
 import { uploadResumeToS3, generateResumeUrl } from "../lib/s3";
-import { parseResume } from "../utils/ResumeParser";
+import { parseResume, validateResumeContent } from "../utils/ResumeParser";
 import { randomUUID } from "node:crypto";
-
-const RESUME_UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const ALLOWED_EXTENSIONS = ["pdf", "docx", "txt"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -71,20 +68,25 @@ export const resumeRoutes = new Elysia({ prefix: "/resumes" }).guard(
 
             const extractedText = await parseResume(buffer, file.name);
 
+            const validation = validateResumeContent(
+              extractedText,
+              user.name ?? undefined,
+            );
+            if (!validation.valid) {
+              set.status = 400;
+              return { error: validation.error! };
+            }
+
             const contentType = MIME_MAP[ext] ?? "application/octet-stream";
 
             const existing = await prisma.resume.findFirst({
               where: { userId: user.id },
               orderBy: { version: "desc" },
-              select: { version: true, objectKey: true },
+              select: { version: true },
             });
             const nextVersion = (existing?.version ?? 0) + 1;
 
-            // Reuse UUID from previous version, or generate one for v1
-            const resumeUuid =
-              existing && RESUME_UUID_PATTERN.test(existing.objectKey)
-                ? existing.objectKey.split("/")[3]!
-                : randomUUID();
+            const resumeUuid = randomUUID();
 
             const result = await uploadResumeToS3({
               userId: user.id,

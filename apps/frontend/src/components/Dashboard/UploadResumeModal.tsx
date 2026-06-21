@@ -27,6 +27,7 @@ export function UploadResumeModal({
       onClose();
     } catch (err) {
       toast.error((err as Error).message);
+      if (fileRef.current) fileRef.current.value = "";
     } finally {
       setUploading(false);
     }

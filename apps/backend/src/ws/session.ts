@@ -3,6 +3,7 @@ import { jwtVerify } from "jose";
 import { createGeminiSession, type GeminiSession } from "../gemini";
 import { prisma } from "../lib/prisma";
 import { buildInterviewPrompt, type PromptInput } from "../prompt";
+import { buildDsaSystemPrompt } from "../services/dsaPrompt";
 import { COMPANIES } from "@evalio/shared";
 import {
   tryActivate,
@@ -12,6 +13,7 @@ import {
 } from "../lib/queue";
 import { dedupAppend } from "./dedup";
 import { finalizeInterview } from "./finalize";
+import { DSA_PHASES } from "../services/dsaPrompt";
 
 const SECRET = Bun.env.JWT_SECRET;
 const encoder = new TextEncoder();
@@ -46,8 +48,25 @@ export class InterviewConnection {
   private interviewDepth: string = "STANDARD";
   private waitingForAiResponse = false;
   private isQueued = false;
+  private isDsaMode = false;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private pongTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  // Rate limiter: max 20 WS messages per second per connection
+  private messageTimestamps: number[] = [];
+  private readonly MAX_WS_MSGS_PER_SEC = 20;
+
+  private isRateLimited(): boolean {
+    const now = Date.now();
+    this.messageTimestamps = this.messageTimestamps.filter(
+      (t) => now - t < 1000,
+    );
+    if (this.messageTimestamps.length >= this.MAX_WS_MSGS_PER_SEC) {
+      return true;
+    }
+    this.messageTimestamps.push(now);
+    return false;
+  }
 
   constructor(
     private client: WsWebSocket,
@@ -340,12 +359,20 @@ export class InterviewConnection {
     }
 
     console.log("[ws] sending initial clientContent to start interview...");
-    // pick a random greeting instruction so the AI varies its opening
-    const greetings = [
-      "Start the interview. Greet the candidate naturally — vary your opening based on their background. Introduce yourself as an Evalio interviewer, then ask your first question.",
-      "Begin the interview. Welcome the candidate with a varied opening — reference something about their experience if available. Keep the intro brief under 30 seconds, then move to questions.",
-      "Start the session. Greet the candidate conversationally — don't use a scripted opening. Introduce yourself and the structure briefly, then lead into the first question.",
-    ];
+
+    let greetings: string[];
+    if (this.isDsaMode) {
+      greetings = [
+        "Start the DSA coding interview. Say you're their interviewer for the day. Mention the role and company they're interviewing for. Tell the candidate their first coding problem is displayed on the right side of their screen. Ask them to take a moment to read it and let you know when they're ready. Then STOP — wait for their response. Do NOT discuss the problem or ask any technical questions until they confirm they're ready. Do not use a name or introduce yourself personally — just say you're their interviewer.",
+        "Begin the DSA coding interview. Briefly mention the role they're interviewing for and the company. Do not say your name or introduce yourself personally — just say you're their interviewer. Point out that the first question is visible on their screen. Ask if they can see it and if they have any immediate questions. Then wait for their reply before proceeding.",
+      ];
+    } else {
+      greetings = [
+        "Start the interview. Greet the candidate naturally. Say you're their interviewer for the day and mention the role and company they're interviewing for. Do not introduce yourself with a name. Then ask your first question.",
+        "Begin the interview. Welcome the candidate — just say you're their interviewer, mention what they're here for (role at company), and keep it brief. Do not use a name. Then move to questions.",
+        "Start the session. Greet the candidate conversationally — say you're their interviewer for the day and state the role and company. No name or personal introduction. Then lead into the first question.",
+      ];
+    }
     this.gemini.send(
       JSON.stringify({
         clientContent: {
@@ -385,9 +412,20 @@ export class InterviewConnection {
             `[gemini] \u2192 ${label}${hasAudio ? " (with audio)" : ""} turnComplete=${!!parsed.serverContent?.turnComplete}`,
           );
         } else if (!parsed.setupComplete) {
+          const sanitized = { ...parsed };
+          if (
+            typeof sanitized.clientContent === "object" &&
+            sanitized.clientContent
+          ) {
+            (sanitized.clientContent as Record<string, unknown>).turns =
+              "[redacted]";
+          }
+          if (sanitized.realtimeInput) {
+            sanitized.realtimeInput = "[redacted]";
+          }
           console.log(
             "[gemini] \u2192 other message:",
-            JSON.stringify(parsed).slice(0, 300),
+            JSON.stringify(sanitized).slice(0, 300),
           );
         }
 
@@ -439,6 +477,110 @@ export class InterviewConnection {
         if (this.closingMode && turnComplete) {
           await this.handleTurnCompleteDuringClosing();
         }
+
+        // DSA mode: detect READY_FOR_NEXT / ALL_DONE signals
+        if (turnComplete && outputText && this.isDsaMode) {
+          if (outputText.includes("READY_FOR_NEXT")) {
+            // Parse optional target index: READY_FOR_NEXT:3 (1-based, skip to Q3)
+            const skipMatch = outputText.match(
+              /READY_FOR_NEXT\s*[:－]\s*(\d+)/,
+            );
+            const skipIdx = skipMatch
+              ? Math.max(0, parseInt(skipMatch[1]!, 10) - 1)
+              : null;
+            await this.safeSend({ type: "dsa_ready_next", index: skipIdx });
+            console.log(
+              `[dsa] READY_FOR_NEXT detected — skipping to ${
+                skipIdx != null ? `Q${skipIdx + 1}` : "next question"
+              }`,
+            );
+
+            // Tell Gemini which question we're moving to
+            try {
+              const dsaSession = await prisma.dsaSession.findUnique({
+                where: { interviewId: this.interviewId! },
+                include: { problems: { orderBy: { index: "asc" } } },
+              });
+              if (dsaSession) {
+                const nextIdx =
+                  skipIdx != null ? skipIdx : dsaSession.currentIndex + 1;
+                const nextProblem = dsaSession.problems[nextIdx];
+                if (nextProblem) {
+                  await prisma.dsaSession.update({
+                    where: { id: dsaSession.id },
+                    data: { currentIndex: nextIdx },
+                  });
+                  console.log(
+                    `[dsa] updated currentIndex to ${nextIdx} (${nextProblem.title})`,
+                  );
+
+                  this.gemini?.send(
+                    JSON.stringify({
+                      clientContent: {
+                        turns: [
+                          {
+                            role: "user",
+                            parts: [
+                              {
+                                text:
+                                  skipIdx != null
+                                    ? `[System] Skip ahead. The candidate is now on Question ${nextIdx + 1}: "${nextProblem.title}" (${nextProblem.difficulty}). The previous questions were too easy for them, so we're jumping here. Do NOT read it aloud — it's on their screen. Wait for them to indicate they've read it, then start with comprehension checks.`
+                                    : `[System] The interview has moved to the next question. The candidate is now on Question ${nextIdx + 1}: "${nextProblem.title}" (${nextProblem.difficulty}). Do NOT read the question aloud — it's displayed on their screen. Wait for the candidate to indicate they've read it before discussing. Start with comprehension checks: ask them to explain their understanding of this problem.`,
+                              },
+                            ],
+                          },
+                        ],
+                        turnComplete: true,
+                      },
+                    }),
+                  );
+                }
+              }
+            } catch (err) {
+              console.error("[dsa] failed to handle READY_FOR_NEXT:", err);
+            }
+          }
+          if (outputText.includes("ALL_DONE")) {
+            await this.safeSend({ type: "dsa_all_done" });
+          }
+
+          // DSA: detect CODE_UPDATE signal (AI modifying code)
+          const codeUpdateMatch = outputText.match(
+            /\[CODE_UPDATE\]\s*```(?:\w+)?\s*\n?([\s\S]*?)```\s*\[\/CODE_UPDATE\]/i,
+          );
+          if (codeUpdateMatch) {
+            const updatedCode = codeUpdateMatch[1]!.trim();
+            await this.safeSend({
+              type: "dsa_code_update",
+              code: updatedCode,
+            });
+            console.log("[dsa] CODE_UPDATE detected — saving");
+            try {
+              const dsaSession = await prisma.dsaSession.findUnique({
+                where: { interviewId: this.interviewId! },
+                include: { problems: { orderBy: { index: "asc" } } },
+              });
+              if (dsaSession) {
+                const problem = dsaSession.problems[dsaSession.currentIndex];
+                if (problem) {
+                  const currentSnapshots = (problem.codeSnapshots ??
+                    {}) as Record<string, string>;
+                  const currentPhase = problem.currentPhase;
+                  currentSnapshots[currentPhase] = updatedCode;
+                  await prisma.dsaProblem.update({
+                    where: { id: problem.id },
+                    data: {
+                      code: updatedCode,
+                      codeSnapshots: currentSnapshots,
+                    },
+                  });
+                }
+              }
+            } catch (err) {
+              console.error("[dsa] failed to persist CODE_UPDATE:", err);
+            }
+          }
+        }
       } catch {
         // Not JSON or parse error — just relay
       }
@@ -486,6 +628,10 @@ export class InterviewConnection {
   }
 
   private async handleMessage(msg: Record<string, unknown>) {
+    if (this.isRateLimited()) {
+      this.safeSend({ error: "Too many messages. Slow down." });
+      return;
+    }
     switch (msg.type) {
       case "init": {
         const token = msg.token as string | undefined;
@@ -594,53 +740,139 @@ export class InterviewConnection {
                 ? "declining"
                 : "stable";
 
-        const promptInput = {
-          position: interview.position,
-          candidateName: interview.user.name,
-          resumeText: interview.resume?.extractedText ?? null,
-          jobDescription:
-            (interview as { jobDescription?: string | null }).jobDescription ??
-            null,
-          githubUsername: github?.username ?? null,
-          githubSummary: github?.summary ?? null,
-          githubLanguages: (github?.languages as string[]) ?? [],
-          githubProjects:
-            (github?.projects as {
-              name: string;
-              description: string | null;
-              stars: number;
-              language: string | null;
-            }[]) ?? [],
-          durationMinutes,
-          interviewStyle: (interview.interviewStyle ??
-            "PROFESSIONAL") as PromptInput["interviewStyle"],
-          interviewDepth: this.interviewDepth as PromptInput["interviewDepth"],
-          companyName: interview.companyName ?? null,
-          companyCulture: companyConfig?.culture ?? null,
-          companyInterviewerBehavior:
-            companyConfig?.interviewerBehavior ?? null,
-          companyEvaluationBiases: companyConfig?.evaluationBiases ?? null,
-          roleTopics: selectedRole?.topics ?? null,
-          roleEvaluationCriteria: selectedRole?.evaluationCriteria ?? null,
-          roleMustProbe: selectedRole?.mustProbe ?? null,
-          interviewRound:
-            (interview as { interviewRound?: string | null }).interviewRound ??
-            null,
-          candidateHistory: pastInterviews.map((iv) => ({
-            date: iv.createdAt.toISOString(),
-            role: iv.roleTitle ?? iv.position,
-            overallScore: iv.overallScore,
-            strengths: (iv.summary?.strengths as string[]) ?? [],
-            weaknesses: (iv.summary?.weaknesses as string[]) ?? [],
-            summary: iv.summary?.summary ?? null,
-          })),
-          overallMostImproved: skillProfile?.mostImprovedSkill ?? null,
-          overallWeakest: skillProfile?.weakestSkill ?? null,
-          overallPatterns: (skillProfile?.commonPatterns as string[]) ?? [],
-          scoreTrendLast5,
-        };
+        const isDsa = (interview as { mode?: string }).mode === "DSA";
+        this.isDsaMode = isDsa;
 
-        const systemPrompt = buildInterviewPrompt(promptInput);
+        let systemPrompt: string;
+
+        if (isDsa) {
+          const dsaSession = await prisma.dsaSession.findUnique({
+            where: { interviewId: interview.id },
+            include: { problems: { orderBy: { index: "asc" } } },
+          });
+          const problems =
+            dsaSession?.problems.map((p) => ({
+              index: p.index,
+              title: p.title,
+              description: p.description,
+              difficulty: p.difficulty,
+            })) ?? [];
+
+          // Fetch past DSA interview history
+          const pastDsaInterviews = await prisma.interviewSession.findMany({
+            where: {
+              userId: interview.userId,
+              mode: "DSA",
+              status: "COMPLETED",
+              id: { not: interview.id },
+              dsaSession: { isNot: null },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 3,
+            include: {
+              dsaSession: {
+                include: { problems: { orderBy: { index: "asc" } } },
+              },
+            },
+          });
+          const dsaHistoryEntries = pastDsaInterviews.map((iv) => ({
+            date: iv.createdAt.toISOString().slice(0, 10),
+            overallScore: iv.overallScore,
+            problemScores:
+              iv.dsaSession?.problems.map((p) => ({
+                title: p.title,
+                score: p.score,
+              })) ?? [],
+          }));
+          const dsaScored = await prisma.interviewSession.findMany({
+            where: {
+              userId: interview.userId,
+              mode: "DSA",
+              status: "COMPLETED",
+              overallScore: { not: null },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 5,
+            select: { overallScore: true },
+          });
+          const dsaScores = dsaScored.map((i) => i.overallScore!).reverse();
+          const dsaScoreTrend: "improving" | "stable" | "declining" | null =
+            dsaScores.length < 2
+              ? null
+              : dsaScores[dsaScores.length - 1]! > dsaScores[0]! + 5
+                ? "improving"
+                : dsaScores[dsaScores.length - 1]! < dsaScores[0]! - 5
+                  ? "declining"
+                  : "stable";
+
+          systemPrompt = buildDsaSystemPrompt(
+            problems,
+            dsaSession?.language ?? "python",
+            {
+              companyName: interview.companyName,
+              roleTitle: (interview as { roleTitle?: string | null }).roleTitle,
+              interviewRound: (interview as { interviewRound?: string | null })
+                .interviewRound,
+              position: interview.position,
+              interviewDepth: (interview as { interviewDepth?: string | null })
+                .interviewDepth,
+            },
+            {
+              pastSessions: dsaHistoryEntries,
+              scoreTrendLast5: dsaScoreTrend,
+              mostImproved: skillProfile?.mostImprovedSkill ?? null,
+              weakest: skillProfile?.weakestSkill ?? null,
+            },
+          );
+        } else {
+          const promptInput = {
+            position: interview.position,
+            candidateName: interview.user.name,
+            resumeText: interview.resume?.extractedText ?? null,
+            jobDescription:
+              (interview as { jobDescription?: string | null })
+                .jobDescription ?? null,
+            githubUsername: github?.username ?? null,
+            githubSummary: github?.summary ?? null,
+            githubLanguages: (github?.languages as string[]) ?? [],
+            githubProjects:
+              (github?.projects as {
+                name: string;
+                description: string | null;
+                stars: number;
+                language: string | null;
+              }[]) ?? [],
+            durationMinutes,
+            interviewStyle: (interview.interviewStyle ??
+              "PROFESSIONAL") as PromptInput["interviewStyle"],
+            interviewDepth: this
+              .interviewDepth as PromptInput["interviewDepth"],
+            companyName: interview.companyName ?? null,
+            companyCulture: companyConfig?.culture ?? null,
+            companyInterviewerBehavior:
+              companyConfig?.interviewerBehavior ?? null,
+            companyEvaluationBiases: companyConfig?.evaluationBiases ?? null,
+            roleTopics: selectedRole?.topics ?? null,
+            roleEvaluationCriteria: selectedRole?.evaluationCriteria ?? null,
+            roleMustProbe: selectedRole?.mustProbe ?? null,
+            interviewRound:
+              (interview as { interviewRound?: string | null })
+                .interviewRound ?? null,
+            candidateHistory: pastInterviews.map((iv) => ({
+              date: iv.createdAt.toISOString(),
+              role: iv.roleTitle ?? iv.position,
+              overallScore: iv.overallScore,
+              strengths: (iv.summary?.strengths as string[]) ?? [],
+              weaknesses: (iv.summary?.weaknesses as string[]) ?? [],
+              summary: iv.summary?.summary ?? null,
+            })),
+            overallMostImproved: skillProfile?.mostImprovedSkill ?? null,
+            overallWeakest: skillProfile?.weakestSkill ?? null,
+            overallPatterns: (skillProfile?.commonPatterns as string[]) ?? [],
+            scoreTrendLast5,
+          };
+          systemPrompt = buildInterviewPrompt(promptInput);
+        }
 
         const startFn = async () => {
           await this.startInterview(systemPrompt, timeLimitMs);
@@ -793,6 +1025,182 @@ export class InterviewConnection {
         break;
       }
 
+      case "code_preview": {
+        if (!this.gemini || this.closingMode) return;
+        const prevMsg = msg as {
+          code?: string;
+          language?: string;
+          questionIndex?: number;
+          phase?: string;
+        };
+        if (prevMsg.code === undefined || prevMsg.code.length > 100000) break;
+        const idx = safeIndex(prevMsg.questionIndex);
+        const phase = safePhase(prevMsg.phase);
+        this.gemini.send(
+          JSON.stringify({
+            clientContent: {
+              turns: [
+                {
+                  role: "user",
+                  parts: [
+                    {
+                      text: `[Code Preview — Question ${idx}, ${phase} phase, not yet saved]\n\n\`\`\`${prevMsg.language ?? "python"}\n${prevMsg.code}\n\`\`\``,
+                    },
+                  ],
+                },
+              ],
+              turnComplete: true,
+            },
+          }),
+        );
+        break;
+      }
+
+      case "code_snapshot": {
+        if (!this.gemini || this.closingMode) return;
+        const codeMsg = msg as {
+          code?: string;
+          language?: string;
+          questionIndex?: number;
+          phase?: string;
+        };
+        if (codeMsg.code === undefined || codeMsg.code.length > 100000) break;
+        const idx = safeIndex(codeMsg.questionIndex);
+        const phase = safePhase(codeMsg.phase);
+        const codeText = `\`\`\`${codeMsg.language ?? "python"}\n${codeMsg.code}\n\`\`\``;
+        this.gemini.send(
+          JSON.stringify({
+            clientContent: {
+              turns: [
+                {
+                  role: "user",
+                  parts: [
+                    {
+                      text: `[Code Snapshot for Question ${idx} during ${phase} phase]\n\n${codeText}`,
+                    },
+                  ],
+                },
+              ],
+              turnComplete: true,
+            },
+          }),
+        );
+
+        // Persist code snapshot to the DSA problem
+        if (this.interviewId) {
+          try {
+            const dsaSession = await prisma.dsaSession.findUnique({
+              where: { interviewId: this.interviewId },
+              include: { problems: { orderBy: { index: "asc" } } },
+            });
+            if (dsaSession && idx < dsaSession.problems.length) {
+              const problem = dsaSession.problems[idx];
+              if (problem) {
+                const currentSnapshots = (problem.codeSnapshots ??
+                  {}) as Record<string, string>;
+                currentSnapshots[phase] = codeMsg.code;
+                await prisma.dsaProblem.update({
+                  where: { id: problem.id },
+                  data: {
+                    code: codeMsg.code,
+                    codeSnapshots: currentSnapshots,
+                  },
+                });
+              }
+            }
+          } catch {
+            // Silently fail — code snapshot persistence is non-critical
+          }
+        }
+        break;
+      }
+
+      case "phase_update": {
+        if (this.closingMode) return;
+        const phaseMsg = msg as { phase?: string; questionIndex?: number };
+        if (this.gemini) {
+          const idx = safeIndex(phaseMsg.questionIndex);
+          this.gemini.send(
+            JSON.stringify({
+              clientContent: {
+                turns: [
+                  {
+                    role: "user",
+                    parts: [
+                      {
+                        text: `[Phase Update] Moving to "${safePhase(phaseMsg.phase)}" phase for question ${idx}.`,
+                      },
+                    ],
+                  },
+                ],
+                turnComplete: true,
+              },
+            }),
+          );
+        }
+        break;
+      }
+
+      case "request_hint": {
+        if (!this.gemini || this.closingMode || !this.isDsaMode) return;
+        const hintMsg = msg as { questionIndex?: number };
+        const idx = safeIndex(hintMsg.questionIndex);
+        this.gemini.send(
+          JSON.stringify({
+            clientContent: {
+              turns: [
+                {
+                  role: "user",
+                  parts: [
+                    {
+                      text: `[Hint Request] The candidate is asking for a hint on Question ${idx}. Provide a subtle hint that guides them toward the solution without giving it away. Use a Socratic approach — ask a leading question or point them toward the relevant data structure/algorithm to consider.`,
+                    },
+                  ],
+                },
+              ],
+              turnComplete: true,
+            },
+          }),
+        );
+        break;
+      }
+
+      case "language_change": {
+        if (!this.isDsaMode || !this.gemini) break;
+        const langMsg = msg as { language?: string };
+        const newLang = langMsg.language;
+        if (!newLang) break;
+        console.log(`[dsa] language change to "${newLang}"`);
+
+        try {
+          await prisma.dsaSession.update({
+            where: { interviewId: this.interviewId! },
+            data: { language: newLang },
+          });
+
+          this.gemini.send(
+            JSON.stringify({
+              clientContent: {
+                turns: [
+                  {
+                    role: "user",
+                    parts: [
+                      {
+                        text: `[Language Change] The candidate has switched to coding in **${newLang}**. Adjust your code review expectations and feedback accordingly. Be aware of ${newLang}-specific idioms, syntax, and conventions.`,
+                      },
+                    ],
+                  },
+                ],
+                turnComplete: true,
+              },
+            }),
+          );
+        } catch (err) {
+          console.error("[dsa] failed to update language:", err);
+        }
+        break;
+      }
+
       case "end_interview": {
         console.log("[ws] end_interview from client");
         await this.initiateClosing();
@@ -805,4 +1213,18 @@ export class InterviewConnection {
         });
     }
   }
+}
+
+// Safe index: defaults to 0, clamped to non-negative, capped at sane max
+function safeIndex(n: unknown): number {
+  if (typeof n !== "number" || !Number.isInteger(n) || n < 0) return 0;
+  return Math.min(n, 20);
+}
+
+// Safe phase: must be one of the known DSA_PHASES, else "implementation"
+function safePhase(p: unknown): string {
+  if (typeof p !== "string") return "implementation";
+  return DSA_PHASES.includes(p as (typeof DSA_PHASES)[number])
+    ? p
+    : "implementation";
 }

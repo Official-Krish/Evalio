@@ -122,7 +122,7 @@ export function IdentityEmergence({ className }: IdentityEmergenceProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
         {/* Left Column (Copy and Header) */}
         <div className="lg:col-span-5 flex flex-col justify-start lg:sticky lg:top-32">
-          <span className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-faint)] mb-8">
+          <span className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-muted)] mb-8">
             <span className="w-8 h-px bg-[var(--landing-line)]" aria-hidden />
             Chapter I &middot; The Emergence
           </span>

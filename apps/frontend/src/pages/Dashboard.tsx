@@ -1,65 +1,44 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "motion/react";
 import { api } from "../lib/api";
-import { useSession } from "../lib/auth";
 import { ResumePreview } from "../components/ResumePreview";
 import { UploadResumeModal } from "../components/Dashboard/UploadResumeModal";
-import { SessionStrip } from "../components/Dashboard/SessionStrip";
-import { PastSessionsTable } from "../components/Dashboard/PastSessionsTable";
-import { EmptyState } from "../components/Dashboard/EmptyState";
-import { ReadinessHero } from "../components/Dashboard/ReadinessHero";
-import { AiCoachCard } from "../components/Dashboard/AiCoachCard";
-import { TrendsSection } from "../components/Dashboard/TrendsSection";
-import { WeaknessDetection } from "../components/Dashboard/WeaknessDetection";
-import { FailurePatternCard } from "../components/Dashboard/FailurePatternCard";
-import { IdentityProfileCard } from "../components/Dashboard/IdentityProfileCard";
-import { InterviewerRemembers } from "../components/Dashboard/InterviewerRemembers";
-import { RoleRecommendations } from "../components/Dashboard/RoleRecommendations";
-import { SidebarRight } from "../components/Dashboard/SidebarRight";
-import {
-  computeReadiness,
-  computeComparison30Days,
-  computeMilestones,
-} from "../components/Dashboard/helpers";
+import { Sidebar } from "../components/Dashboard/Sidebar";
+import { Hero } from "../components/Dashboard/Hero";
+import { Signals } from "../components/Dashboard/Signals";
+import { Coach } from "../components/Dashboard/Coach";
+import { History } from "../components/Dashboard/History";
+import { computeReadiness } from "../components/Dashboard/helpers";
 import { usePageTitle } from "@/lib/usePageTitle";
 import type { InterviewSession } from "@evalio/shared";
 
 export function DashboardPage() {
   usePageTitle("Dashboard");
-  const { data: session } = useSession();
-  const user = session?.user;
   const [showUpload, setShowUpload] = useState(false);
   const [previewResumeId, setPreviewResumeId] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ["interviews"],
     queryFn: () => api.listInterviews(0, 100),
     select: (d) => d.interviews,
   });
 
-  const interviews =
-    (data as (InterviewSession & {
-      _count?: { turns: number };
-      resume?: { id: string; version: number } | null;
-    })[]) ?? [];
-  const active = interviews.filter((i) => i.status === "ACTIVE");
-  const continueInterview = active[0] ?? null;
-  const completed = interviews.filter((i) => i.status === "COMPLETED");
-  const latestCompleted = completed[0] ?? null;
-  const mostRecent = continueInterview ?? latestCompleted;
-  const totalSessions = interviews.length;
+  const interviews = useMemo(() => {
+    return (
+      (data as (InterviewSession & {
+        _count?: { turns: number };
+        resume?: { id: string; version: number } | null;
+      })[]) ?? []
+    );
+  }, [data]);
 
+  const completed = interviews.filter((i) => i.status === "COMPLETED");
+  const totalSessions = interviews.length;
+  const hasResume = interviews.some((i) => i.resume != null);
   const readinessScore = useMemo(
     () => computeReadiness(completed),
     [completed],
   );
-  const comparison = useMemo(
-    () => computeComparison30Days(completed),
-    [completed],
-  );
-  const milestones = useMemo(() => computeMilestones(completed), [completed]);
 
   const { data: skillProfile } = useQuery({
     queryKey: ["skills"],
@@ -67,186 +46,186 @@ export function DashboardPage() {
     enabled: completed.length >= 4,
   });
 
-  const failurePatterns =
-    (skillProfile?.profile as { failurePatterns?: unknown } | null)
-      ?.failurePatterns ?? [];
-  const normalizedPatterns = Array.isArray(failurePatterns)
-    ? failurePatterns
-    : [];
+  const safeArr = (v: unknown): unknown[] => {
+    if (Array.isArray(v)) return v;
+    if (typeof v === "string") {
+      try {
+        const p = JSON.parse(v);
+        if (Array.isArray(p)) return p;
+      } catch {
+        /* not JSON */
+      }
+    }
+    return [];
+  };
+  const safeObj = (v: unknown): Record<string, unknown> => {
+    if (v && typeof v === "object" && !Array.isArray(v))
+      return v as Record<string, unknown>;
+    if (typeof v === "string") {
+      try {
+        const p = JSON.parse(v);
+        if (p && typeof p === "object") return p;
+      } catch {
+        /* not JSON */
+      }
+    }
+    return {};
+  };
 
-  const identityTraits =
-    (skillProfile?.profile as { identityTraits?: unknown } | null)
-      ?.identityTraits ?? null;
+  const profile = skillProfile?.profile as Record<string, unknown> | null;
 
-  // Derive dashboard insights from the latest evaluated interview
+  const identityTraitsRaw = safeObj(profile?.identityTraits) as Record<
+    string,
+    { score: number; description: string; level: string; trend: string }
+  >;
+  const failurePatternsRaw = safeArr(profile?.failurePatterns) as {
+    label: string | null;
+    code: string;
+    frequency: number;
+    totalSessions: number;
+    severity: string;
+    trend: string;
+    evidence: { interviewId: string; date: string; reason: string }[];
+  }[];
+  const patternsRaw = safeArr(profile?.commonPatterns) as string[];
+
+  const traits = useMemo(
+    () =>
+      Object.keys(identityTraitsRaw).length > 0 ? identityTraitsRaw : null,
+    [identityTraitsRaw],
+  );
+  const failurePatterns = useMemo(
+    () => failurePatternsRaw,
+    [failurePatternsRaw],
+  );
+  const mostImproved = (profile?.mostImprovedSkill as string | null) ?? null;
+  const weakest = (profile?.weakestSkill as string | null) ?? null;
+  const commonPatterns = useMemo(() => patternsRaw, [patternsRaw]);
+
   const latestSummary = useMemo(() => {
     return completed.find((i) => i.summary)?.summary ?? null;
   }, [completed]);
 
+  type StepStatus = "done" | "active" | "pending";
+  const funnelSteps = useMemo(() => {
+    const isResumeUploaded = hasResume;
+    const isTechDone = completed.length >= 1;
+    const isBehavioralDone = completed.length >= 3;
+    const isReady = readinessScore >= 75;
+
+    const s = (v: boolean, t: boolean, _a: boolean, _p: boolean): StepStatus =>
+      v ? "done" : t ? "active" : "pending";
+
+    return [
+      {
+        label: "Resume Analysis",
+        status: s(isResumeUploaded, true, false, false),
+        meta: "Complete",
+      },
+      {
+        label: "Technical Proficiency",
+        status: s(isTechDone, isResumeUploaded, false, false),
+        meta: isTechDone ? "Verified" : "Current focus",
+      },
+      {
+        label: "Behavioral Alignment",
+        status: s(isBehavioralDone, isTechDone, false, false),
+        meta: isBehavioralDone ? "Refined" : "Next up",
+      },
+      {
+        label: "Role Readiness Decision",
+        status: s(isReady, isBehavioralDone, false, false),
+        meta: isReady ? "Certified" : "Goal",
+      },
+    ] as { label: string; status: StepStatus; meta: string }[];
+  }, [hasResume, completed, readinessScore]);
+
   return (
-    <div style={{ position: "relative" }}>
-      <div style={{ position: "relative" }}>
-        <UploadResumeModal
-          open={showUpload}
-          onClose={() => setShowUpload(false)}
-        />
-        <ResumePreview
-          resumeId={previewResumeId}
-          open={!!previewResumeId}
-          onClose={() => setPreviewResumeId(null)}
-        />
+    <div className="db-container">
+      <UploadResumeModal
+        open={showUpload}
+        onClose={() => setShowUpload(false)}
+      />
+      <ResumePreview
+        resumeId={previewResumeId}
+        open={!!previewResumeId}
+        onClose={() => setPreviewResumeId(null)}
+      />
 
-        <div
-          className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-10"
-          style={{ maxWidth: "960px", margin: "0 auto" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "32px",
-              minWidth: 0,
-            }}
-          >
-            {completed.length >= 4 && (
-              <IdentityProfileCard
-                traits={
-                  identityTraits as
-                    | import("../constants/signals").IdentityTraits
-                    | null
-                }
-                completedCount={completed.length}
-              />
-            )}
+      <div className="db-layout">
+        <Sidebar completedCount={completed.length} />
 
-            <ReadinessHero
-              user={user}
-              totalSessions={totalSessions}
-              readinessScore={readinessScore}
-              interviews={interviews}
-            />
+        <main className="db-main">
+          <div className="db-title-row">
+            <div className="db-title-text">
+              <h1>Evaluation board</h1>
+              <p>Your performance indicators and signal tracks.</p>
+            </div>
 
-            {totalSessions > 0 && (
-              <div
-                style={{ height: "1px", background: "var(--color-border)" }}
-              />
-            )}
+            <div className="db-quick-stats">
+              <div className="db-quick-stat">
+                <div className="db-quick-stat-content">
+                  <span className="db-quick-stat-label">Readiness</span>
+                  <span className="db-quick-stat-value">
+                    {readinessScore > 0 ? `${readinessScore}%` : "\u2014"}
+                  </span>
+                  {readinessScore > 0 && (
+                    <span className="db-quick-stat-badge green">Positive</span>
+                  )}
+                </div>
+              </div>
 
-            <AiCoachCard
-              summary={latestSummary}
-              totalSessions={totalSessions}
-            />
+              <div className="db-quick-stat-divider" />
 
-            {mostRecent && (
-              <SessionStrip
-                mostRecent={mostRecent}
-                onViewResume={setPreviewResumeId}
-              />
-            )}
+              <div className="db-quick-stat">
+                <div className="db-quick-stat-content">
+                  <span className="db-quick-stat-label">Sessions</span>
+                  <span className="db-quick-stat-value">
+                    {String(totalSessions).padStart(2, "0")}
+                  </span>
+                  <span className="db-quick-stat-badge purple">
+                    {totalSessions > 0 ? "Active" : "New"}
+                  </span>
+                </div>
+              </div>
 
-            {completed.length > 1 && <TrendsSection completed={completed} />}
+              <div className="db-quick-stat-divider" />
 
-            {completed.length >= 4 && (
-              <FailurePatternCard
-                patterns={
-                  normalizedPatterns as import("../constants/signals").FailurePattern[]
-                }
-                completedCount={completed.length}
-              />
-            )}
-
-            {latestSummary && <WeaknessDetection summary={latestSummary} />}
-
-            {completed.length > 0 && latestSummary && (
-              <InterviewerRemembers
-                summary={latestSummary}
-                totalSessions={totalSessions}
-              />
-            )}
-
-            {latestSummary && <RoleRecommendations summary={latestSummary} />}
-
-            {completed.length > 0 && (
-              <PastSessionsTable completed={completed} />
-            )}
-
-            {!isLoading && interviews.length === 0 && (
-              <EmptyState onUpload={() => setShowUpload(true)} />
-            )}
-
-            {completed.length > 0 && (
-              <motion.div whileHover={{ x: 2 }} transition={{ duration: 0.15 }}>
-                <Link
-                  to="/feedback"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "14px 20px",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-bg-card)",
-                    textDecoration: "none",
-                    transition: "border-color 0.15s, background 0.15s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor =
-                      "var(--app-accent-border, rgba(184,168,138,0.3))";
-                    e.currentTarget.style.background = "var(--color-bg-hover)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "var(--color-border)";
-                    e.currentTarget.style.background = "var(--color-bg-card)";
-                  }}
-                >
-                  <div style={{ flex: 1 }}>
-                    <p
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: 500,
-                        color: "var(--color-text)",
-                        margin: 0,
-                        letterSpacing: "-0.01em",
-                      }}
-                    >
-                      Share your thoughts
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "11px",
-                        color: "var(--color-text-muted)",
-                        margin: "2px 0 0",
-                      }}
-                    >
-                      Help us improve Evalio with your feedback
-                    </p>
-                  </div>
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    stroke="var(--color-text-muted)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 3l4 4-4 4" />
-                  </svg>
-                </Link>
-              </motion.div>
-            )}
+              <div className="db-quick-stat">
+                <div className="db-quick-stat-content">
+                  <span className="db-quick-stat-label">Focus Areas</span>
+                  <span className="db-quick-stat-value">
+                    {failurePatterns.length > 0
+                      ? String(failurePatterns.length).padStart(2, "0")
+                      : "00"}
+                  </span>
+                  <span className="db-quick-stat-badge orange">
+                    {failurePatterns.length > 0 ? "Attention" : "Stable"}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="lg:sticky lg:top-6 self-start">
-            <SidebarRight
-              interviews={interviews}
-              completed={completed}
-              comparison={comparison}
-              milestones={milestones}
+          <Hero completed={completed} interviews={interviews} />
+
+          <div className="db-columns">
+            <Signals
+              completedCount={completed.length}
+              traits={traits}
+              failurePatterns={failurePatterns}
+              mostImproved={mostImproved}
+              weakest={weakest}
+            />
+            <Coach
+              latestSummary={latestSummary}
+              funnelSteps={funnelSteps}
+              commonPatterns={commonPatterns}
             />
           </div>
-        </div>
+
+          <History completed={completed} />
+        </main>
       </div>
     </div>
   );

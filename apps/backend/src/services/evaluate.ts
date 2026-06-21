@@ -141,7 +141,7 @@ Also analyze the candidate's resume briefly — what are its strongest points (r
 async function generateEvaluation(
   prompt: string,
 ): Promise<EvaluationResult | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = Bun.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY env not set");
 
   const ai = new GoogleGenAI({ apiKey });
@@ -336,4 +336,210 @@ export async function evaluateInterview(interviewId: string, _retries = 1) {
   );
 
   return { evaluation: result, summary: null };
+}
+
+// ── DSA Evaluation ──
+
+interface DsaEvaluationResult {
+  overallScore: number;
+  summary: string;
+  keyStrengths: string[];
+  areasForImprovement: string[];
+  attempts: Array<{
+    index: number;
+    score: number;
+    feedback: string;
+    complexity: string;
+    strengths: string[];
+    weaknesses: string[];
+  }>;
+}
+
+const DSA_EVALUATION_SCHEMA = {
+  type: "object",
+  properties: {
+    overallScore: {
+      type: "number",
+      description: "Overall DSA score 0-100 weighted across questions",
+    },
+    summary: { type: "string", description: "Overall DSA performance summary" },
+    keyStrengths: {
+      type: "array",
+      items: { type: "string" },
+      description: "Top 3-5 strengths",
+    },
+    areasForImprovement: {
+      type: "array",
+      items: { type: "string" },
+      description: "Top 3-5 areas to improve",
+    },
+    attempts: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          index: { type: "number" },
+          score: { type: "number", description: "Score 0-100" },
+          feedback: {
+            type: "string",
+            description: "Detailed evaluation feedback",
+          },
+          complexity: {
+            type: "string",
+            description: "Time and space complexity achieved",
+          },
+          strengths: { type: "array", items: { type: "string" } },
+          weaknesses: { type: "array", items: { type: "string" } },
+        },
+        required: [
+          "index",
+          "score",
+          "feedback",
+          "complexity",
+          "strengths",
+          "weaknesses",
+        ],
+      },
+    },
+  },
+  required: ["overallScore", "summary", "keyStrengths", "areasForImprovement"],
+};
+
+async function generateDsaEvaluation(
+  prompt: string,
+): Promise<DsaEvaluationResult | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY env not set");
+
+  const ai = new GoogleGenAI({ apiKey });
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: {
+          responseMimeType: "application/json",
+          responseJsonSchema: DSA_EVALUATION_SCHEMA,
+        },
+      });
+
+      const text = response.text;
+      if (!text) {
+        console.warn(`[dsa-evaluate] empty response, attempt ${attempt + 1}`);
+        throw new Error("No response from Gemini");
+      }
+
+      return JSON.parse(text) as DsaEvaluationResult;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `[dsa-evaluate] attempt ${attempt + 1}/2 failed: ${message}`,
+      );
+      if (attempt < 1) {
+        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+      }
+    }
+  }
+
+  return null;
+}
+
+export async function evaluateDsaSession(interviewId: string) {
+  try {
+    const dsaSession = await prisma.dsaSession.findUnique({
+      where: { interviewId },
+      include: {
+        problems: { orderBy: { index: "asc" } },
+      },
+    });
+
+    if (!dsaSession) {
+      console.warn(
+        `[dsa-evaluate] no DSA session for interview ${interviewId}`,
+      );
+      return;
+    }
+
+    if (dsaSession.status === "EVALUATED") return;
+
+    const problems = dsaSession.problems;
+    const problemBlocks = problems
+      .map((p, i) => `Question ${i + 1}: ${p.title} (${p.difficulty})`)
+      .join("\n");
+
+    const attemptBlocks = problems
+      .map(
+        (p) =>
+          `Attempt ${p.index + 1}:
+- Phases completed: ${p.phasesCompleted.join(", ") || "none"}
+- Time taken: ${p.timeTaken ? `${p.timeTaken}s` : "N/A"}
+- Code: ${p.code ? `\`\`\`\n${p.code.slice(0, 2000)}\n\`\`\`` : "No code submitted"}`,
+      )
+      .join("\n\n");
+
+    const prompt = `Evaluate the candidate's DSA coding interview performance.
+
+## Questions
+${problemBlocks}
+
+## Attempts
+${attemptBlocks}
+
+## Evaluation Criteria
+Score each question 0-100 based on:
+- **Problem Understanding** (20%): Did they clarify requirements and edge cases?
+- **Approach** (25%): Did they discuss brute force and optimize?
+- **Implementation** (30%): Did they write correct, clean code?
+- **Testing** (10%): Did they verify with test cases?
+- **Communication** (15%): Did they explain their thinking clearly?
+
+Provide specific, actionable feedback for each question. Return ONLY valid JSON matching the schema.`;
+
+    const result = await generateDsaEvaluation(prompt);
+    if (!result) {
+      console.error(
+        `[dsa-evaluate] evaluation failed for interview ${interviewId}`,
+      );
+      return;
+    }
+
+    // Update each problem with score and feedback
+    await Promise.all(
+      result.attempts.map((a) =>
+        prisma.dsaProblem.updateMany({
+          where: { dsaSessionId: dsaSession.id, index: a.index },
+          data: {
+            score: a.score,
+            feedback: a.feedback,
+            complexity: a.complexity,
+          },
+        }),
+      ),
+    );
+
+    // Update session with overall score and mark as evaluated
+    await prisma.dsaSession.update({
+      where: { id: dsaSession.id },
+      data: {
+        status: "EVALUATED",
+      },
+    });
+
+    // Store overall scores on the interview session
+    await prisma.interviewSession.update({
+      where: { id: interviewId },
+      data: {
+        overallScore: result.overallScore,
+        technicalScore: result.overallScore,
+        problemSolvingScore: result.overallScore,
+      },
+    });
+
+    console.log(
+      `[dsa-evaluate] completed for interview ${interviewId}: ${result.overallScore}/100`,
+    );
+  } catch (err) {
+    console.error(`[dsa-evaluate] error:`, err);
+  }
 }

@@ -111,10 +111,6 @@ export function LandingPricing() {
         transition={{ duration: 0.8 }}
         className="relative z-10 max-w-lg mb-16"
       >
-        <span className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-faint)] mb-8">
-          <span className="w-8 h-px bg-[var(--landing-line)]" aria-hidden />
-          Chapter V · The investment
-        </span>
         <h2 className="landing-display text-[clamp(1.85rem,3.8vw,2.85rem)] leading-[1.08] tracking-[-0.03em] text-[var(--landing-fg)]">
           Free to{" "}
           <span className="landing-serif italic text-[var(--landing-fg-muted)]">

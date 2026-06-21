@@ -1,42 +1,46 @@
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { motion } from "motion/react"
-import { loginSchema, type LoginInput } from "@evalio/shared"
-import { useLogin } from "../lib/auth"
-import { AuthLayout } from "@/components/static/AuthLayout"
-import { usePageTitle } from "@/lib/usePageTitle"
-import toast from "react-hot-toast"
+import { useState } from "react";
+import { Link, useNavigate, Navigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "motion/react";
+import { loginSchema, type LoginInput } from "@evalio/shared";
+import { useLogin, useSession } from "../lib/auth";
+import { AuthLayout } from "@/components/static/AuthLayout";
+import { usePageTitle } from "@/lib/usePageTitle";
+import toast from "react-hot-toast";
 
 export function LoginPage() {
-  usePageTitle("Sign In")
-  const navigate = useNavigate()
-  const loginMutation = useLogin()
-  const [showPassword, setShowPassword] = useState(false)
+  usePageTitle("Sign In");
+  const navigate = useNavigate();
+  const loginMutation = useLogin();
+  const { data: session, isLoading } = useSession();
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
-  })
+  });
 
   const onSubmit = (data: LoginInput) => {
     loginMutation.mutate(data, {
       onSuccess: () => {
-        toast.success("Welcome back!")
-        navigate("/dashboard")
+        toast.success("Welcome back!");
+        navigate("/dashboard");
       },
       onError: (err) => {
-        const msg = err.message
-        toast.error(msg)
+        const msg = err.message;
+        toast.error(msg);
         if (msg.includes("verify your email")) {
-          navigate(`/verify-otp?email=${encodeURIComponent(data.email)}`)
+          navigate(`/verify-otp?email=${encodeURIComponent(data.email)}`);
         }
       },
-    })
-  }
+    });
+  };
+
+  if (isLoading) return null;
+  if (session) return <Navigate to="/dashboard" replace />;
 
   return (
     <AuthLayout variant="login">
@@ -62,9 +66,14 @@ export function LoginPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="static-auth-card space-y-5">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="static-auth-card space-y-5"
+        >
           <div>
-            <label htmlFor="email" className="static-label">Email</label>
+            <label htmlFor="email" className="static-label">
+              Email
+            </label>
             <input
               id="email"
               type="email"
@@ -72,10 +81,16 @@ export function LoginPage() {
               className="static-input"
               {...register("email")}
             />
-            {errors.email && <p className="mt-1 text-[12px] text-red-400">{errors.email.message}</p>}
+            {errors.email && (
+              <p className="mt-1 text-[12px] text-red-400">
+                {errors.email.message}
+              </p>
+            )}
           </div>
           <div>
-            <label htmlFor="password" className="static-label">Password</label>
+            <label htmlFor="password" className="static-label">
+              Password
+            </label>
             <div className="relative">
               <input
                 id="password"
@@ -93,7 +108,11 @@ export function LoginPage() {
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
-            {errors.password && <p className="mt-1 text-[12px] text-red-400">{errors.password.message}</p>}
+            {errors.password && (
+              <p className="mt-1 text-[12px] text-red-400">
+                {errors.password.message}
+              </p>
+            )}
           </div>
           <div className="flex items-center justify-end -mt-2">
             <Link
@@ -112,12 +131,15 @@ export function LoginPage() {
           </button>
           <p className="text-center text-[13px] text-[var(--landing-fg-faint)]">
             No account?{" "}
-            <Link to="/signup" className="text-[var(--landing-accent)] hover:underline">
+            <Link
+              to="/signup"
+              className="text-[var(--landing-accent)] hover:underline"
+            >
               Create one
             </Link>
           </p>
         </form>
       </motion.div>
     </AuthLayout>
-  )
+  );
 }

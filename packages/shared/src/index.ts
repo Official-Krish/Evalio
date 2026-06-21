@@ -74,6 +74,8 @@ export const interviewDepthSchema = z.enum([
 ]);
 
 // ── Interview ──
+export const interviewModeSchema = z.enum(["VOICE", "DSA"]);
+
 export const createInterviewSchema = z.object({
   position: z.string().min(1),
   resumeId: z.string().optional(),
@@ -85,6 +87,8 @@ export const createInterviewSchema = z.object({
   interviewRound: z.string().optional(),
   interviewStyle: interviewStyleSchema.optional(),
   interviewDepth: interviewDepthSchema.optional(),
+  mode: interviewModeSchema.optional(),
+  language: z.string().optional(),
 });
 
 export const interviewStatusSchema = z.enum([
@@ -116,6 +120,7 @@ export type CreateInterviewInput = z.infer<typeof createInterviewSchema>;
 export type InterviewStatus = z.infer<typeof interviewStatusSchema>;
 export type InterviewStyle = z.infer<typeof interviewStyleSchema>;
 export type InterviewDepth = z.infer<typeof interviewDepthSchema>;
+export type InterviewMode = z.infer<typeof interviewModeSchema>;
 
 export type UserRole = "FREE" | "PRO" | "ADMIN";
 
@@ -130,6 +135,7 @@ export interface InterviewSession {
   id: string;
   userId: string;
   status: InterviewStatus;
+  mode: InterviewMode;
   position: string | null;
   jobDescription: string | null;
   overallScore: number | null;
@@ -160,6 +166,9 @@ export interface InterviewTurn {
   score: number | null;
   feedback: string | null;
   createdAt: Date;
+  questionStartMs?: number | null;
+  answerStartMs?: number | null;
+  answerEndMs?: number | null;
 }
 
 export interface InterviewSummary {

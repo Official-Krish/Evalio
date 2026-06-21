@@ -86,7 +86,7 @@ export function LandingStyles() {
         transition={{ duration: 0.8 }}
         className="relative z-10 max-w-lg mb-16"
       >
-        <span className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-faint)] mb-8">
+        <span className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-[var(--landing-fg-muted)] mb-8">
           <span className="w-8 h-px bg-[var(--landing-line)]" aria-hidden />
           Chapter IV · The voice
         </span>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "motion/react";
@@ -8,7 +8,7 @@ import {
   passwordRequirements,
   type SignupInput,
 } from "@evalio/shared";
-import { useSignup } from "../lib/auth";
+import { useSignup, useSession } from "../lib/auth";
 import { AuthLayout } from "@/components/static/AuthLayout";
 import { usePageTitle } from "@/lib/usePageTitle";
 import toast from "react-hot-toast";
@@ -17,6 +17,7 @@ export function SignupPage() {
   usePageTitle("Create Account");
   const navigate = useNavigate();
   const signupMutation = useSignup();
+  const { data: session, isLoading } = useSession();
   const [showPassword, setShowPassword] = useState(false);
   const {
     register,
@@ -41,6 +42,9 @@ export function SignupPage() {
       onError: (err) => toast.error(err.message),
     });
   };
+
+  if (isLoading) return null;
+  if (session) return <Navigate to="/dashboard" replace />;
 
   return (
     <AuthLayout variant="signup">

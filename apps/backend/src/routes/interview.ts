@@ -90,6 +90,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
               data: {
                 userId: user.id,
                 status: "CREATED",
+                mode: (body.mode as "VOICE" | "DSA") ?? "VOICE",
                 position: body.position,
                 jobDescription: body.jobDescription,
                 resumeId: resume.id,
@@ -136,6 +137,13 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
                   BAR_RAISER: "BAR_RAISER",
                 }),
               ),
+              mode: t.Optional(
+                t.Enum({
+                  VOICE: "VOICE",
+                  DSA: "DSA",
+                }),
+              ),
+              language: t.Optional(t.String()),
             }),
           },
         ),
@@ -161,6 +169,11 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
             turns: { orderBy: { createdAt: "asc" } },
             summary: true,
             resume: { select: { id: true, version: true, objectKey: true } },
+            dsaSession: {
+              include: {
+                problems: { orderBy: { index: "asc" } },
+              },
+            },
           },
         });
         if (!interview || interview.userId !== user.id) {
@@ -175,7 +188,34 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
                 : null,
             }
           : null;
-        return { interview: { ...interview, resume: mappedResume } };
+
+        const scoredInterviews = await prisma.interviewSession.findMany({
+          where: {
+            userId: user.id,
+            status: "COMPLETED",
+            overallScore: { not: null },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { overallScore: true },
+        });
+        const scores = scoredInterviews.map((i) => i.overallScore!).reverse();
+        const scoreTrendLast5: "improving" | "stable" | "declining" | null =
+          scores.length < 2
+            ? null
+            : scores[scores.length - 1]! > scores[0]! + 5
+              ? "improving"
+              : scores[scores.length - 1]! < scores[0]! - 5
+                ? "declining"
+                : "stable";
+
+        return {
+          interview: {
+            ...interview,
+            resume: mappedResume,
+            scoreTrendLast5,
+          },
+        };
       })
       .patch(
         "/:id",
@@ -196,18 +236,6 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
                 startedAt: body.startedAt,
               }),
               ...(body.endedAt !== undefined && { endedAt: body.endedAt }),
-              ...(body.overallScore !== undefined && {
-                overallScore: body.overallScore,
-              }),
-              ...(body.communicationScore !== undefined && {
-                communicationScore: body.communicationScore,
-              }),
-              ...(body.technicalScore !== undefined && {
-                technicalScore: body.technicalScore,
-              }),
-              ...(body.problemSolvingScore !== undefined && {
-                problemSolvingScore: body.problemSolvingScore,
-              }),
               ...(body.durationSeconds !== undefined && {
                 durationSeconds: body.durationSeconds,
               }),
@@ -228,10 +256,6 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
             ),
             startedAt: t.Optional(t.Nullable(t.Date())),
             endedAt: t.Optional(t.Nullable(t.Date())),
-            overallScore: t.Optional(t.Nullable(t.Number())),
-            communicationScore: t.Optional(t.Nullable(t.Number())),
-            technicalScore: t.Optional(t.Nullable(t.Number())),
-            problemSolvingScore: t.Optional(t.Nullable(t.Number())),
             durationSeconds: t.Optional(t.Nullable(t.Number())),
           }),
         },

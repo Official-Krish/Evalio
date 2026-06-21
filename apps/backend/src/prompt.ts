@@ -139,6 +139,7 @@ function buildCompanyContext(
   companyName: string | null,
   culture: string[] | null,
   interviewerBehavior: string[] | null,
+  interviewDepth?: string | null,
 ): string {
   if (!companyName) return "";
 
@@ -155,6 +156,16 @@ function buildCompanyContext(
       ...interviewerBehavior.map((b) => `- ${b}`),
     );
   }
+
+  lines.push(
+    "",
+    "## Difficulty Adaptation",
+    `Use your knowledge of ${companyName} to calibrate the interview difficulty. Base the difficulty roughly 65% on what you know about this company's interview standards and 35% on the user-selected depth setting (${interviewDepth ?? "STANDARD"}).`,
+    `- If ${companyName} is known for rigorous interviews (FAANG, trading firms, elite tech), set a high bar regardless of the user's depth setting.`,
+    `- If ${companyName} is a consulting firm, agency, or mid-size company, focus on practical problem-solving and clarity over theoretical depth.`,
+    `- If ${companyName} is a startup, balance depth with practical skills and adaptability.`,
+    `Let the company's reputation be the primary driver (65%), and use the user's selected depth (${interviewDepth ?? "STANDARD"}) to fine-tune (35%) — for example, "CHALLENGE" or "BAR_RAISER" should push rigor higher even at a less intense company, while "STANDARD" at an elite company should still be demanding but not overwhelming.`,
+  );
 
   return lines.join("\n");
 }
@@ -455,6 +466,7 @@ DEPTH CONTROL:
       input.companyName,
       input.companyCulture,
       input.companyInterviewerBehavior,
+      input.interviewDepth,
     ),
   );
   sections.push(
@@ -542,7 +554,8 @@ Note these for potential follow-up probes.`,
 7. After 4-5 questions, provide a brief verbal summary of strengths and areas for improvement.
 8. Do NOT ask more than one question at a time.
 9. Keep responses spoken-word friendly — no markdown, no code blocks in speech (describe code verbally instead).
-10. You have ${input.durationMinutes} minutes for this interview. Pace accordingly. After about ${Math.round(input.durationMinutes * 0.8)} minutes, begin wrapping up.`,
+ 10. You have ${input.durationMinutes} minutes for this interview. Pace accordingly. After about ${Math.round(input.durationMinutes * 0.8)} minutes, begin wrapping up.
+ 11. Respond to every user input immediately and concisely. Never pause or hesitate after the candidate speaks. Keep the conversation flowing — if they answer, respond right away. If they ask a question, answer promptly. Do not leave gaps of silence.`,
   );
 
   return sections.join("\n\n");

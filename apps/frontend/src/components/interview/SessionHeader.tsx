@@ -1,27 +1,32 @@
-type SessionPhase = "connecting" | "ready" | "ai_speaking" | "user_speaking" | "ended"
+type SessionPhase =
+  | "connecting"
+  | "ready"
+  | "ai_speaking"
+  | "user_speaking"
+  | "ended";
 
 interface SessionHeaderProps {
-  position: string | null
-  duration: number
-  phase: SessionPhase
-  timeLimit: number | null
-  remainingMs: number | null
-  companyName?: string | null
-  interviewStyle?: string | null
-  interviewDepth?: string | null
+  position: string | null;
+  duration: number;
+  phase: SessionPhase;
+  timeLimit: number | null;
+  remainingMs: number | null;
+  companyName?: string | null;
+  interviewStyle?: string | null;
+  interviewDepth?: string | null;
 }
 
 function formatDuration(seconds: number) {
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
 function formatMs(ms: number) {
-  const totalSec = Math.ceil(ms / 1000)
-  const m = Math.floor(totalSec / 60)
-  const s = totalSec % 60
-  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+  const totalSec = Math.ceil(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
 const PHASE_LABEL: Record<SessionPhase, string> = {
@@ -30,11 +35,38 @@ const PHASE_LABEL: Record<SessionPhase, string> = {
   ai_speaking: "Interviewer",
   user_speaking: "You're live",
   ended: "Ended",
-}
+};
 
-export function SessionHeader({ position, duration, phase, timeLimit, remainingMs, companyName, interviewStyle, interviewDepth }: SessionHeaderProps) {
-  const styleLabel = interviewStyle === "SUPPORTIVE" ? "Supportive" : interviewStyle === "PROFESSIONAL" ? "Professional" : interviewStyle === "CHALLENGING" ? "Challenging" : interviewStyle === "BAR_RAISER" ? "Bar Raiser" : null
-  const depthLabel = interviewDepth === "STANDARD" ? "Standard" : interviewDepth === "PROBING" ? "Probing" : interviewDepth === "CHALLENGE" ? "Challenge" : interviewDepth === "BAR_RAISER" ? "Bar Raiser" : null
+export function SessionHeader({
+  position,
+  duration,
+  phase,
+  timeLimit,
+  remainingMs,
+  companyName,
+  interviewStyle,
+  interviewDepth,
+}: SessionHeaderProps) {
+  const styleLabel =
+    interviewStyle === "SUPPORTIVE"
+      ? "Supportive"
+      : interviewStyle === "PROFESSIONAL"
+        ? "Professional"
+        : interviewStyle === "CHALLENGING"
+          ? "Challenging"
+          : interviewStyle === "BAR_RAISER"
+            ? "Bar Raiser"
+            : null;
+  const depthLabel =
+    interviewDepth === "STANDARD"
+      ? "Standard"
+      : interviewDepth === "PROBING"
+        ? "Probing"
+        : interviewDepth === "CHALLENGE"
+          ? "Challenge"
+          : interviewDepth === "BAR_RAISER"
+            ? "Bar Raiser"
+            : null;
 
   return (
     <header className="interview-session-header">
@@ -51,7 +83,7 @@ export function SessionHeader({ position, duration, phase, timeLimit, remainingM
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           {companyName && (
-            <span className="text-[10px] tracking-[0.06em] text-[#818CF8] border border-[rgba(99,102,241,0.3)] px-2 py-0.5 rounded">
+            <span className="text-[10px] tracking-[0.06em] text-[var(--app-accent,#b8a88a)] border border-[rgba(184,168,138,0.3)] px-2 py-0.5 rounded">
               {companyName}
             </span>
           )}
@@ -80,5 +112,5 @@ export function SessionHeader({ position, duration, phase, timeLimit, remainingM
         )}
       </div>
     </header>
-  )
+  );
 }

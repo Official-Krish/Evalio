@@ -1,5 +1,5 @@
 import tailwind from "bun-plugin-tailwind";
-import { rm } from "node:fs/promises";
+import { rm, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const outdir = path.join(process.cwd(), "dist");
@@ -26,3 +26,9 @@ await Bun.build({
     __WS_HOST__: JSON.stringify(process.env.VITE_WS_HOST || "localhost:8080"),
   },
 });
+
+// Make all asset paths absolute so they work on any sub-route after refresh.
+const htmlPath = path.join(outdir, "index.html");
+let html = await readFile(htmlPath, "utf-8");
+html = html.replace(/(src|href)="(?:\.\/)?(?!\/|https?:\/\/|data:)/g, '$1="/');
+await writeFile(htmlPath, html);
