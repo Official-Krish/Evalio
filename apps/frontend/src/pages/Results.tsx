@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
@@ -47,6 +47,34 @@ export function ResultsPage() {
   const queryClient = useQueryClient();
   const [evalStuck, setEvalStuck] = useState(false);
   const [retryingEval, setRetryingEval] = useState(false);
+
+  const prevEvalRef = useRef(evalStatus?.status);
+
+  useEffect(() => {
+    const prev = prevEvalRef.current;
+    prevEvalRef.current = evalStatus?.status;
+    if (prev === "pending" && evalStatus?.status === "completed") {
+      toast.success(
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <span style={{ fontWeight: 500, fontSize: "14px" }}>
+            Evaluation complete!
+          </span>
+          <Link
+            to="/analysis"
+            style={{
+              fontSize: "12px",
+              textDecoration: "underline",
+              opacity: 0.8,
+            }}
+            onClick={() => toast.dismiss()}
+          >
+            View cross-session analysis &rarr;
+          </Link>
+        </div>,
+        { duration: 8000 },
+      );
+    }
+  }, [evalStatus?.status]);
 
   useEffect(() => {
     if (evalStatus?.status !== "pending") return;

@@ -227,9 +227,6 @@ export function NewInterviewPage() {
     mutationFn: api.createInterview,
     onSuccess: (data) => {
       toast.success("Interview created!");
-      if (interviewMode === "DSA") {
-        sessionStorage.setItem("dsa_language", "cpp");
-      }
       navigate(`/interview/${data.interview.id}`);
     },
     onError: (err: Error) => {

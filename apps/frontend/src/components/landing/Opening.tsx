@@ -32,14 +32,8 @@ export function Opening() {
       {/* Ambient dot grid — subtle texture across the full viewport */}
       <div className="opening-dot-grid" aria-hidden />
 
-      {/* Dual aurora glows — warm gold top-left, cool violet bottom-right */}
-      <div className="opening-aurora" aria-hidden />
-
-      {/* Radial vignette to soften edges */}
-      <div className="opening-vignette" aria-hidden />
-
-      {/* Scrim for text readability */}
-      <div className="opening-scrim" aria-hidden />
+      {/* Combined atmosphere — aurora glow + vignette + scrim in one layer */}
+      <div className="opening-atmosphere" aria-hidden />
 
       {/* Corner ticks — editorial framing */}
       <div className="opening-corners" aria-hidden>

@@ -4,6 +4,15 @@ import type {
   InterviewDepth,
   InterviewMode,
 } from "@evalio/shared";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  IconBuildingSkyscraper,
+  IconBriefcase,
+  IconGitCommit,
+  IconFingerprint,
+  IconSettings,
+  IconRadio,
+} from "@tabler/icons-react";
 
 interface SessionSummaryProps {
   companyId: string | null;
@@ -46,96 +55,110 @@ export function SessionSummary({
       : null;
 
   const selections = [
-    { label: "Company", value: company?.name ?? companyName ?? "—" },
-    { label: "Role", value: (roleTitle ?? customRole) || "—" },
-    { label: "Round", value: interviewRound || "—" },
-    { label: "Style", value: styleLabel[interviewStyle] },
-    { label: "Depth", value: depthLabel[interviewDepth] },
+    {
+      label: "Company",
+      value: company?.name ?? companyName ?? "—",
+      icon: IconBuildingSkyscraper,
+    },
+    {
+      label: "Role / Position",
+      value: (roleTitle ?? customRole) || "—",
+      icon: IconBriefcase,
+    },
+    {
+      label: "Interview Round",
+      value: interviewRound || "—",
+      icon: IconGitCommit,
+    },
+    {
+      label: "AI Interviewer Style",
+      value: styleLabel[interviewStyle],
+      icon: IconFingerprint,
+    },
+    {
+      label: "Technical Depth",
+      value: depthLabel[interviewDepth],
+      icon: IconSettings,
+    },
   ];
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="sticky top-[190px] rounded-2xl border border-white/[0.04] p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden"
       style={{
-        position: "sticky",
-        top: "50%",
-        transform: "translateY(-50%)",
-        borderRadius: "14px",
-        border: "1px solid var(--color-border-light)",
-        background: "var(--color-bg-elevated)",
-        padding: "20px",
+        background:
+          "linear-gradient(135deg, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0.03) 100%), var(--color-bg-card, rgba(18,18,18,0.6))",
       }}
     >
-      <p
+      {/* Decorative gradient light reflection */}
+      <div
+        className="absolute -top-10 -left-10 w-24 h-24 rounded-full pointer-events-none filter blur-[32px] opacity-15"
         style={{
-          fontSize: "10px",
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          color: "var(--color-text-muted)",
-          margin: "0 0 16px",
+          background:
+            "radial-gradient(circle, var(--color-accent, #b8a88a) 0%, transparent 70%)",
         }}
-      >
-        Session Summary
-      </p>
+      />
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        {selections.map((s) => (
-          <div key={s.label}>
-            <p
-              style={{
-                fontSize: "10px",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "var(--color-text-tertiary)",
-                margin: "0 0 2px",
-              }}
+      <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--color-text-muted)] block mb-5 font-semibold">
+        Session Configurations
+      </span>
+
+      <div className="flex flex-col gap-4">
+        {selections.map((s) => {
+          const Icon = s.icon;
+          const isPlaceholder = s.value === "—";
+          return (
+            <div
+              key={s.label}
+              className="p-3 rounded-xl border border-white/[0.02] bg-white/[0.005] hover:bg-white/[0.01] transition-all duration-300"
             >
-              {s.label}
-            </p>
-            <p
-              style={{
-                fontSize: "13px",
-                fontWeight: 500,
-                color:
-                  s.value === "—"
-                    ? "var(--color-text-tertiary)"
-                    : "var(--color-text)",
-                margin: 0,
-                lineHeight: 1.3,
-              }}
-            >
-              {s.value}
-              {s.label === "Round" && interviewMode === "DSA" && (
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "3px",
-                    marginLeft: "6px",
-                    fontSize: "8px",
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: "var(--color-accent)",
-                    border: "1px solid var(--color-accent-border)",
-                    borderRadius: 2,
-                    padding: "0 4px",
-                    lineHeight: "13px",
-                    verticalAlign: "middle",
-                  }}
-                >
-                  <span
-                    className="w-1 h-1 rounded-full"
-                    style={{
-                      background: "var(--color-accent)",
-                      display: "inline-block",
-                    }}
-                  />
-                  Live
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Icon
+                  size={12}
+                  className="text-[var(--color-text-muted)] opacity-60"
+                />
+                <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--color-text-muted)]">
+                  {s.label}
                 </span>
-              )}
-            </p>
-          </div>
-        ))}
+              </div>
+
+              <div className="flex items-center justify-between min-w-0">
+                <div className="text-[13px] font-medium leading-normal truncate min-w-0 flex items-center">
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={s.value}
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      transition={{ duration: 0.15 }}
+                      className={
+                        isPlaceholder
+                          ? "text-[var(--color-text-muted)] italic font-normal"
+                          : "text-[var(--color-text)]"
+                      }
+                    >
+                      {s.value}
+                    </motion.span>
+                  </AnimatePresence>
+
+                  {s.label === "Interview Round" && interviewMode === "DSA" && (
+                    <span className="inline-flex items-center gap-1 ml-2 text-[9px] font-mono font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 rounded px-1.5 py-0.5 align-middle shrink-0">
+                      <IconRadio
+                        size={10}
+                        className="text-emerald-400 animate-pulse fill-emerald-400/20"
+                      />
+                      Live Code
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
-    </div>
+    </motion.div>
   );
 }

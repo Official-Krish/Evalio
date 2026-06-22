@@ -139,6 +139,52 @@ export const api = {
     return data as { user: User };
   },
 
+  getOverallAnalysis: async () => {
+    const { data, error } = await client.api.analysis.get();
+    if (error) throw new Error(errorMessage(error.value));
+    return data as unknown as {
+      sessions: Array<{
+        id: string;
+        companyName: string | null;
+        roleTitle: string | null;
+        overallScore: number | null;
+        communicationScore: number | null;
+        technicalScore: number | null;
+        problemSolvingScore: number | null;
+        durationSeconds: number | null;
+        createdAt: string;
+        mode: string;
+        summary: {
+          strengths: string[];
+          weaknesses: string[];
+          improvementAreas: string[];
+          summary: string;
+        } | null;
+      }>;
+      skillProfile: Record<string, unknown> | null;
+    };
+  },
+
+  getAnalysis: async (id: string) => {
+    const { data, error } = await client.api.interview({ id }).analysis.get();
+    if (error) throw new Error(errorMessage(error.value));
+    return data as unknown as {
+      interview: Record<string, unknown>;
+      scoreHistory: Array<{
+        id: string;
+        companyName: string | null;
+        roleTitle: string | null;
+        overallScore: number | null;
+        communicationScore: number | null;
+        technicalScore: number | null;
+        problemSolvingScore: number | null;
+        date: string;
+        mode: string;
+      }>;
+      skillProfile: Record<string, unknown> | null;
+    };
+  },
+
   getSkillProfile: async () => {
     const { data, error } = await client.api.profile.skills.get();
     if (error) throw new Error(errorMessage(error.value));
@@ -240,10 +286,9 @@ export const api = {
     };
   },
 
-  startDsaSession: async (interviewId: string, language?: string) => {
+  startDsaSession: async (interviewId: string) => {
     const { data, error } = await client.api.dsa.start.post({
       interviewId,
-      language,
     });
     if (error) throw new Error(errorMessage(error.value));
     return data as unknown as { session: Record<string, unknown> };

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 
-export const EYE = [0.16, 1, 0.3, 1] as const; // easeOutExpo-ish
+const EYE = [0.16, 1, 0.3, 1] as const; // easeOutExpo-ish
 
 export type Direction = "left" | "right" | "up" | "down";
 

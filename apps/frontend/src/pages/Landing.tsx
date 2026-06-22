@@ -11,6 +11,7 @@ import { LandingEvaluation } from "@/components/landing/LandingEvaluation";
 import { IdentityEmergence } from "@/components/landing/IdentityEmergence";
 import { MemoryTimeline } from "@/components/landing/MemoryTimeline";
 import { DSACoding } from "@/components/landing/DSACoding";
+import { SystemDesignComingSoon } from "@/components/landing/SystemDesign";
 import { LandingPricing } from "@/components/landing/LandingPricing";
 import { Threshold } from "@/components/landing/Threshold";
 import { Footer } from "@/components/Footer";
@@ -37,6 +38,7 @@ export function LandingPage() {
         <Manifesto />
         <Presence />
         <DSACoding />
+        <SystemDesignComingSoon />
         <IdentityEmergence />
         <MemoryTimeline />
         <LandingCompanies />

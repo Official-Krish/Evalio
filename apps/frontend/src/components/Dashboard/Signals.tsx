@@ -102,7 +102,7 @@ export function Signals({
         <div className="db-section-header">
           <h3 className="db-section-label">Interview Identity Profile</h3>
           {completedCount >= 4 && (
-            <Link to="/profile" className="db-section-link">
+            <Link to="/analysis" className="db-section-link">
               <span>Full analysis</span>
               <IconChevronRight size={12} />
             </Link>

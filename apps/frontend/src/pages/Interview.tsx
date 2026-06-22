@@ -60,6 +60,7 @@ export function InterviewPage() {
   const socketRef = useRef<InterviewSocket | null>(null);
   const endedRef = useRef(false);
   const dsaLastTransitionRef = useRef(-1);
+  const dsaPendingRef = useRef<{ index?: number | null } | null>(null);
   const isDsaRef = useRef(false);
 
   const [isConnecting, setIsConnecting] = useState(true);
@@ -103,36 +104,64 @@ export function InterviewPage() {
   const { mutate: loadDsaSession } = useMutation({
     mutationFn: () => {
       setDsaLoading(true);
-      const storedLang = sessionStorage.getItem("dsa_language");
-      sessionStorage.removeItem("dsa_language");
-      return api.startDsaSession(id!, storedLang ?? undefined);
+      return api.startDsaSession(id!);
     },
     onSuccess: (data) => {
       setDsaLoading(false);
       const session = data.session as Record<string, unknown>;
       if (!session) return;
+      const currentIndex = (session.currentIndex as number) ?? 0;
+      const problems =
+        (session.problems as Array<{
+          id: string;
+          index: number;
+          title: string;
+          slug: string;
+          difficulty: string;
+          description: string;
+          code: string | null;
+          codeSnapshots: Record<string, string> | null;
+          currentPhase: string;
+          phasesCompleted: string[];
+        }>) ?? [];
       setDsaSessionData({
-        problems:
-          (session.problems as Array<{
-            id: string;
-            index: number;
-            title: string;
-            slug: string;
-            difficulty: string;
-            description: string;
-            code: string | null;
-            codeSnapshots: Record<string, string> | null;
-            currentPhase: string;
-            phasesCompleted: string[];
-          }>) ?? [],
-        currentIndex: (session.currentIndex as number) ?? 0,
-        language: (session.language as string) ?? "python",
+        problems,
+        currentIndex,
+        language: (session.language as string) ?? "javascript",
       });
-      const firstProblem = (
-        session.problems as Array<Record<string, unknown>> | undefined
-      )?.[0];
+      const firstProblem = problems[0];
       if (firstProblem) {
         setDsaCode((firstProblem.code as string) ?? "");
+      }
+      // Apply any pending transition that arrived before session data loaded
+      const pending = dsaPendingRef.current;
+      if (pending) {
+        dsaPendingRef.current = null;
+        const nextIdx = pending.index ?? currentIndex + 1;
+        if (
+          nextIdx < problems.length &&
+          nextIdx > dsaLastTransitionRef.current
+        ) {
+          dsaLastTransitionRef.current = nextIdx;
+          setDsaSessionData((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  currentIndex: nextIdx,
+                  problems: prev.problems.map((p, i) =>
+                    i === nextIdx
+                      ? {
+                          ...p,
+                          currentPhase: "understanding",
+                          phasesCompleted: [],
+                        }
+                      : p,
+                  ),
+                }
+              : prev,
+          );
+          setDsaCode("");
+        }
       }
     },
     onError: () => setDsaLoading(false),
@@ -173,7 +202,7 @@ export function InterviewPage() {
         sd.currentIndex,
         sd.problems[sd.currentIndex]?.currentPhase ?? "implementation",
       );
-    }, 10000);
+    }, 20000);
     return () => clearInterval(interval);
   }, [isDsa]);
 
@@ -192,7 +221,7 @@ export function InterviewPage() {
         sd.currentIndex,
         sd.problems[sd.currentIndex]?.currentPhase ?? "implementation",
       );
-    }, 25000);
+    }, 30000);
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
@@ -374,40 +403,6 @@ export function InterviewPage() {
           { role: "assistant", text: outputText, id: `ai-${Date.now()}` },
         ]);
 
-        // DSA: detect question transition directly from AI output
-        if (isDsaRef.current && outputText.includes("READY_FOR_NEXT")) {
-          const skipMatch = outputText.match(/READY_FOR_NEXT\s*[:－]\s*(\d+)/);
-          const targetIdx = skipMatch
-            ? Math.max(0, parseInt(skipMatch[1]!, 10) - 1)
-            : null;
-          flushSync(() => {
-            setDsaSessionData((prev) => {
-              if (!prev) return prev;
-              const nextIdx = targetIdx ?? prev.currentIndex + 1;
-              if (
-                nextIdx >= prev.problems.length ||
-                nextIdx <= dsaLastTransitionRef.current
-              )
-                return prev;
-              dsaLastTransitionRef.current = nextIdx;
-              return {
-                ...prev,
-                currentIndex: nextIdx,
-                problems: prev.problems.map((p, i) =>
-                  i === nextIdx
-                    ? {
-                        ...p,
-                        currentPhase: "understanding",
-                        phasesCompleted: [],
-                      }
-                    : p,
-                ),
-              };
-            });
-            setDsaCode("");
-          });
-        }
-
         // Detect AI signaling end-of-interview — auto-trigger closing
         if (outputText.includes("Thank you for interviewing with Evalio")) {
           autoEndPendingRef.current = true;
@@ -461,6 +456,10 @@ export function InterviewPage() {
 
     socket.on("dsa_ready_next", (data) => {
       const msg = data as { index?: number | null };
+      if (!sessionDataRef.current) {
+        dsaPendingRef.current = msg;
+        return;
+      }
       flushSync(() => {
         setDsaSessionData((prev) => {
           if (!prev) return prev;
@@ -468,8 +467,9 @@ export function InterviewPage() {
           if (
             nextIdx >= prev.problems.length ||
             nextIdx <= dsaLastTransitionRef.current
-          )
+          ) {
             return prev;
+          }
           dsaLastTransitionRef.current = nextIdx;
           return {
             ...prev,

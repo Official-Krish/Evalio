@@ -221,6 +221,7 @@ export function DashboardPage() {
               latestSummary={latestSummary}
               funnelSteps={funnelSteps}
               commonPatterns={commonPatterns}
+              completedCount={completed.length}
             />
           </div>
 

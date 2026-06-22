@@ -5,7 +5,7 @@ import { Ambient } from "../landing/Ambient";
 
 export function AppLayout() {
   const location = useLocation();
-  const isWidePage = ["/dashboard", "/profile"].some((p) =>
+  const isWidePage = ["/dashboard", "/profile", "/analysis"].some((p) =>
     location.pathname.startsWith(p),
   );
 

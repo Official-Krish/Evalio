@@ -66,8 +66,8 @@ interface StepResumeProps {
 }
 
 export function StepResume({
-  companyId,
-  companyName,
+  companyId: _companyId,
+  companyName: _companyName,
   resumes,
   effectiveResumeId,
   githubUrl,
@@ -77,7 +77,7 @@ export function StepResume({
   interviewMode,
   interviewStyle,
   interviewDepth,
-  interviewRound,
+  interviewRound: _interviewRound,
   jobDescription,
   selectedCompany,
   selectedRole,
@@ -255,6 +255,7 @@ export function StepResume({
         style={{
           display: "flex",
           justifyContent: "space-between",
+          alignItems: "center",
           marginBottom: "32px",
         }}
       >
@@ -272,12 +273,12 @@ export function StepResume({
       </div>
 
       <SessionCard
+        isPending={isPending}
+        onCreate={onCreate}
         position={effectivePosition}
         customPosition={customRole}
         selectedResumeId={effectiveResumeId}
         resumes={resumes}
-        isPending={isPending}
-        onCreate={onCreate}
         mode={interviewMode}
       />
     </motion.div>

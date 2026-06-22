@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { IconFlame } from "@tabler/icons-react";
 import type { InterviewSession } from "@evalio/shared";
@@ -227,6 +228,48 @@ export function Hero({ completed, interviews }: HeroProps) {
           )}
         </div>
       </div>
+
+      {completed.length > 0 && (
+        <Link to="/analysis" className="db-hero-analysis-link">
+          <span className="db-hero-analysis-link-icon">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 20V10M12 20V4M6 20v-6" />
+            </svg>
+          </span>
+          <span className="db-hero-analysis-link-text">
+            <span className="db-hero-analysis-link-title">
+              Deep Performance Analysis
+            </span>
+            <span className="db-hero-analysis-link-desc">
+              View detailed dimension scores, trends, and personalized
+              improvement insights.
+            </span>
+          </span>
+          <span className="db-hero-analysis-link-arrow">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 4l4 4-4 4" />
+            </svg>
+          </span>
+        </Link>
+      )}
     </section>
   );
 }

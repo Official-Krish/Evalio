@@ -14,12 +14,14 @@ interface CoachProps {
   latestSummary: InterviewSession["summary"] | null;
   funnelSteps: FunnelStep[];
   commonPatterns?: string[];
+  completedCount?: number;
 }
 
 export function Coach({
   latestSummary,
   funnelSteps,
   commonPatterns,
+  completedCount = 0,
 }: CoachProps) {
   return (
     <div className="db-col-block">
@@ -38,14 +40,25 @@ export function Coach({
             </p>
           )}
         </div>
-        <Link
-          to="/interview/new"
-          className="db-coach-cta"
-          style={{ position: "relative", zIndex: 2 }}
-        >
-          <span>Start active practice</span>
-          <IconArrowUpRight size={14} />
-        </Link>
+        {completedCount > 0 ? (
+          <Link
+            to="/analysis"
+            className="db-coach-cta"
+            style={{ position: "relative", zIndex: 2 }}
+          >
+            <span>View cross-session analysis</span>
+            <IconArrowUpRight size={14} />
+          </Link>
+        ) : (
+          <Link
+            to="/interview/new"
+            className="db-coach-cta"
+            style={{ position: "relative", zIndex: 2 }}
+          >
+            <span>Start active practice</span>
+            <IconArrowUpRight size={14} />
+          </Link>
+        )}
         <SpectrumWave className="absolute bottom-0 inset-x-0 w-full h-[60px] pointer-events-none opacity-[0.06] text-[var(--color-accent)]" />
       </div>
 

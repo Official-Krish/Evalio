@@ -3,8 +3,8 @@ import { Helmet } from "react-helmet-async";
 const BASE = "Evalio";
 const DEFAULT_DESCRIPTION =
   "Practice interviews with AI that thinks like real interviewers. Get scored across 6 dimensions with actionable feedback tailored to your dream company.";
-const DEFAULT_OG_IMAGE = "https://evalio.app/og.png";
-const SITE_URL = "https://evalio.app";
+const DEFAULT_OG_IMAGE = "https://evalio.krishlabs.tech/og.png";
+const SITE_URL = "https://evalio.krishlabs.tech";
 
 interface SEOProps {
   title: string;

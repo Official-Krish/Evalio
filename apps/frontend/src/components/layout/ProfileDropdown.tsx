@@ -310,7 +310,7 @@ export function ProfileDropdown({
 function AvatarRing({
   initials,
   size = 28,
-  active = false,
+  active: _active = false,
 }: {
   initials: string;
   size?: number;

@@ -44,6 +44,7 @@ const InterviewPage = lazyPage(
   "InterviewPage",
 );
 const ResultsPage = lazyPage(() => import("./pages/Results"), "ResultsPage");
+const AnalysisPage = lazyPage(() => import("./pages/Analysis"), "AnalysisPage");
 const ProfilePage = lazyPage(() => import("./pages/Profile"), "ProfilePage");
 const PricingPage = lazyPage(() => import("./pages/Pricing"), "PricingPage");
 const AboutPage = lazyPage(() => import("./pages/About"), "AboutPage");
@@ -140,6 +141,15 @@ const router = createBrowserRouter([
       </AuthGuard>
     ),
     children: [{ index: true, element: <ResultsPage /> }],
+  },
+  {
+    path: "/analysis",
+    element: (
+      <AuthGuard>
+        <AppLayout />
+      </AuthGuard>
+    ),
+    children: [{ index: true, element: <AnalysisPage /> }],
   },
   {
     path: "/profile",
