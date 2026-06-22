@@ -1,7 +1,6 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { jwt } from "@elysia/jwt";
-import sharp from "sharp";
 import { authRoutes } from "./routes/auth";
 import { userRoutes } from "./routes/user";
 import { interviewRoutes } from "./routes/interview";
@@ -23,8 +22,6 @@ if (!JWT_SECRET) {
 }
 
 const SITE_URL = "https://evalio.krishlabs.tech";
-
-let ogPngBuffer: Buffer | null = null;
 
 const OG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
@@ -98,20 +95,16 @@ export const app = new Elysia()
         headers: { "Content-Type": "application/xml" },
       }),
   )
-  .get("/og.png", async () => {
-    if (!ogPngBuffer) {
-      ogPngBuffer = await sharp(Buffer.from(OG_SVG))
-        .resize(1200, 630)
-        .png()
-        .toBuffer();
-    }
-    return new Response(ogPngBuffer, {
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=86400",
-      },
-    });
-  })
+  .get(
+    "/og.png",
+    () =>
+      new Response(OG_SVG, {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "public, max-age=86400",
+        },
+      }),
+  )
   .use(globalRateLimit)
   .use(
     cors({
