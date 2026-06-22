@@ -8,33 +8,14 @@ if (!SECRET) {
   throw new Error("JWT_SECRET environment variable is required");
 }
 
-const TTL = 60_000;
+const TTL = 30_000;
 
 type CacheEntry = {
-  version: number;
   role: "FREE" | "PRO" | "ADMIN";
   expiresAt: number;
 };
 
 const roleCache = new Map<string, CacheEntry>();
-
-function getCached(id: string): CacheEntry | null {
-  const entry = roleCache.get(id);
-  if (!entry) return null;
-  if (Date.now() > entry.expiresAt) {
-    roleCache.delete(id);
-    return null;
-  }
-  return entry;
-}
-
-function setCached(
-  id: string,
-  version: number,
-  role: "FREE" | "PRO" | "ADMIN",
-) {
-  roleCache.set(id, { version, role, expiresAt: Date.now() + TTL });
-}
 
 export const authGuard = new Elysia({ name: "auth-guard" })
   .use(jwt({ secret: SECRET, exp: "7d" }))
@@ -53,12 +34,12 @@ export const authGuard = new Elysia({ name: "auth-guard" })
     const uid = payload.id as string;
     const tokenRoleVersion = (payload.roleVersion as number) ?? 0;
 
-    const cached = getCached(uid);
-    if (cached !== null) {
-      if (cached.version !== tokenRoleVersion) {
-        cookie.token?.remove();
-        throw new Error("Unauthorized");
-      }
+    const cached = roleCache.get(uid);
+    if (
+      cached !== null &&
+      cached !== undefined &&
+      Date.now() < cached.expiresAt
+    ) {
       return {
         user: {
           id: uid,
@@ -76,17 +57,16 @@ export const authGuard = new Elysia({ name: "auth-guard" })
       });
 
       if (!user) {
-        setCached(uid, -1, "FREE");
         cookie.token?.remove();
         throw new Error("Unauthorized");
       }
-
-      setCached(uid, user.roleVersion, user.role);
 
       if (user.roleVersion !== tokenRoleVersion) {
         cookie.token?.remove();
         throw new Error("Unauthorized");
       }
+
+      roleCache.set(uid, { role: user.role, expiresAt: Date.now() + TTL });
 
       return {
         user: {

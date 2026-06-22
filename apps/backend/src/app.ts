@@ -14,6 +14,7 @@ import { profileRoutes } from "./routes/profile";
 import { contactRoutes } from "./routes/contact";
 import { feedbackRoutes } from "./routes/feedback";
 import { dsaRoutes } from "./routes/dsa";
+import { analysisRoutes } from "./routes/analysis";
 import { globalRateLimit } from "./middleware/rateLimit";
 
 const JWT_SECRET = Bun.env.JWT_SECRET;
@@ -49,7 +50,7 @@ const OG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630
   <rect x="80" y="440" width="180" height="48" rx="24" fill="url(#accent)"/>
   <text x="170" y="472" font-family="system-ui, sans-serif" font-size="16" fill="#0a0a0a" text-anchor="middle" font-weight="600">Get Started</text>
   <line x1="80" y1="530" x2="400" y2="530" stroke="#c8a97e" stroke-width="1" opacity="0.3"/>
-  <text x="80" y="570" font-family="system-ui, sans-serif" font-size="12" fill="#555555">evalio.app</text>
+  <text x="80" y="570" font-family="system-ui, sans-serif" font-size="12" fill="#555555">evalio.krishlabs.tech</text>
 </svg>`;
 
 const ROBOTS_TXT = `User-agent: *
@@ -137,5 +138,6 @@ export const app = new Elysia()
       .use(profileRoutes)
       .use(contactRoutes)
       .use(feedbackRoutes)
-      .use(dsaRoutes),
+      .use(dsaRoutes)
+      .use(analysisRoutes),
   );
