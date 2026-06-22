@@ -12,7 +12,7 @@ import { StepRound } from "../components/Create-Interview/StepRound";
 import { StepStyle } from "../components/Create-Interview/StepStyle";
 import { StepResume } from "../components/Create-Interview/StepResume";
 import { COMPANIES, getDefaultStyleDepth } from "@evalio/shared";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 import type {
   Resume,
   InterviewSession,
@@ -23,7 +23,6 @@ import type {
 import toast from "react-hot-toast";
 
 export function NewInterviewPage() {
-  usePageTitle("New Interview");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const retryId = searchParams.get("retry");
@@ -329,6 +328,7 @@ export function NewInterviewPage() {
 
   return (
     <div className="relative">
+      <SEO title="New Interview" noindex />
       <span
         className="inline-flex items-center gap-1.5 absolute top-0 -right-20 text-[10px] tracking-[0.12em] uppercase px-2 py-1"
         style={{

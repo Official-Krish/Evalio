@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { StaticPageLayout } from "@/components/layout/StaticPageLayout";
 import { RevealSection } from "@/components/motion/RevealSection";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 
 const tiers = [
   {
@@ -169,13 +169,16 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 }
 
 export function PricingPage() {
-  usePageTitle("Pricing");
   const [activeTab, setActiveTab] = useState<string>("free");
 
   const activeTier = tiers.find((t) => t.id === activeTab) ?? tiers[0]!;
 
   return (
     <StaticPageLayout>
+      <SEO
+        title="Pricing"
+        description="Transparent pricing for interview practice. Free tier included."
+      />
       {/* ── Hero ── */}
       <RevealSection>
         <header className="landing-container pt-18 pb-10">

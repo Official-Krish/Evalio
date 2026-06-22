@@ -6,11 +6,10 @@ import { motion } from "motion/react";
 import { loginSchema, type LoginInput } from "@evalio/shared";
 import { useLogin, useSession } from "../lib/auth";
 import { AuthLayout } from "@/components/static/AuthLayout";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 import toast from "react-hot-toast";
 
 export function LoginPage() {
-  usePageTitle("Sign In");
   const navigate = useNavigate();
   const loginMutation = useLogin();
   const { data: session, isLoading } = useSession();
@@ -44,6 +43,10 @@ export function LoginPage() {
 
   return (
     <AuthLayout variant="login">
+      <SEO
+        title="Sign In"
+        description="Sign in to Evalio to continue your interview practice."
+      />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

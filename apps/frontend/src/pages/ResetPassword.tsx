@@ -15,12 +15,11 @@ import {
 } from "@evalio/shared";
 import { useResetPassword, useForgotPassword } from "../lib/auth";
 import { useResendTimer } from "../lib/useResendTimer";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 import { AuthLayout } from "@/components/static/AuthLayout";
 import toast from "react-hot-toast";
 
 export function ResetPasswordPage() {
-  usePageTitle("Set New Password");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const emailParam = searchParams.get("email") ?? "";
@@ -105,6 +104,10 @@ export function ResetPasswordPage() {
 
   return (
     <AuthLayout variant="login">
+      <SEO
+        title="Reset Password"
+        description="Set a new password for your Evalio account."
+      />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

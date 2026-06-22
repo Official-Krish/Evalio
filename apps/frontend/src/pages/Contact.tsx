@@ -3,7 +3,7 @@ import { StaticPageLayout } from "@/components/layout/StaticPageLayout";
 import { StaticPageHero } from "@/components/static/StaticPageHero";
 import { RevealSection } from "@/components/motion/RevealSection";
 import { client } from "@/lib/eden";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 import toast from "react-hot-toast";
 
 const SUBJECTS = [
@@ -16,7 +16,6 @@ const SUBJECTS = [
 ] as const;
 
 export function ContactPage() {
-  usePageTitle("Contact");
   const presetSubject = useMemo(() => {
     const q = new URLSearchParams(window.location.search);
     return q.get("subject");
@@ -69,6 +68,7 @@ export function ContactPage() {
 
   return (
     <StaticPageLayout>
+      <SEO title="Contact" description="Get in touch with the Evalio team." />
       <StaticPageHero
         badge={isProUpgrade ? "Pro Upgrade" : "Contact"}
         title={isProUpgrade ? "Go Pro." : "Let's talk."}

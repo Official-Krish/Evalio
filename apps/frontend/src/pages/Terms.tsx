@@ -1,16 +1,18 @@
-import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
-import { StaticPageHero } from "@/components/static/StaticPageHero"
-import { StaticProse } from "@/components/static/StaticProse"
-import { usePageTitle } from "@/lib/usePageTitle"
+import { StaticPageLayout } from "@/components/layout/StaticPageLayout";
+import { StaticPageHero } from "@/components/static/StaticPageHero";
+import { StaticProse } from "@/components/static/StaticProse";
+import { SEO } from "@/components/SEO";
 
 const sections = [
   {
     title: "1. Acceptance",
-    content: "By using Evalio you agree to these terms. If you disagree, don't use the service.",
+    content:
+      "By using Evalio you agree to these terms. If you disagree, don't use the service.",
   },
   {
     title: "2. Your account",
-    content: "You're responsible for your credentials and activity under your account. Keep your password secure.",
+    content:
+      "You're responsible for your credentials and activity under your account. Keep your password secure.",
   },
   {
     title: "3. Acceptable use",
@@ -34,14 +36,18 @@ const sections = [
   },
   {
     title: "7. Contact",
-    content: "Questions? Reach out via GitHub until formal support channels are listed on the contact page.",
+    content:
+      "Questions? Reach out via GitHub until formal support channels are listed on the contact page.",
   },
-]
+];
 
 export function TermsPage() {
-  usePageTitle("Terms of Service")
   return (
     <StaticPageLayout>
+      <SEO
+        title="Terms of Service"
+        description="Terms of service for Evalio interview practice platform."
+      />
       <StaticPageHero
         badge="Legal"
         title="Terms of Service"
@@ -49,5 +55,5 @@ export function TermsPage() {
       />
       <StaticProse sections={sections} />
     </StaticPageLayout>
-  )
+  );
 }

@@ -102,8 +102,9 @@ export function Opening() {
         >
           <div className="opening-desc-rule" aria-hidden />
           <p className="opening-desc-lead">
-            An AI interviewer that remembers every session and builds a profile
-            of how you perform under pressure.
+            Practice realistic AI interviews. Every session updates a living
+            profile of how you think, communicate, and make decisions under
+            pressure
           </p>
         </motion.div>
 
@@ -168,19 +169,6 @@ export function Opening() {
           </div>
         </motion.div>
       </div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.4, duration: 1 }}
-        className="opening-scroll"
-      >
-        <span>Scroll</span>
-        <div className="opening-scroll-track">
-          <div className="opening-scroll-thumb" />
-        </div>
-      </motion.div>
     </section>
   );
 }

@@ -1,7 +1,7 @@
 export function Ambient() {
   return (
     <div
-      className="landing-ambient pointer-events-none fixed inset-0 overflow-hidden"
+      className="pointer-events-none fixed inset-0 overflow-hidden"
       aria-hidden
     >
       <div className="landing-grain absolute inset-0" />

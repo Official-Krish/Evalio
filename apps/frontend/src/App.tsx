@@ -1,5 +1,5 @@
+import { lazy, Suspense, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
 import {
   RouterProvider,
   createBrowserRouter,
@@ -10,31 +10,58 @@ import { useSession } from "./lib/auth";
 import { ThemeProvider } from "./lib/theme";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AppLayout } from "./components/layout/AppLayout";
-import { LandingPage } from "./pages/Landing";
-import { LoginPage } from "./pages/Login";
-import { SignupPage } from "./pages/Signup";
-import { VerifyOtpPage } from "./pages/VerifyOtp";
-import { ForgotPasswordPage } from "./pages/ForgotPassword";
-import { ResetPasswordPage } from "./pages/ResetPassword";
-import { DashboardPage } from "./pages/Dashboard";
-import { NewInterviewPage } from "./pages/NewInterview";
-import { InterviewPage } from "./pages/Interview";
-import { ResultsPage } from "./pages/Results";
-import { ProfilePage } from "./pages/Profile";
-import { PricingPage } from "./pages/Pricing";
-import { AboutPage } from "./pages/About";
-import { FAQPage } from "./pages/FAQ";
-import { ContactPage } from "./pages/Contact";
-import { FeedbackPage } from "./pages/Feedback";
-import { AdminFeedbackPage } from "./pages/AdminFeedback";
-import { BlogPage } from "./pages/Blog";
-import { BlogPostPage } from "./pages/BlogPost";
-import { CareersPage } from "./pages/Careers";
-import { DocsPage } from "./pages/Docs";
-import { PrivacyPage } from "./pages/Privacy";
-import { TermsPage } from "./pages/Terms";
-import { CookiesPage } from "./pages/Cookies";
-import { NotFoundPage } from "./pages/NotFound";
+
+const lazyPage = <K extends string>(
+  imp: () => Promise<Record<K, React.ComponentType>>,
+  name: K,
+) => lazy(() => imp().then((m) => ({ default: m[name] })));
+
+const LandingPage = lazyPage(() => import("./pages/Landing"), "LandingPage");
+const LoginPage = lazyPage(() => import("./pages/Login"), "LoginPage");
+const SignupPage = lazyPage(() => import("./pages/Signup"), "SignupPage");
+const VerifyOtpPage = lazyPage(
+  () => import("./pages/VerifyOtp"),
+  "VerifyOtpPage",
+);
+const ForgotPasswordPage = lazyPage(
+  () => import("./pages/ForgotPassword"),
+  "ForgotPasswordPage",
+);
+const ResetPasswordPage = lazyPage(
+  () => import("./pages/ResetPassword"),
+  "ResetPasswordPage",
+);
+const DashboardPage = lazyPage(
+  () => import("./pages/Dashboard"),
+  "DashboardPage",
+);
+const NewInterviewPage = lazyPage(
+  () => import("./pages/NewInterview"),
+  "NewInterviewPage",
+);
+const InterviewPage = lazyPage(
+  () => import("./pages/Interview"),
+  "InterviewPage",
+);
+const ResultsPage = lazyPage(() => import("./pages/Results"), "ResultsPage");
+const ProfilePage = lazyPage(() => import("./pages/Profile"), "ProfilePage");
+const PricingPage = lazyPage(() => import("./pages/Pricing"), "PricingPage");
+const AboutPage = lazyPage(() => import("./pages/About"), "AboutPage");
+const FAQPage = lazyPage(() => import("./pages/FAQ"), "FAQPage");
+const ContactPage = lazyPage(() => import("./pages/Contact"), "ContactPage");
+const FeedbackPage = lazyPage(() => import("./pages/Feedback"), "FeedbackPage");
+const AdminFeedbackPage = lazyPage(
+  () => import("./pages/AdminFeedback"),
+  "AdminFeedbackPage",
+);
+const BlogPage = lazyPage(() => import("./pages/Blog"), "BlogPage");
+const BlogPostPage = lazyPage(() => import("./pages/BlogPost"), "BlogPostPage");
+const CareersPage = lazyPage(() => import("./pages/Careers"), "CareersPage");
+const DocsPage = lazyPage(() => import("./pages/Docs"), "DocsPage");
+const PrivacyPage = lazyPage(() => import("./pages/Privacy"), "PrivacyPage");
+const TermsPage = lazyPage(() => import("./pages/Terms"), "TermsPage");
+const CookiesPage = lazyPage(() => import("./pages/Cookies"), "CookiesPage");
+const NotFoundPage = lazyPage(() => import("./pages/NotFound"), "NotFoundPage");
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { data, isLoading } = useSession();
@@ -126,6 +153,14 @@ const router = createBrowserRouter([
   { path: "*", element: <NotFoundPage /> },
 ]);
 
+function PageSkeleton() {
+  return (
+    <div className="page-skeleton">
+      <div className="skeleton-spinner" />
+    </div>
+  );
+}
+
 export function App() {
   const [queryClient] = useState(
     () =>
@@ -140,7 +175,9 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ErrorBoundary>
-          <RouterProvider router={router} />
+          <Suspense fallback={<PageSkeleton />}>
+            <RouterProvider router={router} />
+          </Suspense>
         </ErrorBoundary>
         <Toaster
           position="top-center"

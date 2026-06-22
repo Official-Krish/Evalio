@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { ResultsSkeleton } from "../components/skeletons/ResultsSkeleton";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 import toast from "react-hot-toast";
 import type { EvaluationStatus } from "@evalio/shared";
 import { getVerdict } from "../components/Result/helpers";
@@ -18,7 +18,6 @@ import { DsaResultsSection } from "../components/Result/DsaResultsSection";
 import type { DsaSessionData } from "../components/Result/types";
 
 export function ResultsPage() {
-  usePageTitle("Results");
   const { id } = useParams<{ id: string }>();
 
   const {
@@ -184,6 +183,7 @@ export function ResultsPage() {
 
   return (
     <div className="max-w-[840px] mx-auto pb-20 px-4">
+      <SEO title="Results" noindex />
       <SessionMeta interview={interview} turnsCount={turns.length} />
 
       <ScoreBlock

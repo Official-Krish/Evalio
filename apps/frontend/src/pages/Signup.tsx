@@ -10,11 +10,10 @@ import {
 } from "@evalio/shared";
 import { useSignup, useSession } from "../lib/auth";
 import { AuthLayout } from "@/components/static/AuthLayout";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 import toast from "react-hot-toast";
 
 export function SignupPage() {
-  usePageTitle("Create Account");
   const navigate = useNavigate();
   const signupMutation = useSignup();
   const { data: session, isLoading } = useSession();
@@ -48,6 +47,10 @@ export function SignupPage() {
 
   return (
     <AuthLayout variant="signup">
+      <SEO
+        title="Create Account"
+        description="Create your Evalio account and start practicing interviews with AI."
+      />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

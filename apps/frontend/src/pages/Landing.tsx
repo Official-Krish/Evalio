@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 import { Ambient } from "@/components/landing/Ambient";
 import { AppBar } from "@/components/layout/AppBar";
 import { Opening } from "@/components/landing/Opening";
@@ -17,7 +17,6 @@ import { Footer } from "@/components/Footer";
 import { FilmStrip } from "@/components/landing/HorizontalStrip";
 
 export function LandingPage() {
-  usePageTitle("AI-Powered Interview Practice");
   useEffect(() => {
     document.documentElement.classList.add("landing-active");
     return () => {
@@ -27,6 +26,10 @@ export function LandingPage() {
 
   return (
     <div className="landing-page min-h-screen bg-[var(--landing-bg)] text-[var(--landing-fg)] selection:bg-[var(--landing-accent-soft)] selection:text-[var(--landing-fg)]">
+      <SEO
+        title="AI-Powered Interview Practice"
+        description="Practice interviews with AI that thinks like real interviewers. Get scored across 6 dimensions."
+      />
       <Ambient />
       <AppBar />
       <main>

@@ -1,17 +1,20 @@
-import { Link } from "react-router-dom"
-import { useEffect } from "react"
-import { IconArrowRight } from "@tabler/icons-react"
-import { usePageTitle } from "@/lib/usePageTitle"
+import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { IconArrowRight } from "@tabler/icons-react";
+import { SEO } from "@/components/SEO";
 
 export function NotFoundPage() {
-  usePageTitle("Page Not Found")
   useEffect(() => {
-    document.documentElement.classList.add("landing-active")
-    return () => document.documentElement.classList.remove("landing-active")
-  }, [])
+    document.documentElement.classList.add("landing-active");
+    return () => document.documentElement.classList.remove("landing-active");
+  }, []);
 
   return (
     <div className="landing-page min-h-[100dvh] flex flex-col items-center justify-center px-6">
+      <SEO
+        title="Page Not Found"
+        description="The page you're looking for doesn't exist."
+      />
       <div className="max-w-md mx-auto text-center">
         <p className="text-[120px] font-bold leading-none tracking-[-0.06em] text-[var(--landing-fg-faint)] select-none">
           404
@@ -31,5 +34,5 @@ export function NotFoundPage() {
         </Link>
       </div>
     </div>
-  )
+  );
 }

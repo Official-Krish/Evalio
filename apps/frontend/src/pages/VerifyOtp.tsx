@@ -1,97 +1,107 @@
-import { useState, useRef, type KeyboardEvent, type ClipboardEvent } from "react"
-import { useNavigate, useSearchParams, Link } from "react-router-dom"
-import { motion } from "motion/react"
-import { useVerifyOtp, useResendOtp } from "../lib/auth"
-import { useResendTimer } from "../lib/useResendTimer"
-import { usePageTitle } from "@/lib/usePageTitle"
-import { AuthLayout } from "@/components/static/AuthLayout"
-import toast from "react-hot-toast"
+import {
+  useState,
+  useRef,
+  type KeyboardEvent,
+  type ClipboardEvent,
+} from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { motion } from "motion/react";
+import { useVerifyOtp, useResendOtp } from "../lib/auth";
+import { useResendTimer } from "../lib/useResendTimer";
+import { SEO } from "@/components/SEO";
+import { AuthLayout } from "@/components/static/AuthLayout";
+import toast from "react-hot-toast";
 
 export function VerifyOtpPage() {
-  usePageTitle("Verify Email")
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const emailParam = searchParams.get("email") ?? ""
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const emailParam = searchParams.get("email") ?? "";
 
-  const [email, setEmail] = useState(emailParam)
-  const [digits, setDigits] = useState(["", "", "", "", "", ""])
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-  const { cooldown, canResend, startCooldown } = useResendTimer()
+  const [email, setEmail] = useState(emailParam);
+  const [digits, setDigits] = useState(["", "", "", "", "", ""]);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const { cooldown, canResend, startCooldown } = useResendTimer();
 
-  const verifyMutation = useVerifyOtp()
-  const resendMutation = useResendOtp()
+  const verifyMutation = useVerifyOtp();
+  const resendMutation = useResendOtp();
 
-  const otp = digits.join("")
+  const otp = digits.join("");
 
   const handleDigitChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return
-    const next = [...digits]
-    next[index] = value.slice(-1)
-    setDigits(next)
+    if (!/^\d*$/.test(value)) return;
+    const next = [...digits];
+    next[index] = value.slice(-1);
+    setDigits(next);
     if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus()
+      inputRefs.current[index + 1]?.focus();
     }
-  }
+  };
 
   const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace" && !digits[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus()
+      inputRefs.current[index - 1]?.focus();
     }
-  }
+  };
 
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault()
-    const text = e.clipboardData.getData("text")
-    const nums = text.replace(/\D/g, "").slice(0, 6).split("")
-    const next = ["", "", "", "", "", ""]
-    nums.forEach((n, i) => { next[i] = n })
-    setDigits(next)
-    const focusAt = Math.min(nums.length, 5)
-    inputRefs.current[focusAt]?.focus()
-  }
+    e.preventDefault();
+    const text = e.clipboardData.getData("text");
+    const nums = text.replace(/\D/g, "").slice(0, 6).split("");
+    const next = ["", "", "", "", "", ""];
+    nums.forEach((n, i) => {
+      next[i] = n;
+    });
+    setDigits(next);
+    const focusAt = Math.min(nums.length, 5);
+    inputRefs.current[focusAt]?.focus();
+  };
 
   const handleVerify = () => {
     if (!email) {
-      toast.error("Email is required")
-      return
+      toast.error("Email is required");
+      return;
     }
     if (otp.length !== 6) {
-      toast.error("Enter the full 6-digit code")
-      return
+      toast.error("Enter the full 6-digit code");
+      return;
     }
     verifyMutation.mutate(
       { email, otp },
       {
         onSuccess: () => {
-          toast.success("Email verified! Welcome aboard.")
-          navigate("/dashboard")
+          toast.success("Email verified! Welcome aboard.");
+          navigate("/dashboard");
         },
         onError: (err) => toast.error(err.message),
-      }
-    )
-  }
+      },
+    );
+  };
 
   const handleResend = () => {
     if (!email) {
-      toast.error("Enter your email first")
-      return
+      toast.error("Enter your email first");
+      return;
     }
     resendMutation.mutate(
       { email },
       {
         onSuccess: () => {
-          toast.success("New code sent!")
-          startCooldown()
-          setDigits(["", "", "", "", "", ""])
-          inputRefs.current[0]?.focus()
+          toast.success("New code sent!");
+          startCooldown();
+          setDigits(["", "", "", "", "", ""]);
+          inputRefs.current[0]?.focus();
         },
         onError: (err) => toast.error(err.message),
-      }
-    )
-  }
+      },
+    );
+  };
 
   return (
     <AuthLayout variant="signup">
+      <SEO
+        title="Verify Email"
+        description="Verify your email address for Evalio."
+      />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -103,14 +113,18 @@ export function VerifyOtpPage() {
           <h1 className="static-title mt-4 text-[2rem]">Check your inbox.</h1>
           <p className="static-subtitle mt-2">
             We sent a 6-digit code to{" "}
-            <span className="text-[var(--landing-fg)] font-medium">{email || "your email"}</span>
+            <span className="text-[var(--landing-fg)] font-medium">
+              {email || "your email"}
+            </span>
           </p>
         </div>
 
         <div className="static-auth-card space-y-6">
           {!emailParam && (
             <div>
-              <label htmlFor="email" className="static-label">Email address</label>
+              <label htmlFor="email" className="static-label">
+                Email address
+              </label>
               <input
                 id="email"
                 type="email"
@@ -128,7 +142,9 @@ export function VerifyOtpPage() {
               {digits.map((d, i) => (
                 <input
                   key={i}
-                  ref={(el) => { inputRefs.current[i] = el }}
+                  ref={(el) => {
+                    inputRefs.current[i] = el;
+                  }}
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
@@ -168,12 +184,15 @@ export function VerifyOtpPage() {
           </div>
 
           <p className="text-center text-[13px] text-[var(--landing-fg-faint)]">
-            <Link to="/signup" className="text-[var(--landing-accent)] hover:underline">
+            <Link
+              to="/signup"
+              className="text-[var(--landing-accent)] hover:underline"
+            >
               Use a different email
             </Link>
           </p>
         </div>
       </motion.div>
     </AuthLayout>
-  )
+  );
 }

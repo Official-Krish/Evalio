@@ -8,6 +8,7 @@ import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import { InterviewSocket } from "../lib/ws";
 import { api } from "../lib/api";
 import { DsaPanel } from "../components/interview/DsaPanel";
+import { SEO } from "@/components/SEO";
 import { Ambient } from "@/components/landing/Ambient";
 import { PresenceOrb } from "@/components/interview/PresenceOrb";
 import { SessionControls } from "@/components/interview/SessionControls";
@@ -643,6 +644,7 @@ export function InterviewPage() {
 
   return (
     <div className="interview-room landing-page min-h-[100dvh] flex flex-col relative overflow-hidden">
+      <SEO title="Interview" noindex />
       <Ambient />
 
       <div
