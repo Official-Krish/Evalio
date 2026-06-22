@@ -204,19 +204,17 @@ export function CodeEditor({
       ),
     });
 
-    if (!code) {
-      const sample = CODE_SAMPLES[language];
-      if (sample) {
-        view.dispatch({
-          changes: {
-            from: 0,
-            to: view.state.doc.length,
-            insert: sample,
-          },
-        });
-      }
+    // Always swap starter code when language changes
+    const sample = CODE_SAMPLES[language];
+    if (sample) {
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: view.state.doc.length,
+          insert: sample,
+        },
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
   useEffect(() => {

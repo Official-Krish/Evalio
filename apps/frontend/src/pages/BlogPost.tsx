@@ -1,15 +1,17 @@
-import { useParams, Link } from "react-router-dom"
-import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
-import { RevealSection } from "@/components/motion/RevealSection"
-import { getBlogPost, BLOG_POSTS } from "@/lib/blogData"
+import { useParams, Link } from "react-router-dom";
+import { StaticPageLayout } from "@/components/layout/StaticPageLayout";
+import { RevealSection } from "@/components/motion/RevealSection";
+import { getBlogPost, BLOG_POSTS } from "@/lib/blogData";
+import { SEO } from "@/components/SEO";
 
 export function BlogPostPage() {
-  const { slug } = useParams<{ slug: string }>()
-  const post = getBlogPost(slug ?? "")
+  const { slug } = useParams<{ slug: string }>();
+  const post = getBlogPost(slug ?? "");
 
   if (!post) {
     return (
       <StaticPageLayout>
+        <SEO title="Blog" />
         <div
           style={{
             minHeight: "60vh",
@@ -20,34 +22,56 @@ export function BlogPostPage() {
             gap: "16px",
           }}
         >
-          <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)" }}>Post not found.</p>
+          <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)" }}>
+            Post not found.
+          </p>
           <Link
             to="/blog"
-            style={{ fontSize: "13px", color: "#A78BFA", textDecoration: "none" }}
+            style={{
+              fontSize: "13px",
+              color: "#A78BFA",
+              textDecoration: "none",
+            }}
           >
             ← Back to blog
           </Link>
         </div>
       </StaticPageLayout>
-    )
+    );
   }
 
-  const otherPosts = BLOG_POSTS.filter((p) => p.slug !== post.slug).slice(0, 2)
+  const otherPosts = BLOG_POSTS.filter((p) => p.slug !== post.slug).slice(0, 2);
 
   return (
     <StaticPageLayout>
+      <SEO title={post?.title ? `${post.title} — Blog` : "Blog"} />
       {/* Hero */}
       <RevealSection>
         <header className="landing-container pt-28 pb-10">
           <div style={{ maxWidth: "680px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                marginBottom: "20px",
+              }}
+            >
               <Link
                 to="/blog"
-                style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", textDecoration: "none" }}
+                style={{
+                  fontSize: "12px",
+                  color: "rgba(255,255,255,0.35)",
+                  textDecoration: "none",
+                }}
               >
                 Blog
               </Link>
-              <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>/</span>
+              <span
+                style={{ color: "rgba(255,255,255,0.2)", fontSize: "12px" }}
+              >
+                /
+              </span>
               <span
                 style={{
                   fontSize: "10px",
@@ -106,10 +130,22 @@ export function BlogPostPage() {
                 IL
               </div>
               <div>
-                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", margin: 0 }}>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "rgba(255,255,255,0.6)",
+                    margin: 0,
+                  }}
+                >
                   Evalio Team
                 </p>
-                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", margin: 0 }}>
+                <p
+                  style={{
+                    fontSize: "11px",
+                    color: "rgba(255,255,255,0.3)",
+                    margin: 0,
+                  }}
+                >
                   {post.date} · {post.readMins} min read
                 </p>
               </div>
@@ -121,7 +157,10 @@ export function BlogPostPage() {
       {/* Divider */}
       <div
         className="landing-container"
-        style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)", marginBottom: "0" }}
+        style={{
+          borderTop: "0.5px solid rgba(255,255,255,0.07)",
+          marginBottom: "0",
+        }}
       />
 
       {/* Article body */}
@@ -163,7 +202,10 @@ export function BlogPostPage() {
       {otherPosts.length > 0 && (
         <div
           className="landing-container pb-24"
-          style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)", paddingTop: "48px" }}
+          style={{
+            borderTop: "0.5px solid rgba(255,255,255,0.07)",
+            paddingTop: "48px",
+          }}
         >
           <p
             style={{
@@ -176,7 +218,13 @@ export function BlogPostPage() {
           >
             More from the blog
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: "20px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))",
+              gap: "20px",
+            }}
+          >
             {otherPosts.map((p) => (
               <Link
                 key={p.slug}
@@ -193,12 +241,13 @@ export function BlogPostPage() {
                     cursor: "pointer",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(124,58,237,0.35)"
-                    e.currentTarget.style.background = "rgba(124,58,237,0.05)"
+                    e.currentTarget.style.borderColor = "rgba(124,58,237,0.35)";
+                    e.currentTarget.style.background = "rgba(124,58,237,0.05)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"
-                    e.currentTarget.style.background = "rgba(255,255,255,0.02)"
+                    e.currentTarget.style.borderColor =
+                      "rgba(255,255,255,0.07)";
+                    e.currentTarget.style.background = "rgba(255,255,255,0.02)";
                   }}
                 >
                   <span
@@ -225,7 +274,13 @@ export function BlogPostPage() {
                   >
                     {p.title}
                   </p>
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: 0 }}>
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "rgba(255,255,255,0.35)",
+                      margin: 0,
+                    }}
+                  >
                     {p.date} · {p.readMins} min
                   </p>
                 </div>
@@ -235,5 +290,5 @@ export function BlogPostPage() {
         </div>
       )}
     </StaticPageLayout>
-  )
+  );
 }

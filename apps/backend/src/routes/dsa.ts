@@ -14,7 +14,7 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
       .post(
         "/start",
         async ({ user, body, set }) => {
-          const { interviewId, language, questionCount } = body;
+          const { interviewId, questionCount } = body;
 
           // Validate inputs
           const count =
@@ -24,21 +24,6 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
             questionCount <= 5
               ? questionCount
               : 3;
-          const validLangs = [
-            "python",
-            "javascript",
-            "typescript",
-            "java",
-            "cpp",
-            "go",
-            "rust",
-            "swift",
-            "kotlin",
-          ];
-          const lang =
-            typeof language === "string" && validLangs.includes(language)
-              ? language
-              : "python";
 
           const interview = await prisma.interviewSession.findUnique({
             where: { id: interviewId },
@@ -105,7 +90,6 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
             data: {
               interviewId,
               userId: user.id,
-              language: lang,
               problems: {
                 create: enriched.map((q, idx) => ({
                   index: idx,
@@ -128,7 +112,6 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
         {
           body: t.Object({
             interviewId: t.String(),
-            language: t.Optional(t.String()),
             questionCount: t.Optional(t.Number()),
           }),
         },

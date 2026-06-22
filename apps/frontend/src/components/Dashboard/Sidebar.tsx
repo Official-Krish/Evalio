@@ -1,22 +1,35 @@
-import { Link } from "react-router-dom";
-import { IconCompass, IconBriefcase, IconPlus } from "@tabler/icons-react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  IconCompass,
+  IconBriefcase,
+  IconPlus,
+  IconChartBar,
+} from "@tabler/icons-react";
 
 export function Sidebar({ completedCount }: { completedCount: number }) {
+  const location = useLocation();
+  const currentPath = location.pathname;
+
   return (
     <aside className="db-sidebar">
       <nav className="db-sidebar-menu">
-        <Link to="/dashboard" className="db-sidebar-item active">
+        <Link
+          to="/dashboard"
+          className={`db-sidebar-item ${currentPath === "/dashboard" && location.hash !== "#history" ? "active" : ""}`}
+        >
           <IconCompass size={16} />
           <span>Dashboard</span>
         </Link>
-        <a
-          href="#history"
-          className="db-sidebar-item"
+        <Link
+          to="/dashboard#history"
+          className={`db-sidebar-item ${currentPath === "/dashboard" && location.hash === "#history" ? "active" : ""}`}
           onClick={(e) => {
-            e.preventDefault();
-            document
-              .getElementById("history")
-              ?.scrollIntoView({ behavior: "smooth" });
+            if (currentPath === "/dashboard") {
+              e.preventDefault();
+              document
+                .getElementById("history")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }
           }}
         >
           <IconBriefcase size={16} />
@@ -24,10 +37,23 @@ export function Sidebar({ completedCount }: { completedCount: number }) {
           {completedCount > 0 && (
             <span className="db-sidebar-item-badge">{completedCount}</span>
           )}
-        </a>
-        <Link to="/interview/new" className="db-sidebar-item">
+        </Link>
+        <Link
+          to="/interview/new"
+          className={`db-sidebar-item ${currentPath === "/interview/new" ? "active" : ""}`}
+        >
           <IconPlus size={16} />
           <span>Practice Area</span>
+        </Link>
+        <Link
+          to="/analysis"
+          className={`db-sidebar-item ${currentPath === "/analysis" ? "active" : ""}`}
+        >
+          <IconChartBar size={16} />
+          <span>Analysis</span>
+          {completedCount > 0 && (
+            <span className="db-sidebar-item-dot" title="Analysis available" />
+          )}
         </Link>
       </nav>
 

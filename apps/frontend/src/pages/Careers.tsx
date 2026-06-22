@@ -1,18 +1,23 @@
-import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
-import { StaticPageHero } from "@/components/static/StaticPageHero"
-import { ComingSoonBlock } from "@/components/static/ComingSoonBlock"
-import { usePageTitle } from "@/lib/usePageTitle"
+import { StaticPageLayout } from "@/components/layout/StaticPageLayout";
+import { StaticPageHero } from "@/components/static/StaticPageHero";
+import { ComingSoonBlock } from "@/components/static/ComingSoonBlock";
+import { SEO } from "@/components/SEO";
 
 export function CareersPage() {
-  usePageTitle("Careers")
   return (
     <StaticPageLayout>
+      <SEO
+        title="Careers"
+        description="Join the Evalio team and help build the future of interview practice."
+      />
       <StaticPageHero
         badge="Careers"
         title={
           <>
             Small team.{" "}
-            <span className="landing-serif italic text-[var(--landing-fg-muted)]">Big craft.</span>
+            <span className="landing-serif italic text-[var(--landing-fg-muted)]">
+              Big craft.
+            </span>
           </>
         }
         subtitle="Evalio is early. We're not hiring on a job board yet — but we're always open to exceptional people."
@@ -34,5 +39,5 @@ export function CareersPage() {
         }
       />
     </StaticPageLayout>
-  )
+  );
 }

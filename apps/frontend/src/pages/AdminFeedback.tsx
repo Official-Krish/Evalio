@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { api } from "@/lib/api";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 
 function formatDate(s: string) {
   const d = new Date(s);
@@ -14,8 +14,6 @@ function formatDate(s: string) {
 }
 
 export function AdminFeedbackPage() {
-  usePageTitle("Admin — Feedback");
-
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "feedbacks"],
     queryFn: api.listFeedbacks,
@@ -57,6 +55,7 @@ export function AdminFeedbackPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
+      <SEO title="Admin Feedback" noindex />
       <p
         style={{
           fontSize: 12,

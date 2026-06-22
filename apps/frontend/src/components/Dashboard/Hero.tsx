@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { IconFlame } from "@tabler/icons-react";
 import type { InterviewSession } from "@evalio/shared";
@@ -212,79 +213,6 @@ export function Hero({ completed, interviews }: HeroProps) {
               viewBox="0 0 500 100"
               preserveAspectRatio="none"
             >
-              {/* y-axis labels */}
-              <text
-                x="2"
-                y="12"
-                fill="var(--color-text-secondary)"
-                fontSize="8"
-                fontFamily="ui-monospace, monospace"
-              >
-                100%
-              </text>
-              <text
-                x="2"
-                y="96"
-                fill="var(--color-text-secondary)"
-                fontSize="8"
-                fontFamily="ui-monospace, monospace"
-              >
-                0%
-              </text>
-              {/* x-axis label */}
-              <text
-                x="480"
-                y="98"
-                fill="var(--color-text-secondary)"
-                fontSize="8"
-                fontFamily="ui-monospace, monospace"
-                textAnchor="end"
-              >
-                Session &rarr;
-              </text>
-              {/* grid lines */}
-              <line
-                x1="10"
-                y1="15"
-                x2="490"
-                y2="15"
-                stroke="var(--color-border-light)"
-                strokeWidth="0.5"
-                strokeDasharray="2 4"
-                opacity="0.5"
-              />
-              <line
-                x1="10"
-                y1="50"
-                x2="490"
-                y2="50"
-                stroke="var(--color-border-light)"
-                strokeWidth="0.5"
-                strokeDasharray="2 4"
-                opacity="0.5"
-              />
-              <line
-                x1="10"
-                y1="85"
-                x2="490"
-                y2="85"
-                stroke="var(--color-border-light)"
-                strokeWidth="0.5"
-                strokeDasharray="2 4"
-                opacity="0.5"
-              />
-              {/* projection curve */}
-              <motion.path
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-                d="M 10 85 C 120 80, 240 60, 490 25"
-                stroke="var(--color-accent)"
-                strokeWidth="1.5"
-                strokeDasharray="4 4"
-                fill="none"
-                opacity="0.5"
-              />
               <text
                 x="250"
                 y="54"
@@ -300,6 +228,48 @@ export function Hero({ completed, interviews }: HeroProps) {
           )}
         </div>
       </div>
+
+      {completed.length > 0 && (
+        <Link to="/analysis" className="db-hero-analysis-link">
+          <span className="db-hero-analysis-link-icon">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 20V10M12 20V4M6 20v-6" />
+            </svg>
+          </span>
+          <span className="db-hero-analysis-link-text">
+            <span className="db-hero-analysis-link-title">
+              Deep Performance Analysis
+            </span>
+            <span className="db-hero-analysis-link-desc">
+              View detailed dimension scores, trends, and personalized
+              improvement insights.
+            </span>
+          </span>
+          <span className="db-hero-analysis-link-arrow">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 4l4 4-4 4" />
+            </svg>
+          </span>
+        </Link>
+      )}
     </section>
   );
 }

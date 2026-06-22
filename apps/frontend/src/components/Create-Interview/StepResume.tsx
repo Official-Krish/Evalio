@@ -26,6 +26,8 @@ const btnBack: React.CSSProperties = {
 };
 
 interface StepResumeProps {
+  companyId: string | null;
+  companyName: string | null;
   resumes: Resume[];
   effectiveResumeId: string | undefined;
   githubUrl: string;
@@ -45,6 +47,7 @@ interface StepResumeProps {
   interviewMode: InterviewMode;
   interviewStyle: InterviewStyle;
   interviewDepth: InterviewDepth;
+  interviewRound: string | null;
   jobDescription: string;
   selectedCompany: { name: string } | null;
   selectedRole: { title: string; duration: number } | null;
@@ -63,6 +66,8 @@ interface StepResumeProps {
 }
 
 export function StepResume({
+  companyId: _companyId,
+  companyName: _companyName,
   resumes,
   effectiveResumeId,
   githubUrl,
@@ -72,6 +77,7 @@ export function StepResume({
   interviewMode,
   interviewStyle,
   interviewDepth,
+  interviewRound: _interviewRound,
   jobDescription,
   selectedCompany,
   selectedRole,
@@ -97,6 +103,50 @@ export function StepResume({
       exit="exit"
       transition={{ duration: 0.15 }}
     >
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        style={{ marginBottom: "28px" }}
+      >
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{
+            fontSize: "11px",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "var(--color-text-muted)",
+            margin: "0 0 6px",
+          }}
+        >
+          Step 5 of 5
+        </motion.p>
+        <motion.h1
+          style={{
+            fontSize: "clamp(1.25rem, 3vw, 1.6rem)",
+            fontWeight: 500,
+            letterSpacing: "-0.025em",
+            color: "var(--color-text)",
+            lineHeight: 1.2,
+            margin: 0,
+          }}
+        >
+          Review & Start
+        </motion.h1>
+        <motion.p
+          style={{
+            fontSize: "12px",
+            color: "var(--color-text-tertiary)",
+            margin: "4px 0 0",
+            lineHeight: 1.4,
+          }}
+        >
+          Upload your resume and configure optional inputs. Review your
+          selections below before starting.
+        </motion.p>
+      </motion.div>
+
       <ResumeSection
         resumes={resumes}
         selectedResumeId={effectiveResumeId}
@@ -205,6 +255,7 @@ export function StepResume({
         style={{
           display: "flex",
           justifyContent: "space-between",
+          alignItems: "center",
           marginBottom: "32px",
         }}
       >
@@ -222,12 +273,12 @@ export function StepResume({
       </div>
 
       <SessionCard
+        isPending={isPending}
+        onCreate={onCreate}
         position={effectivePosition}
         customPosition={customRole}
         selectedResumeId={effectiveResumeId}
         resumes={resumes}
-        isPending={isPending}
-        onCreate={onCreate}
         mode={interviewMode}
       />
     </motion.div>

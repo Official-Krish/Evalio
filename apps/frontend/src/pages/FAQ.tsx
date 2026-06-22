@@ -1,9 +1,9 @@
-import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
-import { StaticPageHero } from "@/components/static/StaticPageHero"
-import { FAQ } from "@/components/landing/FAQ"
-import { RevealSection } from "@/components/motion/RevealSection"
-import { Link } from "react-router-dom"
-import { usePageTitle } from "@/lib/usePageTitle"
+import { StaticPageLayout } from "@/components/layout/StaticPageLayout";
+import { StaticPageHero } from "@/components/static/StaticPageHero";
+import { FAQ } from "@/components/landing/FAQ";
+import { RevealSection } from "@/components/motion/RevealSection";
+import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 
 const items = [
   {
@@ -38,12 +38,15 @@ const items = [
     q: "What languages are supported?",
     a: "English only for now.",
   },
-]
+];
 
 export function FAQPage() {
-  usePageTitle("FAQ")
   return (
     <StaticPageLayout>
+      <SEO
+        title="FAQ"
+        description="Frequently asked questions about AI interview practice with Evalio."
+      />
       <StaticPageHero
         badge="Support"
         title="Questions, answered."
@@ -62,5 +65,5 @@ export function FAQPage() {
         </section>
       </RevealSection>
     </StaticPageLayout>
-  )
+  );
 }

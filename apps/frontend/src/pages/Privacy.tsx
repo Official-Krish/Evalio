@@ -1,7 +1,7 @@
-import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
-import { StaticPageHero } from "@/components/static/StaticPageHero"
-import { StaticProse } from "@/components/static/StaticProse"
-import { usePageTitle } from "@/lib/usePageTitle"
+import { StaticPageLayout } from "@/components/layout/StaticPageLayout";
+import { StaticPageHero } from "@/components/static/StaticPageHero";
+import { StaticProse } from "@/components/static/StaticProse";
+import { SEO } from "@/components/SEO";
 
 const sections = [
   {
@@ -34,12 +34,15 @@ const sections = [
     content:
       "We may update this policy as the product matures. Material changes will be noted on this page with an updated date.",
   },
-]
+];
 
 export function PrivacyPage() {
-  usePageTitle("Privacy Policy")
   return (
     <StaticPageLayout>
+      <SEO
+        title="Privacy Policy"
+        description="Privacy policy for Evalio interview practice platform."
+      />
       <StaticPageHero
         badge="Legal"
         title="Privacy Policy"
@@ -47,5 +50,5 @@ export function PrivacyPage() {
       />
       <StaticProse sections={sections} />
     </StaticPageLayout>
-  )
+  );
 }

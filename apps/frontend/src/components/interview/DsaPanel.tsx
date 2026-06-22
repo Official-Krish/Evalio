@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "motion/react";
 import DOMPurify from "dompurify";
 import { CodeEditor } from "./CodeEditor";
 import {
@@ -53,142 +52,11 @@ interface DsaPanelProps {
   onLanguageChange?: (language: string) => void;
 }
 
-const PHASES = [
-  { id: "understanding", label: "Understand", short: "Understanding" },
-  { id: "brute_force", label: "Brute Force", short: "Brute Force" },
-  { id: "optimization", label: "Optimize", short: "Optimization" },
-  { id: "implementation", label: "Implement", short: "Implementation" },
-  { id: "testing", label: "Test", short: "Testing" },
-  { id: "review", label: "Review", short: "Review" },
-] as const;
-
 const DIFFICULTY_COLORS: Record<string, string> = {
   EASY: "#22c55e",
   MEDIUM: "#eab308",
   HARD: "#ef4444",
 };
-
-function PhaseStepper({
-  currentPhase,
-  phasesCompleted,
-}: {
-  currentPhase: string;
-  phasesCompleted: string[];
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "16px 20px",
-        borderBottom: "1px solid var(--color-border-light)",
-        background: "rgba(255, 255, 255, 0.01)",
-        overflowX: "auto",
-        scrollbarWidth: "none",
-      }}
-    >
-      {PHASES.map((p, idx) => {
-        const done = phasesCompleted.includes(p.id);
-        const active = currentPhase === p.id;
-        return (
-          <div
-            key={p.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              position: "relative",
-              flex: idx === PHASES.length - 1 ? "none" : 1,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "6px",
-                cursor: "default",
-                zIndex: 2,
-              }}
-            >
-              <motion.div
-                animate={{
-                  scale: active ? 1.15 : 1,
-                  backgroundColor: done
-                    ? "var(--app-accent, #b8a88a)"
-                    : active
-                      ? "var(--color-text)"
-                      : "var(--color-bg-hover)",
-                  borderColor: active
-                    ? "var(--app-accent, #b8a88a)"
-                    : done
-                      ? "var(--app-accent, #b8a88a)"
-                      : "var(--color-border)",
-                  boxShadow: active
-                    ? "0 0 10px var(--app-accent-glow)"
-                    : "none",
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                style={{
-                  width: "18px",
-                  height: "18px",
-                  borderRadius: "50%",
-                  border: "1px solid",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "9px",
-                  fontWeight: 700,
-                  color: done
-                    ? "#080808"
-                    : active
-                      ? "var(--color-bg)"
-                      : "var(--color-text-muted)",
-                }}
-              >
-                {done ? "✓" : idx + 1}
-              </motion.div>
-
-              <span
-                style={{
-                  fontSize: "9px",
-                  fontWeight: active ? 600 : 400,
-                  letterSpacing: "0.03em",
-                  color: active
-                    ? "var(--color-text)"
-                    : done
-                      ? "var(--color-text-secondary)"
-                      : "var(--color-text-tertiary)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {p.short}
-              </span>
-            </div>
-
-            {idx < PHASES.length - 1 && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "9px",
-                  left: "18px",
-                  right: "0",
-                  height: "1px",
-                  background: done
-                    ? "var(--app-accent, #b8a88a)"
-                    : "var(--color-border-light)",
-                  opacity: done ? 0.8 : 0.4,
-                  zIndex: 1,
-                  transform: "translateY(-50%)",
-                }}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 function TestCaseCard({
   testCase,
@@ -565,12 +433,6 @@ export function DsaPanel({
         boxShadow: "var(--db-card-shadow)",
       }}
     >
-      {/* Phase stepper */}
-      <PhaseStepper
-        currentPhase={currentProblem?.currentPhase ?? "understanding"}
-        phasesCompleted={currentProblem?.phasesCompleted ?? []}
-      />
-
       {/* Tab bar */}
       <div
         style={{

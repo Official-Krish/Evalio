@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
 import { api } from "@/lib/api";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 import toast from "react-hot-toast";
 
 /* ── Data ─────────────────────────────────────────────────────── */
@@ -96,8 +96,6 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
 /* ── Main component ─────────────────────────────────────────────── */
 
 export function FeedbackPage() {
-  usePageTitle("Share Feedback");
-
   const [step, setStep] = useState(0);
   const [category, setCategory] = useState("General");
   const [rating, setRating] = useState(0);
@@ -146,6 +144,7 @@ export function FeedbackPage() {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="flex flex-col items-start gap-6"
       >
+        <SEO title="Feedback" noindex />
         {/* Ambient glow */}
         <div
           className="pointer-events-none absolute inset-0 z-0"
@@ -251,6 +250,7 @@ export function FeedbackPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
+      <SEO title="Feedback" noindex />
       {/* ── Header ── */}
       <div className="mb-8">
         <p

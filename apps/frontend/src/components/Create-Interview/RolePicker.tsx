@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { motion } from "motion/react";
 import { COMPANIES } from "@evalio/shared";
+import toast from "react-hot-toast";
 
 const COMMON_ROLES = [
   {
@@ -240,7 +241,19 @@ export function RolePicker({
               >
                 <input
                   value={customRole}
-                  onChange={(e) => onCustomRoleChange(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (
+                      /system\s*design/i.test(val) &&
+                      !/system\s*design/i.test(customRole)
+                    ) {
+                      toast(
+                        "Custom System Design interviews are coming soon, but you can still practice like normal interviews.",
+                        { icon: "🚧" },
+                      );
+                    }
+                    onCustomRoleChange(val);
+                  }}
                   placeholder="e.g. Staff Engineer, TPM, Design Lead..."
                   style={inputStyle}
                   onFocus={(e) =>
@@ -388,7 +401,19 @@ export function RolePicker({
               >
                 <input
                   value={customRole}
-                  onChange={(e) => onCustomRoleChange(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (
+                      /system\s*design/i.test(val) &&
+                      !/system\s*design/i.test(customRole)
+                    ) {
+                      toast(
+                        "Custom System Design interviews are coming soon, but you can still practice like normal interviews.",
+                        { icon: "🚧" },
+                      );
+                    }
+                    onCustomRoleChange(val);
+                  }}
                   placeholder="e.g. Staff Engineer, TPM, Design Lead..."
                   style={inputStyle}
                   onFocus={(e) =>

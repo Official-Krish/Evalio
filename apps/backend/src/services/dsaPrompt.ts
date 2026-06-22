@@ -80,7 +80,6 @@ export function buildDsaSystemPrompt(
     description: string;
     difficulty: string;
   }>,
-  language: string,
   context?: {
     companyName?: string | null;
     roleTitle?: string | null;
@@ -135,8 +134,8 @@ ${difficultyGuidance}
 
 ## Format
 - You communicate via audio. Speak naturally, listen to the candidate's responses.
-- You receive the candidate's code every 10 seconds as a **preview** — you can see what they're typing in real time. If they're going in a clearly wrong direction (fundamentally wrong approach, misunderstanding the problem), you can politely interrupt and guide them back. Do NOT interrupt for minor style issues or incomplete code — only for fundamental problems.
-- Every 25 seconds, their code is **saved** and you'll see a saved snapshot.
+- You receive the candidate's code every 20 seconds as a **preview** — you can see what they're typing in real time. If they're going in a clearly wrong direction (fundamentally wrong approach, misunderstanding the problem), you can politely interrupt and guide them back. Do NOT interrupt for minor style issues or incomplete code — only for fundamental problems.
+- Every 30 seconds, their code is **saved** and you'll see a saved snapshot.
 - You control the pace of the interview.
 
 ## Questions
@@ -171,9 +170,6 @@ You can directly modify the candidate's code to demonstrate a point, fix a bug, 
 - After modifying, say something like "I updated your code to show what I mean — take a look at line X" and ask a question about it.
 - When asking about a specific example or edge case, you can write it as a comment at the end of the code inside a CODE_UPDATE block.
 - You can also ask the candidate to change something themselves and discuss it, like a real interview. Say "Try modifying line X to handle this case" and see what they do.
-
-## Language
-The candidate is coding in **${language}**. Be aware of language-specific idioms and conventions.
 
 ## Reference Previous Questions
 Connect the dots between problems like a real interviewer:

@@ -16,40 +16,11 @@ const navItems = [
   {
     label: "Profile",
     path: "/profile",
-    icon: (
-      <svg
-        width="15"
-        height="15"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-      </svg>
-    ),
     description: "View your account",
   },
   {
     label: "Pricing",
     path: "/pricing",
-    icon: (
-      <svg
-        width="15"
-        height="15"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-      </svg>
-    ),
     description: "Plans & billing",
   },
 ];
@@ -57,21 +28,6 @@ const navItems = [
 const adminItem = {
   label: "Admin Panel",
   path: "/admin/feedback",
-  icon: (
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
-    </svg>
-  ),
   description: "Manage platform",
 };
 
@@ -302,7 +258,6 @@ export function ProfileDropdown({
                   key={item.label}
                   label={item.label}
                   description={item.description}
-                  icon={item.icon}
                   index={i}
                   onClick={() => {
                     setOpen(false);
@@ -355,7 +310,7 @@ export function ProfileDropdown({
 function AvatarRing({
   initials,
   size = 28,
-  active = false,
+  active: _active = false,
 }: {
   initials: string;
   size?: number;
@@ -414,13 +369,11 @@ function AvatarRing({
 function MenuRow({
   label,
   description,
-  icon,
   index,
   onClick,
 }: {
   label: string;
   description: string;
-  icon: React.ReactNode;
   index: number;
   onClick: () => void;
 }) {
@@ -453,28 +406,6 @@ function MenuRow({
         outline: "none",
       }}
     >
-      <span
-        style={{
-          width: "30px",
-          height: "30px",
-          borderRadius: "8px",
-          background: hovered
-            ? "var(--app-accent-bg)"
-            : "var(--color-bg-hover)",
-          border: "1px solid",
-          borderColor: hovered
-            ? "var(--app-accent-border)"
-            : "var(--color-border-light)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: hovered ? "var(--app-accent)" : "var(--color-text-muted)",
-          flexShrink: 0,
-          transition: "all 0.2s ease",
-        }}
-      >
-        {icon}
-      </span>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span
           style={{

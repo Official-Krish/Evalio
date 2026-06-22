@@ -49,6 +49,7 @@ export class InterviewConnection {
   private waitingForAiResponse = false;
   private isQueued = false;
   private isDsaMode = false;
+  private dsaTransitioned = false;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private pongTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -436,8 +437,22 @@ export class InterviewConnection {
         const inputText = parsed.serverContent?.inputTranscription?.text;
         const outputText = parsed.serverContent?.outputTranscription?.text;
 
-        if (outputText && this.interviewId) {
-          this.questionBuf = dedupAppend(this.questionBuf, outputText);
+        // Also grab raw text from modelTurn.parts (preserves markers like READY_FOR_NEXT)
+        const rawText =
+          parsed.serverContent?.modelTurn?.parts
+            ?.filter((p: Record<string, unknown>) => typeof p.text === "string")
+            .map((p: Record<string, unknown>) => p.text as string)
+            .join(" ") ?? "";
+
+        // Prefer raw text for accumulation (preserves underscores), fall back to STT
+        const markerText = (this.isDsaMode && rawText) || outputText;
+
+        if (this.isDsaMode && rawText) {
+          console.log("[dsa] rawText:", JSON.stringify(rawText).slice(0, 300));
+        }
+
+        if (markerText && this.interviewId) {
+          this.questionBuf = dedupAppend(this.questionBuf, markerText);
         }
 
         if (inputText && this.interviewId) {
@@ -449,41 +464,21 @@ export class InterviewConnection {
           this.interviewDepth === "CHALLENGE" ||
           this.interviewDepth === "BAR_RAISER";
 
-        if (
-          turnComplete &&
-          outputText &&
-          isChallengeMode &&
-          this.waitingForAiResponse &&
-          !this.closingMode
-        ) {
-          this.waitingForAiResponse = false;
-          if (this.isNewQuestion(this.questionBuf)) {
-            await this.flushChallengeTurn();
-            this.currentTurnId = null;
-          } else {
-            this.questionBuf = outputText;
-          }
-        }
-
-        if (
-          turnComplete &&
-          outputText &&
-          !isChallengeMode &&
-          this.waitingForAiResponse
-        ) {
-          this.waitingForAiResponse = false;
-        }
-
-        if (this.closingMode && turnComplete) {
-          await this.handleTurnCompleteDuringClosing();
-        }
-
-        // DSA mode: detect READY_FOR_NEXT / ALL_DONE signals
-        if (turnComplete && outputText && this.isDsaMode) {
-          if (outputText.includes("READY_FOR_NEXT")) {
-            // Parse optional target index: READY_FOR_NEXT:3 (1-based, skip to Q3)
-            const skipMatch = outputText.match(
-              /READY_FOR_NEXT\s*[:－]\s*(\d+)/,
+        // DSA mode: detect READY_FOR_NEXT / ALL_DONE / CODE_UPDATE signals
+        // (runs before isNewQuestion to avoid questionBuf overwrite)
+        if (turnComplete && this.isDsaMode && !this.dsaTransitioned) {
+          console.log(
+            "[dsa] turnComplete, buf:",
+            JSON.stringify(this.questionBuf).slice(0, 200),
+          );
+          // Normalize: STT may produce spaces (e.g. "READY FOR NEXT")
+          // while raw text has underscores ("READY_FOR_NEXT").
+          // dedupAppend may also insert spaces between chunks.
+          // Use regex that accepts both.
+          const buf = this.questionBuf;
+          if (/\bREADY[_\s]*FOR[_\s]*NEXT\b/i.test(buf)) {
+            const skipMatch = buf.match(
+              /\bREADY[_\s]*FOR[_\s]*NEXT\s*[:－]\s*(\d+)/i,
             );
             const skipIdx = skipMatch
               ? Math.max(0, parseInt(skipMatch[1]!, 10) - 1)
@@ -495,7 +490,6 @@ export class InterviewConnection {
               }`,
             );
 
-            // Tell Gemini which question we're moving to
             try {
               const dsaSession = await prisma.dsaSession.findUnique({
                 where: { interviewId: this.interviewId! },
@@ -530,7 +524,7 @@ export class InterviewConnection {
                             ],
                           },
                         ],
-                        turnComplete: true,
+                        turnComplete: false,
                       },
                     }),
                   );
@@ -539,16 +533,34 @@ export class InterviewConnection {
             } catch (err) {
               console.error("[dsa] failed to handle READY_FOR_NEXT:", err);
             }
+            this.dsaTransitioned = true;
           }
-          if (outputText.includes("ALL_DONE")) {
+          if (
+            !/\bREADY[_\s]*FOR[_\s]*NEXT\b/i.test(buf) &&
+            !/\bALL[_\s]*DONE\b/i.test(buf)
+          ) {
+            console.log("[dsa] no marker found in buf");
+          }
+          if (/\bALL[_\s]*DONE\b/i.test(buf)) {
+            console.log("[dsa] ALL_DONE detected");
             await this.safeSend({ type: "dsa_all_done" });
+            this.dsaTransitioned = true;
           }
 
           // DSA: detect CODE_UPDATE signal (AI modifying code)
-          const codeUpdateMatch = outputText.match(
+          // Use accumulated buffer - markers may span multiple messages in the turn
+          const hasCodeUpdate = /\[CODE_UPDATE\]/i.test(buf);
+          if (this.isDsaMode && turnComplete) {
+            console.log("[dsa] CODE_UPDATE check:", {
+              hasCodeUpdate,
+              bufSlice: buf.slice(-300),
+            });
+          }
+          const codeUpdateMatch = buf.match(
             /\[CODE_UPDATE\]\s*```(?:\w+)?\s*\n?([\s\S]*?)```\s*\[\/CODE_UPDATE\]/i,
           );
           if (codeUpdateMatch) {
+            console.log("[dsa] CODE_UPDATE detected");
             const updatedCode = codeUpdateMatch[1]!.trim();
             await this.safeSend({
               type: "dsa_code_update",
@@ -580,6 +592,19 @@ export class InterviewConnection {
               console.error("[dsa] failed to persist CODE_UPDATE:", err);
             }
           }
+        }
+
+        // Reset waitingForAiResponse on turnComplete
+        if (turnComplete && this.waitingForAiResponse && !this.closingMode) {
+          this.waitingForAiResponse = false;
+          if (isChallengeMode && this.isNewQuestion(this.questionBuf)) {
+            await this.flushChallengeTurn();
+            this.currentTurnId = null;
+          }
+        }
+
+        if (this.closingMode && turnComplete) {
+          await this.handleTurnCompleteDuringClosing();
         }
       } catch {
         // Not JSON or parse error — just relay
@@ -628,7 +653,7 @@ export class InterviewConnection {
   }
 
   private async handleMessage(msg: Record<string, unknown>) {
-    if (this.isRateLimited()) {
+    if (msg.type !== "audio_chunk" && this.isRateLimited()) {
       this.safeSend({ error: "Too many messages. Slow down." });
       return;
     }
@@ -807,7 +832,6 @@ export class InterviewConnection {
 
           systemPrompt = buildDsaSystemPrompt(
             problems,
-            dsaSession?.language ?? "python",
             {
               companyName: interview.companyName,
               roleTitle: (interview as { roleTitle?: string | null }).roleTitle,
@@ -1010,6 +1034,7 @@ export class InterviewConnection {
         }
 
         this.waitingForAiResponse = true;
+        this.dsaTransitioned = false;
 
         try {
           this.gemini.send(
@@ -1044,7 +1069,7 @@ export class InterviewConnection {
                   role: "user",
                   parts: [
                     {
-                      text: `[Code Preview — Question ${idx}, ${phase} phase, not yet saved]\n\n\`\`\`${prevMsg.language ?? "python"}\n${prevMsg.code}\n\`\`\``,
+                      text: `[Code Preview — Question ${idx}, ${phase} phase, not yet saved]\n\n\`\`\`${prevMsg.language ?? "javascript"}\n${prevMsg.code}\n\`\`\``,
                     },
                   ],
                 },
@@ -1067,7 +1092,7 @@ export class InterviewConnection {
         if (codeMsg.code === undefined || codeMsg.code.length > 100000) break;
         const idx = safeIndex(codeMsg.questionIndex);
         const phase = safePhase(codeMsg.phase);
-        const codeText = `\`\`\`${codeMsg.language ?? "python"}\n${codeMsg.code}\n\`\`\``;
+        const codeText = `\`\`\`${codeMsg.language ?? "javascript"}\n${codeMsg.code}\n\`\`\``;
         this.gemini.send(
           JSON.stringify({
             clientContent: {

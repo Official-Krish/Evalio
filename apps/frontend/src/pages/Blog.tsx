@@ -1,14 +1,17 @@
-import { Link } from "react-router-dom"
-import { usePageTitle } from "@/lib/usePageTitle"
-import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
-import { StaticPageHero } from "@/components/static/StaticPageHero"
-import { RevealSection } from "@/components/motion/RevealSection"
-import { BLOG_POSTS } from "@/lib/blogData"
+import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
+import { StaticPageLayout } from "@/components/layout/StaticPageLayout";
+import { StaticPageHero } from "@/components/static/StaticPageHero";
+import { RevealSection } from "@/components/motion/RevealSection";
+import { BLOG_POSTS } from "@/lib/blogData";
 
 export function BlogPage() {
-  usePageTitle("Blog")
   return (
     <StaticPageLayout>
+      <SEO
+        title="Blog"
+        description="Interview tips, strategies, and insights from Evalio."
+      />
       <StaticPageHero
         badge="Blog"
         title="Thoughts on interviewing."
@@ -26,7 +29,10 @@ export function BlogPage() {
                 <article
                   style={{
                     padding: "36px 0",
-                    borderBottom: i < BLOG_POSTS.length - 1 ? "0.5px solid rgba(255,255,255,0.08)" : "none",
+                    borderBottom:
+                      i < BLOG_POSTS.length - 1
+                        ? "0.5px solid rgba(255,255,255,0.08)"
+                        : "none",
                     display: "grid",
                     gridTemplateColumns: "1fr auto",
                     gap: "24px",
@@ -38,7 +44,14 @@ export function BlogPage() {
                   onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                 >
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        marginBottom: "10px",
+                      }}
+                    >
                       <span
                         style={{
                           fontSize: "10px",
@@ -53,7 +66,12 @@ export function BlogPage() {
                       >
                         {post.tag}
                       </span>
-                      <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          color: "rgba(255,255,255,0.3)",
+                        }}
+                      >
                         {post.date} · {post.readMins} min read
                       </span>
                     </div>
@@ -98,5 +116,5 @@ export function BlogPage() {
         </div>
       </div>
     </StaticPageLayout>
-  )
+  );
 }

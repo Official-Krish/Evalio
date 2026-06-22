@@ -32,3 +32,6 @@ const htmlPath = path.join(outdir, "index.html");
 let html = await readFile(htmlPath, "utf-8");
 html = html.replace(/(src|href)="(?:\.\/)?(?!\/|https?:\/\/|data:)/g, '$1="/');
 await writeFile(htmlPath, html);
+
+// Generate OG image
+await import("./scripts/generate-og");

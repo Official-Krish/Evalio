@@ -8,11 +8,10 @@ import { IdentityProfileCard } from "../components/Dashboard/IdentityProfileCard
 import { FailurePatternDetailCard } from "../components/Profile/FailurePatternDetailCard";
 import { GithubIntegrationCard } from "../components/Profile/GithubIntegrationCard";
 import { api } from "../lib/api";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 import type { InterviewSession, Resume } from "@evalio/shared";
 
 export function ProfilePage() {
-  usePageTitle("Profile");
   const { data: session } = useSession();
   const user = session?.user;
 
@@ -91,6 +90,7 @@ export function ProfilePage() {
     <div
       style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 16px 64px" }}
     >
+      <SEO title="Profile" noindex />
       {/* ─── Bento Grid ───────────────────────────────────────── */}
       <div
         className="grid grid-cols-1 lg:grid-cols-12 gap-5"

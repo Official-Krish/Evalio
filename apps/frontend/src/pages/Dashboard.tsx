@@ -9,11 +9,10 @@ import { Signals } from "../components/Dashboard/Signals";
 import { Coach } from "../components/Dashboard/Coach";
 import { History } from "../components/Dashboard/History";
 import { computeReadiness } from "../components/Dashboard/helpers";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 import type { InterviewSession } from "@evalio/shared";
 
 export function DashboardPage() {
-  usePageTitle("Dashboard");
   const [showUpload, setShowUpload] = useState(false);
   const [previewResumeId, setPreviewResumeId] = useState<string | null>(null);
 
@@ -142,6 +141,7 @@ export function DashboardPage() {
 
   return (
     <div className="db-container">
+      <SEO title="Dashboard" noindex />
       <UploadResumeModal
         open={showUpload}
         onClose={() => setShowUpload(false)}
@@ -221,6 +221,7 @@ export function DashboardPage() {
               latestSummary={latestSummary}
               funnelSteps={funnelSteps}
               commonPatterns={commonPatterns}
+              completedCount={completed.length}
             />
           </div>
 

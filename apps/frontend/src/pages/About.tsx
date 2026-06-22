@@ -1,7 +1,7 @@
-import { StaticPageLayout } from "@/components/layout/StaticPageLayout"
-import { StaticPageHero } from "@/components/static/StaticPageHero"
-import { RevealSection } from "@/components/motion/RevealSection"
-import { usePageTitle } from "@/lib/usePageTitle"
+import { StaticPageLayout } from "@/components/layout/StaticPageLayout";
+import { StaticPageHero } from "@/components/static/StaticPageHero";
+import { RevealSection } from "@/components/motion/RevealSection";
+import { SEO } from "@/components/SEO";
 
 const values = [
   {
@@ -16,25 +16,33 @@ const values = [
     title: "Privacy by design",
     desc: "Your sessions are yours. We don't sell interview data or use it to train third-party models.",
   },
-]
+];
 
 const facts = [
   { label: "Interviewers", value: "6 role-specific personas" },
   { label: "Format", value: "Live voice in the browser" },
-  { label: "Evaluation", value: "Communication, technical, problem-solving scores" },
+  {
+    label: "Evaluation",
+    value: "Communication, technical, problem-solving scores",
+  },
   { label: "Stack", value: "Gemini for conversation & evaluation" },
-]
+];
 
 export function AboutPage() {
-  usePageTitle("About")
   return (
     <StaticPageLayout>
+      <SEO
+        title="About"
+        description="Learn about Evalio — AI-powered interview practice that helps you improve with every session."
+      />
       <StaticPageHero
         badge="About"
         title={
           <>
             The best interview is one{" "}
-            <span className="landing-serif italic text-[var(--landing-fg-muted)]">you've already done.</span>
+            <span className="landing-serif italic text-[var(--landing-fg-muted)]">
+              you've already done.
+            </span>
           </>
         }
         subtitle="Evalio is a voice practice environment that reads your résumé, runs a real conversation, and scores how you performed — so the actual interview feels familiar."
@@ -45,8 +53,12 @@ export function AboutPage() {
           <div className="max-w-3xl grid sm:grid-cols-2 gap-px bg-[var(--landing-line)] border border-[var(--landing-line)]">
             {facts.map((f) => (
               <div key={f.label} className="bg-[var(--landing-bg)] p-5">
-                <p className="text-[10px] tracking-[0.14em] uppercase text-[var(--landing-fg-faint)]">{f.label}</p>
-                <p className="mt-1.5 text-[14px] text-[var(--landing-fg)]">{f.value}</p>
+                <p className="text-[10px] tracking-[0.14em] uppercase text-[var(--landing-fg-faint)]">
+                  {f.label}
+                </p>
+                <p className="mt-1.5 text-[14px] text-[var(--landing-fg)]">
+                  {f.value}
+                </p>
               </div>
             ))}
           </div>
@@ -56,10 +68,15 @@ export function AboutPage() {
       <RevealSection>
         <section className="landing-container pb-16">
           <div className="max-w-3xl">
-            <h2 className="static-title text-[1.75rem] mb-8">What we stand for</h2>
+            <h2 className="static-title text-[1.75rem] mb-8">
+              What we stand for
+            </h2>
             <div className="space-y-px border border-[var(--landing-line)]">
               {values.map((v) => (
-                <div key={v.title} className="static-card !border-0 !border-b border-[var(--landing-line)] last:border-b-0">
+                <div
+                  key={v.title}
+                  className="static-card !border-0 !border-b border-[var(--landing-line)] last:border-b-0"
+                >
                   <h3 className="static-card-title">{v.title}</h3>
                   <p className="static-card-body">{v.desc}</p>
                 </div>
@@ -72,11 +89,16 @@ export function AboutPage() {
       <RevealSection>
         <section className="landing-container pb-28">
           <div className="max-w-3xl static-card">
-            <p className="text-[10px] tracking-[0.14em] uppercase text-[var(--landing-fg-faint)] mb-3">Built by</p>
-            <p className="landing-serif text-[22px] text-[var(--landing-fg)]">Krish Anand</p>
+            <p className="text-[10px] tracking-[0.14em] uppercase text-[var(--landing-fg-faint)] mb-3">
+              Built by
+            </p>
+            <p className="landing-serif text-[22px] text-[var(--landing-fg)]">
+              Krish Anand
+            </p>
             <p className="mt-3 text-[14px] leading-[1.75] text-[var(--landing-fg-muted)]">
-              Evalio started as a prototype to fix a simple gap: most prep tools don't feel like being interviewed.
-              It's still early — features ship weekly, and feedback from real sessions shapes the roadmap.
+              Evalio started as a prototype to fix a simple gap: most prep tools
+              don't feel like being interviewed. It's still early — features
+              ship weekly, and feedback from real sessions shapes the roadmap.
             </p>
             <a
               href="https://github.com/Official-Krish"
@@ -90,5 +112,5 @@ export function AboutPage() {
         </section>
       </RevealSection>
     </StaticPageLayout>
-  )
+  );
 }

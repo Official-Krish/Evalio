@@ -54,9 +54,9 @@ export function LandingCompanies() {
             transition={{ duration: 0.9, delay: 0.08 }}
             className="landing-display text-[clamp(1.85rem,3.8vw,2.85rem)] leading-[1.08] tracking-[-0.03em] text-[var(--landing-fg)]"
           >
-            Walk into the wrong room and you&apos;re practicing the{" "}
+            Every door listens for{" "}
             <span className="landing-serif italic text-[var(--landing-fg-muted)]">
-              wrong conversation
+              something different
             </span>
             .
           </motion.h2>
@@ -67,9 +67,9 @@ export function LandingCompanies() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="mt-5 text-[14px] leading-[1.8] text-[var(--landing-fg-muted)]"
           >
-            Every company listens for something different. Stripe probes
-            tradeoffs. Google watches how you think. Amazon hunts for ownership
-            signals.
+            Stripe probes tradeoffs. Google traces your thinking. Amazon hunts
+            for ownership signals. Evalio prepares you for the room you&apos;re
+            walking into.
           </motion.p>
 
           <AnimatePresence mode="wait">

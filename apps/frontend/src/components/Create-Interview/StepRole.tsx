@@ -107,6 +107,20 @@ export function StepRole({
             ? "Select the position you're applying for"
             : "Type the role you're targeting"}
         </motion.p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15 }}
+          style={{
+            fontSize: "12px",
+            color: "var(--color-text-tertiary)",
+            margin: "4px 0 0",
+            lineHeight: 1.4,
+          }}
+        >
+          The role tells the AI what signals to listen for and how to tailor the
+          difficulty.
+        </motion.p>
       </div>
       <RolePicker
         companyId={companyId}

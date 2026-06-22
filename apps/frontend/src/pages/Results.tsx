@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { ResultsSkeleton } from "../components/skeletons/ResultsSkeleton";
-import { usePageTitle } from "@/lib/usePageTitle";
+import { SEO } from "@/components/SEO";
 import toast from "react-hot-toast";
 import type { EvaluationStatus } from "@evalio/shared";
 import { getVerdict } from "../components/Result/helpers";
@@ -18,7 +18,6 @@ import { DsaResultsSection } from "../components/Result/DsaResultsSection";
 import type { DsaSessionData } from "../components/Result/types";
 
 export function ResultsPage() {
-  usePageTitle("Results");
   const { id } = useParams<{ id: string }>();
 
   const {
@@ -48,6 +47,34 @@ export function ResultsPage() {
   const queryClient = useQueryClient();
   const [evalStuck, setEvalStuck] = useState(false);
   const [retryingEval, setRetryingEval] = useState(false);
+
+  const prevEvalRef = useRef(evalStatus?.status);
+
+  useEffect(() => {
+    const prev = prevEvalRef.current;
+    prevEvalRef.current = evalStatus?.status;
+    if (prev === "pending" && evalStatus?.status === "completed") {
+      toast.success(
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <span style={{ fontWeight: 500, fontSize: "14px" }}>
+            Evaluation complete!
+          </span>
+          <Link
+            to="/analysis"
+            style={{
+              fontSize: "12px",
+              textDecoration: "underline",
+              opacity: 0.8,
+            }}
+            onClick={() => toast.dismiss()}
+          >
+            View cross-session analysis &rarr;
+          </Link>
+        </div>,
+        { duration: 8000 },
+      );
+    }
+  }, [evalStatus?.status]);
 
   useEffect(() => {
     if (evalStatus?.status !== "pending") return;
@@ -184,6 +211,7 @@ export function ResultsPage() {
 
   return (
     <div className="max-w-[840px] mx-auto pb-20 px-4">
+      <SEO title="Results" noindex />
       <SessionMeta interview={interview} turnsCount={turns.length} />
 
       <ScoreBlock
