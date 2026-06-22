@@ -178,8 +178,8 @@ export const FileUpload = ({
                 }}
                 className={cn(
                   "relative z-40 mx-auto mt-4 flex h-32 w-full max-w-[8rem] items-center justify-center rounded-md",
-                  "bg-[var(--color-bg-elevated)] shadow-[0px_10px_50px_rgba(0,0,0,0.4)]",
-                  "group-hover/file:shadow-[0px_10px_50px_rgba(0,0,0,0.6)]",
+                  "bg-[var(--color-bg-elevated)] shadow-[0px_10px_50px_var(--color-shadow-heavy)]",
+                  "group-hover/file:shadow-[0px_10px_50px_var(--color-shadow-hover)]",
                 )}
               >
                 {isDragActive ? (

@@ -3,11 +3,11 @@ import { motion } from "motion/react";
 import { COMPANIES } from "@evalio/shared";
 
 const COMMON_ROUNDS = [
+  "Coding Round (DSA)",
   "Phone Screen",
   "Technical Coding",
   "System Design",
   "Behavioral",
-  "Coding Round (DSA)",
 ];
 
 const TECHNICAL_KEYWORDS = [
@@ -163,7 +163,7 @@ export function RoundPicker({
   const baseRounds = company?.interviewRounds ?? [];
   const isStartup = companyId === "startup";
   const dsaRound = technical && !isStartup ? ["Coding Round (DSA)"] : [];
-  const rounds = isStartup ? baseRounds : [...baseRounds, ...dsaRound];
+  const rounds = isStartup ? baseRounds : [...dsaRound, ...baseRounds];
   const commonRounds = technical
     ? COMMON_ROUNDS
     : COMMON_ROUNDS.filter((r) => r !== "Coding Round (DSA)");
@@ -228,9 +228,36 @@ export function RoundPicker({
                       fontWeight: 600,
                       color: "var(--color-text)",
                       margin: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
                     }}
                   >
                     {round}
+                    {round === "Coding Round (DSA)" && (
+                      <span
+                        className="inline-flex items-center gap-1 live-badge"
+                        style={{
+                          fontSize: "9px",
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
+                          color: "var(--color-accent)",
+                          border: "1px solid var(--color-accent-border)",
+                          borderRadius: 3,
+                          padding: "1px 5px",
+                          lineHeight: "14px",
+                        }}
+                      >
+                        <span
+                          className="w-1 h-1 rounded-full"
+                          style={{
+                            background: "var(--color-accent)",
+                            boxShadow: "0 0 4px var(--color-accent-border)",
+                          }}
+                        />
+                        Live
+                      </span>
+                    )}
                   </p>
                   <p
                     style={{
@@ -389,13 +416,13 @@ export function RoundPicker({
                       {round}
                       {round === "Coding Round (DSA)" && (
                         <span
-                          className="inline-flex items-center gap-1"
+                          className="inline-flex items-center gap-1 live-badge"
                           style={{
                             fontSize: "9px",
                             letterSpacing: "0.1em",
                             textTransform: "uppercase",
-                            color: "rgba(160,200,160,0.9)",
-                            border: "1px solid rgba(160,200,160,0.25)",
+                            color: "var(--color-accent)",
+                            border: "1px solid var(--color-accent-border)",
                             borderRadius: 3,
                             padding: "1px 5px",
                             lineHeight: "14px",
@@ -404,8 +431,8 @@ export function RoundPicker({
                           <span
                             className="w-1 h-1 rounded-full"
                             style={{
-                              background: "rgba(160,200,160,0.9)",
-                              boxShadow: "0 0 4px rgba(160,200,160,0.5)",
+                              background: "var(--color-accent)",
+                              boxShadow: "0 0 4px var(--color-accent-border)",
                             }}
                           />
                           Live

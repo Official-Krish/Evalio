@@ -108,6 +108,20 @@ export function StepRound({
             ? `What stage at ${companyName}?`
             : "What type of interview round?"}
         </motion.p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15 }}
+          style={{
+            fontSize: "12px",
+            color: "var(--color-text-tertiary)",
+            margin: "4px 0 0",
+            lineHeight: 1.4,
+          }}
+        >
+          Choose the round type. DSA rounds include real-time coding with AI
+          feedback. Not sure? Skip and let the AI decide.
+        </motion.p>
       </div>
       <RoundPicker
         companyId={companyId}

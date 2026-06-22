@@ -75,6 +75,20 @@ export function StepCompany({
         >
           Select a company
         </motion.h1>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15 }}
+          style={{
+            fontSize: "12px",
+            color: "var(--color-text-tertiary)",
+            margin: "4px 0 0",
+            lineHeight: 1.4,
+          }}
+        >
+          Every company interviews differently. Pick one and we'll adapt the AI
+          to match.
+        </motion.p>
       </div>
       <CompanyGrid
         selectedCompanyId={selectedCompanyId}

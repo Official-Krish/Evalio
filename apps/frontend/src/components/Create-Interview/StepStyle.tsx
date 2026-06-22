@@ -99,6 +99,20 @@ export function StepStyle({
         >
           Choose how the AI interviews you
         </motion.p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15 }}
+          style={{
+            fontSize: "12px",
+            color: "var(--color-text-tertiary)",
+            margin: "4px 0 0",
+            lineHeight: 1.4,
+          }}
+        >
+          Style sets the tone, depth controls how hard the AI pushes. Defaults
+          are tailored to your company.
+        </motion.p>
       </div>
       <StyleDepthPicker
         style={style}

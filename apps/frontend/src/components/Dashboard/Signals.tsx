@@ -158,18 +158,10 @@ export function Signals({
             <p className="text-[13px] font-medium text-[var(--color-text)] mb-2">
               Discover your interview identity
             </p>
-            <p className="text-[12px] text-[var(--color-text-secondary)] leading-relaxed mb-4">
+            <p className="text-[12px] text-[var(--color-text-secondary)] leading-relaxed">
               Complete {4 - Math.min(3, completedCount)} more sessions to
               generate your core signal profiles.
             </p>
-            <div className="h-1 bg-[var(--db-metric-line)] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[var(--color-accent)] rounded-full transition-all duration-750"
-                style={{
-                  width: `${Math.max(12, (completedCount / 4) * 100)}%`,
-                }}
-              />
-            </div>
           </div>
         )}
       </div>

@@ -42,6 +42,7 @@
 [data-theme="dark"] {
   --color-bg: #080808;
   --color-bg-elevated: #121212;
+  --color-bg-subtle: #0d0d0d;
   --color-bg-card: #111111;
   --color-bg-card-raised: #171717;
   --color-bg-hover: #1a1a1a;
@@ -54,6 +55,8 @@
   --color-text-muted: #7a7874;
   --color-text-tertiary: #3a3a3a;
   --color-background-secondary: #0f0f0f;
+  --color-shadow-heavy: rgba(0, 0, 0, 0.5);
+  --color-shadow-hover: rgba(0, 0, 0, 0.7);
   --ring-track: rgba(255, 255, 255, 0.07);
   /* App accent aliases for dark theme */
   --app-accent: #b8a88a;
@@ -67,6 +70,7 @@
 [data-theme="light"] {
   --color-bg: #f6f4f0;
   --color-bg-elevated: #ffffff;
+  --color-bg-subtle: #f0ede8;
   --color-bg-card: #fdfcfa;
   --color-bg-card-raised: #f8f6f2;
   --color-bg-hover: #f0ede8;
@@ -79,6 +83,8 @@
   --color-text-muted: #6a6864;
   --color-text-tertiary: #c0beb8;
   --color-background-secondary: #ece9e4;
+  --color-shadow-heavy: rgba(0, 0, 0, 0.08);
+  --color-shadow-hover: rgba(0, 0, 0, 0.12);
   --ring-track: rgba(0, 0, 0, 0.07);
   /* App accent aliases for light theme */
   --app-accent: #8a7a5c;
