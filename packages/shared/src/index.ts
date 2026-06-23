@@ -74,7 +74,7 @@ export const interviewDepthSchema = z.enum([
 ]);
 
 // ── Interview ──
-export const interviewModeSchema = z.enum(["VOICE", "DSA"]);
+export const interviewModeSchema = z.enum(["VOICE", "DSA", "SYSTEM_DESIGN"]);
 
 export const createInterviewSchema = z.object({
   position: z.string().min(1),
@@ -155,6 +155,8 @@ export interface InterviewSession {
   companyId?: string | null;
   companyName?: string | null;
   roleTitle?: string | null;
+  finalDiagram?: CanvasSnapshot | null;
+  canvasGraphHistory?: CanvasSnapshot[] | null;
 }
 
 export interface InterviewTurn {
@@ -213,4 +215,60 @@ export interface EvaluationStatus {
     technical: number;
     problemSolving: number;
   } | null;
+}
+
+// ── System Design / Canvas Types ──
+
+export interface CanvasNode {
+  id: string;
+  type: string;
+  label: string;
+  origin: "user" | "ai";
+  confidence: number;
+  inference: "explicit" | "heuristic";
+  tags?: string[];
+}
+
+export interface CanvasEdge {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+}
+
+export interface CanvasSnapshot {
+  version: number;
+  timestamp: number;
+  nodes: CanvasNode[];
+  edges: CanvasEdge[];
+}
+
+export type CanvasDiffAction =
+  | {
+      action: "highlight";
+      nodeIds: string[];
+      color?: string;
+      durationMs?: number;
+    }
+  | {
+      action: "add_node";
+      id: string;
+      type: string;
+      label: string;
+      x: number;
+      y: number;
+    }
+  | { action: "remove_node"; id: string }
+  | { action: "annotate"; text: string; x: number; y: number }
+  | { action: "clear_highlights" };
+
+export interface CanvasDiff {
+  actions: CanvasDiffAction[];
+}
+
+export interface CanvasExample {
+  id: string;
+  title: string;
+  nodes: CanvasNode[];
+  edges: CanvasEdge[];
 }

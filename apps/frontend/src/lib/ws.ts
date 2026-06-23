@@ -52,6 +52,9 @@ export class InterviewSocket {
             "dsa_ready_next",
             "dsa_all_done",
             "dsa_code_update",
+            "canvas_diff",
+            "canvas_example",
+            "task_description",
           ];
           if (
             typeof data.type === "string" &&
@@ -141,6 +144,10 @@ export class InterviewSocket {
 
   sendLanguageChange(language: string) {
     this.send({ type: "language_change", language });
+  }
+
+  sendCanvasSnapshot(state: unknown) {
+    this.send({ type: "canvas_snapshot", state });
   }
 
   forceClose() {

@@ -22,6 +22,7 @@ export class InterviewConnection {
   isQueued = false;
   isDsaMode = false;
   dsaTransitioned = false;
+  isSystemDesign = false;
   heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   pongTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -298,6 +299,43 @@ export class InterviewConnection {
         console.log("[ws] end_interview from client");
         await initiateClosing(this);
         break;
+
+      case "canvas_snapshot": {
+        if (!this.gemini || this.closingMode || !this.isSystemDesign) break;
+        const canvasMsg = msg as { state?: unknown };
+        if (!canvasMsg.state) break;
+
+        try {
+          await prisma.interviewSession.update({
+            where: { id: this.interviewId! },
+            data: {
+              finalDiagram: canvasMsg.state,
+              canvasGraphHistory: { push: canvasMsg.state },
+            },
+          });
+        } catch (err) {
+          console.error("[ws] failed to persist canvas snapshot:", err);
+        }
+
+        this.gemini.send(
+          JSON.stringify({
+            clientContent: {
+              turns: [
+                {
+                  role: "user",
+                  parts: [
+                    {
+                      text: `[Canvas Snapshot]\n\n${JSON.stringify(canvasMsg.state)}`,
+                    },
+                  ],
+                },
+              ],
+              turnComplete: false,
+            },
+          }),
+        );
+        break;
+      }
 
       default:
         await this.safeSend({

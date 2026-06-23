@@ -15,7 +15,7 @@ export interface DsaHistoryEntry {
   problemScores: Array<{ title: string; score: number | null }>;
 }
 
-import { buildStyleDirective } from "../prompt";
+import { buildStyleDirective, buildEndSessionInstruction } from "../prompt";
 
 function buildDsaHistorySection(
   history?: {
@@ -241,7 +241,9 @@ ${buildDsaHistorySection(history)}
 - Respond immediately when the candidate speaks.
 
 ## Response Format
-When you say "READY_FOR_NEXT" or "READY_FOR_NEXT:n" (to skip to a specific question) or "ALL_DONE" at the end of your response, it will be detected and the appropriate transition will happen.`;
+When you say "READY_FOR_NEXT" or "READY_FOR_NEXT:n" (to skip to a specific question) or "ALL_DONE" at the end of your response, it will be detected and the appropriate transition will happen.
+
+${buildEndSessionInstruction()}`;
 }
 
 export const DSA_EVALUATION_SCHEMA = {

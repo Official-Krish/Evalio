@@ -3,6 +3,7 @@ import { createGeminiSession } from "../gemini";
 import { prisma } from "../lib/prisma";
 import { dedupAppend } from "./dedup";
 import { handleDsaMarkers } from "./helpers/dsa-markers";
+import { handleSdMarkers, resetSdCounters } from "./helpers/sd-markers";
 import {
   isNewQuestion,
   flushChallengeTurn,
@@ -61,6 +62,7 @@ export async function startInterview(
 
   try {
     conn.gemini = await createGeminiSession(systemPrompt);
+    if (conn.isSystemDesign) resetSdCounters();
   } catch (err) {
     console.error("[ws] Gemini session failed:", err);
     await conn.safeSend({
@@ -154,11 +156,15 @@ export async function startInterview(
           .map((p: Record<string, unknown>) => p.text as string)
           .join(" ") ?? "";
 
-      // Prefer raw text for accumulation (preserves underscores), fall back to STT
-      const markerText = (conn.isDsaMode && rawText) || outputText;
+      // Prefer raw text for accumulation (preserves markers), fall back to STT
+      const markerText =
+        ((conn.isDsaMode || conn.isSystemDesign) && rawText) || outputText;
 
-      if (conn.isDsaMode && rawText) {
-        console.log("[dsa] rawText:", JSON.stringify(rawText).slice(0, 300));
+      if ((conn.isDsaMode || conn.isSystemDesign) && rawText) {
+        console.log(
+          `[${conn.isDsaMode ? "dsa" : "sd"}] rawText:`,
+          JSON.stringify(rawText).slice(0, 300),
+        );
       }
 
       if (markerText && conn.interviewId) {
@@ -179,6 +185,15 @@ export async function startInterview(
           JSON.stringify(conn.questionBuf).slice(0, 200),
         );
         await handleDsaMarkers(conn);
+      }
+
+      // System Design mode: detect canvas_diff / canvas_example / task_description markers
+      if (turnComplete && conn.isSystemDesign) {
+        console.log(
+          "[sd] turnComplete, extracting canvas markers:",
+          JSON.stringify(conn.questionBuf).slice(0, 200),
+        );
+        await handleSdMarkers(conn);
       }
 
       // Reset waitingForAiResponse on turnComplete

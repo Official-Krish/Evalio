@@ -543,3 +543,259 @@ Provide specific, actionable feedback for each question. Return ONLY valid JSON 
     console.error(`[dsa-evaluate] error:`, err);
   }
 }
+
+// ── System Design Evaluation ──
+
+const SYSTEM_DESIGN_EVALUATION_SCHEMA = {
+  type: "object",
+  properties: {
+    overallScore: {
+      type: "number",
+      description: "Overall system design score 0-100",
+    },
+    dimensions: {
+      type: "object",
+      properties: {
+        requirementsGathering: { type: "number", description: "0-100" },
+        estimation: { type: "number", description: "0-100" },
+        highLevelArchitecture: { type: "number", description: "0-100" },
+        dataModel: { type: "number", description: "0-100" },
+        scalability: { type: "number", description: "0-100" },
+        faultTolerance: { type: "number", description: "0-100" },
+        tradeoffsAndDepth: { type: "number", description: "0-100" },
+      },
+      required: [
+        "requirementsGathering",
+        "estimation",
+        "highLevelArchitecture",
+        "dataModel",
+        "scalability",
+        "faultTolerance",
+        "tradeoffsAndDepth",
+      ],
+    },
+    canvasFeedback: {
+      type: "object",
+      properties: {
+        missingComponents: {
+          type: "array",
+          items: { type: "string" },
+        },
+        strongDecisions: {
+          type: "array",
+          items: { type: "string" },
+        },
+        weakDecisions: {
+          type: "array",
+          items: { type: "string" },
+        },
+        overallDiagramQuality: { type: "string" },
+      },
+      required: [
+        "missingComponents",
+        "strongDecisions",
+        "weakDecisions",
+        "overallDiagramQuality",
+      ],
+    },
+    graphHistoryInsights: {
+      type: "object",
+      properties: {
+        architectureEvolution: { type: "string" },
+        patternStrengths: {
+          type: "array",
+          items: { type: "string" },
+        },
+        patternWeaknesses: {
+          type: "array",
+          items: { type: "string" },
+        },
+      },
+      required: [
+        "architectureEvolution",
+        "patternStrengths",
+        "patternWeaknesses",
+      ],
+    },
+    summary: { type: "string" },
+    improvements: {
+      type: "array",
+      items: { type: "string" },
+    },
+  },
+  required: [
+    "overallScore",
+    "dimensions",
+    "canvasFeedback",
+    "graphHistoryInsights",
+    "summary",
+    "improvements",
+  ],
+} as const;
+
+interface SystemDesignEvaluationResult {
+  overallScore: number;
+  dimensions: {
+    requirementsGathering: number;
+    estimation: number;
+    highLevelArchitecture: number;
+    dataModel: number;
+    scalability: number;
+    faultTolerance: number;
+    tradeoffsAndDepth: number;
+  };
+  canvasFeedback: {
+    missingComponents: string[];
+    strongDecisions: string[];
+    weakDecisions: string[];
+    overallDiagramQuality: string;
+  };
+  graphHistoryInsights: {
+    architectureEvolution: string;
+    patternStrengths: string[];
+    patternWeaknesses: string[];
+  };
+  summary: string;
+  improvements: string[];
+}
+
+async function generateSystemDesignEvaluation(
+  prompt: string,
+): Promise<SystemDesignEvaluationResult | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY env not set");
+
+  const ai = new GoogleGenAI({ apiKey });
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: {
+          responseMimeType: "application/json",
+          responseJsonSchema: SYSTEM_DESIGN_EVALUATION_SCHEMA,
+        },
+      });
+
+      const text = response.text;
+      if (!text) {
+        console.warn(`[sd-evaluate] empty response, attempt ${attempt + 1}`);
+        throw new Error("No response from Gemini");
+      }
+
+      return JSON.parse(text) as SystemDesignEvaluationResult;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(`[sd-evaluate] attempt ${attempt + 1}/2 failed: ${message}`);
+      if (attempt < 1) {
+        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+      }
+    }
+  }
+
+  return null;
+}
+
+export async function evaluateSystemDesignSession(interviewId: string) {
+  try {
+    const interview = await prisma.interviewSession.findUnique({
+      where: { id: interviewId },
+      include: {
+        user: { select: { name: true } },
+        turns: { orderBy: { orderNumber: "asc" } },
+      },
+    });
+
+    if (!interview) {
+      console.warn(`[sd-evaluate] interview ${interviewId} not found`);
+      return;
+    }
+
+    // Filter AI-origin nodes from graph history for evolution analysis
+    const graphHistory =
+      (interview as { canvasGraphHistory?: unknown[] }).canvasGraphHistory ??
+      [];
+    const userOnlyHistory = graphHistory.map((snapshot: unknown) => {
+      const s = snapshot as { nodes?: { origin?: string }[] };
+      if (!s.nodes) return snapshot;
+      return {
+        ...s,
+        nodes: s.nodes.filter((n) => n.origin !== "ai"),
+      };
+    });
+
+    const transcript = interview.turns
+      .map(
+        (t) =>
+          `[Q${t.orderNumber}]: ${t.questionText}\n[A${t.orderNumber}]: ${t.answerText}`,
+      )
+      .join("\n\n");
+
+    const prompt = `Evaluate the candidate's system design interview performance.
+
+## Transcript
+${transcript || "No transcript available."}
+
+## Architecture Evolution (user contributions only, AI suggestions excluded)
+${JSON.stringify(userOnlyHistory.slice(-10))}
+
+## Final Diagram
+${JSON.stringify((interview as { finalDiagram?: unknown }).finalDiagram ?? "No final diagram")}
+
+## Evaluation Criteria
+Score each dimension 0-100 based on observed evidence:
+- **Requirements Gathering**: Did they clarify scope, constraints, and assumptions?
+- **Estimation**: Did they estimate traffic, storage, bandwidth, and cache requirements?
+- **High-Level Architecture**: Overall structure, component choices, and interactions
+- **Data Model**: Schema design, storage technology choices, indexing strategy
+- **Scalability**: Handling growth, sharding, replication, CDN, caching layers
+- **Fault Tolerance**: Redundancy, failover, disaster recovery, graceful degradation
+- **Tradeoffs & Depth**: Awareness of alternatives, informed decision-making, depth of reasoning
+
+## Canvas Feedback
+Analyze the final diagram. What's missing? What strong decisions were made? What weak decisions?
+Rate the overall diagram quality.
+
+## Graph History Insights
+How did the architecture evolve? (AI-suggested nodes are excluded — only user's own decisions.)
+What patterns (strengths and weaknesses) appear across the timeline?
+
+Return ONLY valid JSON matching the schema.`;
+
+    const result = await generateSystemDesignEvaluation(prompt);
+    if (!result) {
+      console.error(
+        `[sd-evaluate] evaluation failed for interview ${interviewId}`,
+      );
+      return;
+    }
+
+    await prisma.interviewSession.update({
+      where: { id: interviewId },
+      data: {
+        overallScore: result.overallScore,
+        technicalScore: Math.round(
+          (result.dimensions.highLevelArchitecture +
+            result.dimensions.dataModel +
+            result.dimensions.scalability +
+            result.dimensions.faultTolerance +
+            result.dimensions.tradeoffsAndDepth) /
+            5,
+        ),
+        problemSolvingScore: Math.round(
+          (result.dimensions.requirementsGathering +
+            result.dimensions.estimation +
+            result.dimensions.highLevelArchitecture) /
+            3,
+        ),
+      },
+    });
+
+    console.log(
+      `[sd-evaluate] completed for interview ${interviewId}: ${result.overallScore}/100`,
+    );
+  } catch (err) {
+    console.error(`[sd-evaluate] error:`, err);
+  }
+}

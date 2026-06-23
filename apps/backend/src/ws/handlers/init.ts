@@ -2,6 +2,7 @@ import { prisma } from "../../lib/prisma";
 import { COMPANIES } from "@evalio/shared";
 import { buildInterviewPrompt, type PromptInput } from "../../prompt";
 import { buildDsaSystemPrompt } from "../../services/dsaPrompt";
+import { buildSystemDesignPrompt } from "../../prompt";
 import { verifyWsToken, startInterview } from "../orchestrator";
 import { tryActivate, enqueue as queueEnqueue } from "../../lib/queue";
 import type { InterviewConnection } from "../session";
@@ -116,8 +117,11 @@ export async function handleInit(
           ? "declining"
           : "stable";
 
-  const isDsa = (interview as { mode?: string }).mode === "DSA";
+  const mode = (interview as { mode?: string }).mode;
+  const isDsa = mode === "DSA";
+  const isSystemDesign = mode === "SYSTEM_DESIGN";
   conn.isDsaMode = isDsa;
+  conn.isSystemDesign = isSystemDesign;
 
   let systemPrompt: string;
 
@@ -201,6 +205,51 @@ export async function handleInit(
         weakest: skillProfile?.weakestSkill ?? null,
       },
     );
+  } else if (isSystemDesign) {
+    systemPrompt = buildSystemDesignPrompt({
+      position: interview.position,
+      candidateName: interview.user.name,
+      companyName: interview.companyName ?? null,
+      companyCulture: companyConfig?.culture ?? null,
+      companyInterviewerBehavior: companyConfig?.interviewerBehavior ?? null,
+      companyEvaluationBiases: companyConfig?.evaluationBiases ?? null,
+      roleTopics: selectedRole?.topics ?? null,
+      roleEvaluationCriteria: selectedRole?.evaluationCriteria ?? null,
+      roleMustProbe: selectedRole?.mustProbe ?? null,
+      interviewRound:
+        (interview as { interviewRound?: string | null }).interviewRound ??
+        null,
+      resumeText: interview.resume?.extractedText ?? null,
+      jobDescription:
+        (interview as { jobDescription?: string | null }).jobDescription ??
+        null,
+      githubUsername: github?.username ?? null,
+      githubSummary: github?.summary ?? null,
+      githubLanguages: (github?.languages as string[]) ?? [],
+      githubProjects:
+        (github?.projects as {
+          name: string;
+          description: string | null;
+          stars: number;
+          language: string | null;
+        }[]) ?? [],
+      interviewStyle: (interview.interviewStyle ??
+        "PROFESSIONAL") as PromptInput["interviewStyle"],
+      interviewDepth: conn.interviewDepth as PromptInput["interviewDepth"],
+      durationMinutes,
+      candidateHistory: pastInterviews.map((iv) => ({
+        date: iv.createdAt.toISOString(),
+        role: iv.roleTitle ?? iv.position,
+        overallScore: iv.overallScore,
+        strengths: (iv.summary?.strengths as string[]) ?? [],
+        weaknesses: (iv.summary?.weaknesses as string[]) ?? [],
+        summary: iv.summary?.summary ?? null,
+      })),
+      overallMostImproved: skillProfile?.mostImprovedSkill ?? null,
+      overallWeakest: skillProfile?.weakestSkill ?? null,
+      overallPatterns: (skillProfile?.commonPatterns as string[]) ?? [],
+      scoreTrendLast5,
+    });
   } else {
     const promptInput = {
       position: interview.position,

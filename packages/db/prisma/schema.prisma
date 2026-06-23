@@ -12,61 +12,60 @@ datasource db {
   provider = "postgresql"
 }
 
-
 model User {
-  id                  String     @id @default(cuid())
-  email               String     @unique
-  name                String?
-  password            String
-  role                UserRole   @default(FREE)
-  roleVersion         Int        @default(0)
-  emailVerified       Boolean    @default(false)
-  verificationOtp     String?
+  id                    String                 @id @default(cuid())
+  email                 String                 @unique
+  name                  String?
+  password              String
+  role                  UserRole               @default(FREE)
+  roleVersion           Int                    @default(0)
+  emailVerified         Boolean                @default(false)
+  verificationOtp       String?
   verificationOtpExpiry DateTime?
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
-  candidate           CandidateProfile?
-  skillProfile        CandidateSkillProfile?
-  resumes             Resume[]
-  githubProfile       GithubProfile?
-  interviews          InterviewSession[]
-  dsaSessions         DsaSession[]
-  feedbacks           Feedback[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  candidate             CandidateProfile?
+  skillProfile          CandidateSkillProfile?
+  resumes               Resume[]
+  githubProfile         GithubProfile?
+  interviews            InterviewSession[]
+  dsaSessions           DsaSession[]
+  feedbacks             Feedback[]
 }
 
 model CandidateProfile {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  githubUsername    String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id])
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  githubUsername String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id])
 }
 
 model Resume {
-  id                String   @id @default(cuid())
-  userId            String
-  version           Int      @default(1)
-  objectKey         String
-  extractedText     String   @db.Text
-  uploadedAt        DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id])
-  interviews        InterviewSession[]
+  id            String             @id @default(cuid())
+  userId        String
+  version       Int                @default(1)
+  objectKey     String
+  extractedText String             @db.Text
+  uploadedAt    DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  user          User               @relation(fields: [userId], references: [id])
+  interviews    InterviewSession[]
 
   @@unique([userId, version])
   @@index([userId])
 }
 
 model GithubProfile {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  username          String
-  summary           String   @db.Text
-  languages         Json
-  projects          Json
-  analyzedAt        DateTime @default(now())
-  user              User     @relation(fields: [userId], references: [id])
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  username   String
+  summary    String   @db.Text
+  languages  Json
+  projects   Json
+  analyzedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
 }
 
 model CandidateSkillProfile {
@@ -89,12 +88,12 @@ model CandidateSkillProfile {
 }
 
 model InterviewSession {
-  id                  String         @id @default(cuid())
+  id                  String             @id @default(cuid())
   userId              String
   status              InterviewStatus
-  mode                InterviewMode  @default(VOICE)
-  interviewStyle      InterviewStyle @default(PROFESSIONAL)
-  interviewDepth      InterviewDepth @default(STANDARD)
+  mode                InterviewMode      @default(VOICE)
+  interviewStyle      InterviewStyle     @default(PROFESSIONAL)
+  interviewDepth      InterviewDepth     @default(STANDARD)
   companyId           String?
   companyName         String?
   roleTitle           String?
@@ -107,98 +106,100 @@ model InterviewSession {
   problemSolvingScore Float?
   durationSeconds     Int?
   position            String?
-  jobDescription      String?        @db.Text
+  jobDescription      String?            @db.Text
   resumeId            String?
-  resume              Resume?        @relation(fields: [resumeId], references: [id])
+  resume              Resume?            @relation(fields: [resumeId], references: [id])
   summary             InterviewSummary?
   turns               InterviewTurn[]
   dsaSession          DsaSession?
-  createdAt           DateTime       @default(now())
-  user                User           @relation(fields: [userId], references: [id])
+  finalDiagram        Json?
+  canvasGraphHistory  Json?              @default("[]")
+  createdAt           DateTime           @default(now())
+  user                User               @relation(fields: [userId], references: [id])
 }
 
 model LeetCodeQuestion {
-  id             String              @id @default(cuid())
-  leetcodeId     Int                 @unique
+  id             String             @id @default(cuid())
+  leetcodeId     Int                @unique
   title          String
   slug           String
   difficulty     LeetCodeDifficulty
   acceptanceRate Float
-  frequency      Float               @default(0)
+  frequency      Float              @default(0)
   companies      String[]
-  description    String?             @db.Text
+  description    String?            @db.Text
   expectedTopics String[]
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 }
 
 model DsaSession {
-  id              String       @id @default(cuid())
-  interviewId     String?      @unique
-  userId          String
-  status          String       @default("IN_PROGRESS")
-  language        String       @default("python")
-  currentIndex    Int          @default(0)
-  timeTaken       Int?
-  createdAt       DateTime     @default(now())
-  submittedAt     DateTime?
-  user            User         @relation(fields: [userId], references: [id])
-  interview       InterviewSession? @relation(fields: [interviewId], references: [id])
-  problems        DsaProblem[]
+  id           String            @id @default(cuid())
+  interviewId  String?           @unique
+  userId       String
+  status       String            @default("IN_PROGRESS")
+  language     String            @default("python")
+  currentIndex Int               @default(0)
+  timeTaken    Int?
+  createdAt    DateTime          @default(now())
+  submittedAt  DateTime?
+  user         User              @relation(fields: [userId], references: [id])
+  interview    InterviewSession? @relation(fields: [interviewId], references: [id])
+  problems     DsaProblem[]
 
   @@index([userId])
 }
 
 model DsaProblem {
-  id              String   @id @default(cuid())
+  id              String     @id @default(cuid())
   dsaSessionId    String
   index           Int
   title           String
   slug            String
   difficulty      String
-  description     String   @db.Text
-  code            String?  @db.Text
+  description     String     @db.Text
+  code            String?    @db.Text
   codeSnapshots   Json?
-  currentPhase    String   @default("understanding")
+  currentPhase    String     @default("understanding")
   phasesCompleted String[]
   score           Float?
-  feedback        String?  @db.Text
+  feedback        String?    @db.Text
   complexity      String?
   timeTaken       Int?
   completedAt     DateTime?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime   @default(now())
   dsaSession      DsaSession @relation(fields: [dsaSessionId], references: [id])
 
   @@index([dsaSessionId])
 }
 
 model InterviewTurn {
-  id              String   @id @default(cuid())
+  id              String           @id @default(cuid())
   interviewId     String
   orderNumber     Int
-  questionText    String   @db.Text
-  answerText      String   @db.Text
+  questionText    String           @db.Text
+  answerText      String           @db.Text
   questionStartMs Int?
   answerStartMs   Int?
   answerEndMs     Int?
   score           Float?
-  feedback        String?  @db.Text
-  createdAt       DateTime @default(now())
-  interview       InterviewSession   @relation(fields: [interviewId], references: [id])
+  feedback        String?          @db.Text
+  createdAt       DateTime         @default(now())
+  interview       InterviewSession @relation(fields: [interviewId], references: [id])
 }
 
 model InterviewSummary {
-  id                    String   @id @default(cuid())
-  interviewId           String   @unique
-  summary               String   @db.Text
-  strengths             Json
-  weaknesses            Json
-  improvementAreas      Json
-  recommendedTopics     Json
-  resumeStrengths       Json
-  resumeWeaknesses      Json
-  generatedAt           DateTime @default(now())
-  interview             InterviewSession @relation(fields: [interviewId], references: [id])
+  id                String           @id @default(cuid())
+  interviewId       String           @unique
+  summary           String           @db.Text
+  strengths         Json
+  weaknesses        Json
+  improvementAreas  Json
+  recommendedTopics Json
+  resumeStrengths   Json
+  resumeWeaknesses  Json
+  generatedAt       DateTime         @default(now())
+  interview         InterviewSession @relation(fields: [interviewId], references: [id])
 }
 
 model Feedback {
@@ -245,6 +246,7 @@ enum InterviewDepth {
 enum InterviewMode {
   VOICE
   DSA
+  SYSTEM_DESIGN
 }
 
 enum LeetCodeDifficulty {
