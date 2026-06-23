@@ -6130,6 +6130,10 @@ a.dash-row:hover {
 }
 
 /* ── MemoryTimeline Wide Layout ──────────────────────────── */
+/* Every row uses the SAME grid: a fixed-width first column (which
+   contains the dot) and a flexible second column (which contains the
+   content). This guarantees `dot[i].x === dot[0].x` for every i —
+   dot x is decoupled from content width and never alternates. */
 
 .timeline-wide-row {
   --timeline-gap: 160px;
