@@ -44,7 +44,7 @@ function CustomTooltip({
         </p>
         <div className="flex items-baseline gap-1.5">
           <span className="text-base font-semibold font-mono" style={{ color }}>
-            {payload[0].value}%
+            {payload[0]!.value}%
           </span>
           <span className="text-[10px] text-[var(--color-text-secondary)]">
             Score
@@ -200,7 +200,7 @@ export function DimensionChart({
                   dx={-2}
                 />
                 <Tooltip
-                  content={<CustomTooltip />}
+                  content={<CustomTooltip color={color} />}
                   cursor={{
                     stroke: "rgba(255,255,255,0.08)",
                     strokeDasharray: "4 4",

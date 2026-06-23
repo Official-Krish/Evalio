@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "motion/react";
 import { useInViewOnce } from "./hooks";
 
@@ -45,22 +45,75 @@ function TraitBlock({
   visible: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+  const [glowX, setGlowX] = useState(50);
+  const [glowY, setGlowY] = useState(50);
+
   const delay = 0.1 + index * 0.09;
   const offset = index % 2 === 1; // stagger second column down slightly
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = cardRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Calculate rotation (-10 to 10 degrees)
+    const rX = (mouseY / height - 0.5) * -10;
+    const rY = (mouseX / width - 0.5) * 10;
+
+    setRotateX(rX);
+    setRotateY(rY);
+
+    setGlowX((mouseX / width) * 100);
+    setGlowY((mouseY / height) * 100);
+  };
+
+  const handleMouseLeave = () => {
+    setRotateX(0);
+    setRotateY(0);
+    setHovered(false);
+  };
+
+  const startX = index % 2 === 0 ? -120 : 120;
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={visible ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      ref={cardRef}
+      initial={{ opacity: 0, x: startX, y: 15 }}
+      animate={visible ? { opacity: 1, x: 0, y: 0, rotateX, rotateY } : {}}
+      transition={
+        hovered
+          ? { type: "spring", stiffness: 250, damping: 20 }
+          : { duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }
+      }
+      onMouseMove={handleMouseMove}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`relative cursor-default ${offset ? "sm:mt-14" : ""}`}
+      onMouseLeave={handleMouseLeave}
+      className={`relative cursor-default group ${offset ? "sm:mt-14" : ""}`}
+      style={{ transformStyle: "preserve-3d", perspective: 1000 }}
     >
+      {/* Spotlight Hover Glow */}
+      <div
+        className="absolute inset-0 pointer-events-none rounded-xl transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+        style={{
+          background: `radial-gradient(circle 100px at ${glowX}% ${glowY}%, rgba(184,168,138,0.06), transparent)`,
+        }}
+        aria-hidden
+      />
+
       {/* Content, offset right so it overlaps the numeral's right edge */}
       <div
         className="relative pl-12 sm:pl-16 pt-6 pb-10 sm:pb-12 border-l"
-        style={{ borderColor: "var(--landing-line)" }}
+        style={{
+          borderColor: "var(--landing-line)",
+          transform: "translateZ(20px)",
+        }}
       >
         <span className="block text-[10px] tracking-[0.14em] uppercase text-[var(--landing-accent)] mb-3">
           {trait.num}

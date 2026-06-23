@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import Lenis from "lenis";
 import { SEO } from "@/components/SEO";
 import { Ambient } from "@/components/landing/Ambient";
 import { AppBar } from "@/components/layout/AppBar";
@@ -10,8 +11,7 @@ import { LandingStyles } from "@/components/landing/LandingStyles";
 import { LandingEvaluation } from "@/components/landing/LandingEvaluation";
 import { IdentityEmergence } from "@/components/landing/IdentityEmergence";
 import { MemoryTimeline } from "@/components/landing/MemoryTimeline";
-import { DSACoding } from "@/components/landing/DSACoding";
-import { SystemDesignComingSoon } from "@/components/landing/SystemDesign";
+import { CustomInterviews } from "@/components/landing/CustomInterviews";
 import { LandingPricing } from "@/components/landing/LandingPricing";
 import { Threshold } from "@/components/landing/Threshold";
 import { Footer } from "@/components/Footer";
@@ -25,6 +25,23 @@ export function LandingPage() {
     };
   }, []);
 
+  /* Lenis smooth scroll — slows perceived scroll for a premium feel */
+  useEffect(() => {
+    const lenis = new Lenis({
+      lerp: 0.068,
+      smoothWheel: true,
+      syncTouch: true,
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    return () => lenis.destroy();
+  }, []);
+
   return (
     <div className="landing-page min-h-screen bg-[var(--landing-bg)] text-[var(--landing-fg)] selection:bg-[var(--landing-accent-soft)] selection:text-[var(--landing-fg)]">
       <SEO
@@ -35,16 +52,15 @@ export function LandingPage() {
       <AppBar />
       <main>
         <Opening />
+        <CustomInterviews />
+        <FilmStrip />
         <Manifesto />
         <Presence />
-        <DSACoding />
-        <SystemDesignComingSoon />
         <IdentityEmergence />
         <MemoryTimeline />
         <LandingCompanies />
         <LandingStyles />
         <LandingEvaluation />
-        <FilmStrip />
         <LandingPricing />
         <Threshold />
       </main>

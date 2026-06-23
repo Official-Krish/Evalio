@@ -126,7 +126,7 @@ export function LandingStyles() {
                     left: `${(activeIndex / (styles.length - 1)) * 100}%`,
                   }}
                   exit={{ opacity: 0, scale: 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 20 }}
                   layoutId="intensity-dot"
                 >
                   <span className="absolute inset-0 rounded-full bg-[var(--landing-accent)] animate-ping opacity-30" />
@@ -150,6 +150,7 @@ export function LandingStyles() {
             <motion.button
               key={s.style}
               type="button"
+              layout
               initial={{ opacity: 0, y: 24 }}
               animate={visible ? { opacity: 1, y: 0 } : {}}
               transition={{

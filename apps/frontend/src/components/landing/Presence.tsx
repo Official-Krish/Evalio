@@ -1,5 +1,6 @@
-import { motion } from "motion/react"
-import { useInViewOnce } from "./hooks"
+import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+import { useInViewOnce } from "./hooks";
 
 const moments = [
   {
@@ -23,13 +24,43 @@ const moments = [
     align: "left",
     live: false,
   },
-]
+];
+
+function TypingText({
+  text,
+  active,
+  speed = 25,
+}: {
+  text: string;
+  active: boolean;
+  speed?: number;
+}) {
+  const [displayed, setDisplayed] = useState("");
+
+  useEffect(() => {
+    if (!active) return;
+    let i = 0;
+    const interval = setInterval(() => {
+      setDisplayed(text.slice(0, i + 1));
+      i++;
+      if (i >= text.length) {
+        clearInterval(interval);
+      }
+    }, speed);
+    return () => clearInterval(interval);
+  }, [text, active, speed]);
+
+  return <span>{displayed}</span>;
+}
 
 export function Presence() {
-  const { ref, visible } = useInViewOnce<HTMLElement>(0.15)
+  const { ref, visible } = useInViewOnce<HTMLElement>(0.15);
 
   return (
-    <section ref={ref} className="landing-container relative py-[14vh] border-b">
+    <section
+      ref={ref}
+      className="landing-container relative py-[14vh] border-b"
+    >
       <div className="grid lg:grid-cols-2 gap-16 items-start">
         <div className="lg:sticky lg:top-32">
           <motion.p
@@ -47,7 +78,9 @@ export function Presence() {
             className="landing-display text-[clamp(2rem,4.5vw,3.5rem)] leading-[1.05] tracking-[-0.03em] text-[var(--landing-fg)] max-w-md"
           >
             Feedback that arrives{" "}
-            <span className="landing-serif italic text-[var(--landing-fg-muted)]">in the moment</span>
+            <span className="landing-serif italic text-[var(--landing-fg-muted)]">
+              in the moment
+            </span>
             , not three days later.
           </motion.h2>
           <motion.p
@@ -66,7 +99,11 @@ export function Presence() {
               key={i}
               initial={{ opacity: 0, y: 28 }}
               animate={visible ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.7, delay: 0.2 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+              transition={{
+                duration: 0.7,
+                delay: 0.2 + i * 0.12,
+                ease: [0.22, 1, 0.36, 1],
+              }}
               className={`
                 landing-moment group relative mb-6 last:mb-0
                 ${m.live ? "landing-moment-live" : ""}
@@ -90,8 +127,14 @@ export function Presence() {
                 )}
               </div>
               <p className="text-[14px] leading-[1.65] text-[var(--landing-fg)]">
-                {m.text}
-                {m.live && <span className="landing-blink-cursor" aria-hidden />}
+                {m.live ? (
+                  <TypingText text={m.text} active={visible} />
+                ) : (
+                  m.text
+                )}
+                {m.live && (
+                  <span className="landing-blink-cursor" aria-hidden />
+                )}
               </p>
               {m.live && (
                 <div className="landing-live-progress mt-4" aria-hidden>
@@ -103,5 +146,5 @@ export function Presence() {
         </div>
       </div>
     </section>
-  )
+  );
 }
