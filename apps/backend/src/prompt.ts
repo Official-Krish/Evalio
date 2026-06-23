@@ -39,7 +39,7 @@ export interface PromptInput {
   scoreTrendLast5: "improving" | "stable" | "declining" | null;
 }
 
-function buildStyleDirective(style: string): string {
+export function buildStyleDirective(style: string): string {
   switch (style) {
     case "SUPPORTIVE":
       return `## Interview Style: Supportive
@@ -87,7 +87,7 @@ Pressure should emerge from the conversation, not from a schedule. A weak answer
 The style and depth directives below describe the interview's character — apply them with judgment, not as a checklist.`;
 }
 
-function buildDepthDirective(depth: string): string {
+export function buildDepthDirective(depth: string): string {
   const header = `## Interaction Depth`;
 
   const principles =

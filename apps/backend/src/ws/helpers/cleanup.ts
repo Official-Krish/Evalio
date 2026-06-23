@@ -1,0 +1,100 @@
+import { removeFromQueue, releaseSlot } from "../../lib/queue";
+import { finalizeInterview } from "../finalize";
+import type { InterviewConnection } from "../session";
+import { stopHeartbeat } from "./heartbeat";
+import {
+  flushChallengeTurn,
+  flushTurn,
+  mergeAnswerBuf,
+  isChallengeMode,
+} from "./turn";
+
+export async function cleanup(conn: InterviewConnection, reason?: string) {
+  stopHeartbeat(conn);
+  if (conn.timeWarningTimer) clearTimeout(conn.timeWarningTimer);
+  if (conn.timeCapTimer) clearTimeout(conn.timeCapTimer);
+
+  if (conn.interviewId) {
+    if (conn.isQueued) {
+      console.log(
+        `[ws] cleanup queued ${conn.interviewId} reason=${reason ?? "unknown"}`,
+      );
+      await removeFromQueue(conn.interviewId);
+      conn.wsMap.delete(conn.interviewId);
+      conn.startCallbacks.delete(conn.interviewId);
+      await conn.onPositionUpdate();
+    } else if (!conn.finalized) {
+      conn.finalized = true;
+      if (isChallengeMode(conn) && conn.currentTurnId) {
+        await flushChallengeTurn(conn);
+      } else if (conn.questionBuf) {
+        await flushTurn(conn);
+      } else if (conn.currentTurnId && conn.answerBuf) {
+        await mergeAnswerBuf(conn);
+      }
+
+      await finalizeInterview(conn.interviewId);
+
+      await releaseSlot(conn.interviewId);
+      conn.wsMap.delete(conn.interviewId);
+      conn.startCallbacks.delete(conn.interviewId);
+      await conn.onDequeue();
+    }
+  }
+  conn.gemini?.close();
+}
+
+export async function initiateClosing(conn: InterviewConnection) {
+  if (conn.closingMode || conn.finalized) return;
+  conn.closingMode = true;
+
+  if (conn.timeWarningTimer) clearTimeout(conn.timeWarningTimer);
+  if (conn.timeCapTimer) clearTimeout(conn.timeCapTimer);
+
+  await conn.safeSend({ type: "closing_started" });
+
+  conn.gemini?.send(
+    JSON.stringify({
+      clientContent: {
+        turns: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: "The interview is now complete. Give a brief closing summary highlighting one key strength and one area for improvement. Thank the candidate for interviewing with Evalio, and mention that this was an Evalio AI-powered practice interview. Invite them to share feedback about their experience. Then say goodbye.",
+              },
+            ],
+          },
+        ],
+        turnComplete: true,
+      },
+    }),
+  );
+
+  setTimeout(() => {
+    if (!conn.finalized) {
+      console.log("[ws] closing safety timeout — forcing cleanup");
+      cleanup(conn);
+    }
+  }, 20_000);
+}
+
+export async function handleTurnCompleteDuringClosing(
+  conn: InterviewConnection,
+) {
+  if (!conn.interviewId || !conn.closingMode || conn.finalized) return;
+  conn.finalized = true;
+  console.log("[ws] closing turn complete — finalizing");
+
+  if (isChallengeMode(conn) && conn.currentTurnId) {
+    await flushChallengeTurn(conn);
+  } else if (conn.questionBuf) {
+    await flushTurn(conn);
+  } else if (conn.currentTurnId && conn.answerBuf) {
+    await mergeAnswerBuf(conn);
+  }
+  await finalizeInterview(conn.interviewId);
+  await conn.safeSend({ type: "feedback_ready" });
+  conn.gemini?.close();
+  conn.client.close();
+}

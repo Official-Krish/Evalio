@@ -15,6 +15,8 @@ export interface DsaHistoryEntry {
   problemScores: Array<{ title: string; score: number | null }>;
 }
 
+import { buildStyleDirective } from "../prompt";
+
 function buildDsaHistorySection(
   history?: {
     pastSessions: DsaHistoryEntry[];
@@ -86,6 +88,7 @@ export function buildDsaSystemPrompt(
     interviewRound?: string | null;
     position?: string | null;
     interviewDepth?: string | null;
+    interviewStyle?: string | null;
   },
   history?: {
     pastSessions: DsaHistoryEntry[];
@@ -114,6 +117,30 @@ export function buildDsaSystemPrompt(
 
   const companyName = context?.companyName;
   const depthLevel = context?.interviewDepth ?? "STANDARD";
+  const styleLevel = context?.interviewStyle ?? "PROFESSIONAL";
+
+  const companyPersonaBlock = companyName
+    ? `
+## Company Persona — ${companyName}
+${buildStyleDirective(styleLevel)}
+
+### ${companyName}-Specific Behavior
+- Adapt your tone and expectations to match ${companyName}'s engineering culture.
+- If the candidate mentions ${companyName} in their reasoning, engage with it — ask how their solution fits that environment.
+- Maintain the persona consistently throughout the interview.`
+    : "";
+
+  const scalingBlock =
+    depthLevel === "BAR_RAISER"
+      ? `
+## Scaling Follow-Ups (Bar Raiser)
+After the candidate provides a solution, you MUST engage in a scaling discussion before moving to the next topic:
+- Ask how their solution behaves with 10x, 100x, and 1000x the input size.
+- What breaks first — memory, latency, throughput, or something else?
+- How would they shard, distribute, or optimize for scale?
+- Identify specific bottlenecks and make them propose mitigations.
+- Do NOT skip this phase. It is a core part of Bar Raiser evaluation.`
+      : "";
 
   const difficultyGuidance = companyName
     ? `Use your knowledge of ${companyName} to calibrate the coding question difficulty. All decisions about depth, follow-ups, and pacing should be driven by this calibration — not by explicit instructions.
@@ -131,10 +158,11 @@ This is an interview for the following:${contextBlock ? `\n${contextBlock}` : "\
 
 ## Difficulty Adaptation
 ${difficultyGuidance}
+${companyPersonaBlock}
 
 ## Format
 - You communicate via audio. Speak naturally, listen to the candidate's responses.
-- You receive the candidate's code every 20 seconds as a **preview** — you can see what they're typing in real time. If they're going in a clearly wrong direction (fundamentally wrong approach, misunderstanding the problem), you can politely interrupt and guide them back. Do NOT interrupt for minor style issues or incomplete code — only for fundamental problems.
+- You receive the candidate's code every 20 seconds as a **preview** — you can see what they're typing in real time. Interrupt naturally like a real interviewer would — don't wait politely if the candidate is rambling, stuck on a tangent, or heading in a clearly wrong direction. Cut in to redirect: "Let me stop you there" or "I want to challenge that assumption." Do NOT interrupt for minor style issues or incomplete code — only for fundamental problems. The goal is realistic pacing, not rudeness.
 - Every 30 seconds, their code is **saved** and you'll see a saved snapshot.
 - You control the pace of the interview.
 
@@ -162,6 +190,7 @@ After the candidate shares code, you MUST discuss it thoroughly — this is wher
 - Discuss time and space complexity of the code they actually wrote — not just theoretical, but specific to their implementation.
 - Ask follow-up questions that dig deeper: "What would happen if the input were sorted?" or "How would you modify this to handle a different constraint?"
 - The goal is to have a genuine technical discussion about their code, not just a pass/fail check.
+${scalingBlock}
 
 ## Modifying Code
 You can directly modify the candidate's code to demonstrate a point, fix a bug, or add an example. Like a real interviewer sketching on a whiteboard:

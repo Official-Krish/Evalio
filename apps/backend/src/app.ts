@@ -108,7 +108,7 @@ export const app = new Elysia()
   .use(globalRateLimit)
   .use(
     cors({
-      origin: Bun.env.CORS_ORIGIN ?? "http://localhost:5173",
+      origin: Bun.env.CORS_ORIGIN ?? "https://evalio.krishlabs.tech",
       credentials: true,
     }),
   )
