@@ -10,25 +10,6 @@ export function Opening() {
 
   return (
     <section className="opening-hero">
-      {/* Background orb — sits behind everything */}
-      <div className="opening-orb" aria-hidden>
-        <div className="landing-orb-inner">
-          <img
-            src="https://cdn.krishlabs.tech/evalio/public/hero-orb.png"
-            alt=""
-            aria-hidden
-            className="landing-orb-img"
-          />
-        </div>
-      </div>
-
-      {/* Concentric rings — radiating from center, gives depth beyond the orb */}
-      <div className="opening-rings" aria-hidden>
-        <div className="opening-ring opening-ring-1" />
-        <div className="opening-ring opening-ring-2" />
-        <div className="opening-ring opening-ring-3" />
-      </div>
-
       {/* Ambient dot grid — subtle texture across the full viewport */}
       <div className="opening-dot-grid" aria-hidden />
 
@@ -42,9 +23,6 @@ export function Opening() {
         <span className="opening-corner opening-corner-bl" />
         <span className="opening-corner opening-corner-br" />
       </div>
-
-      {/* Horizon line — thin accent across center */}
-      <div className="opening-horizon" aria-hidden />
 
       {/* Content */}
       <div className="opening-content">

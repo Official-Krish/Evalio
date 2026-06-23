@@ -771,45 +771,6 @@ html.landing-active {
   border-color: rgba(18, 17, 16, 0.06);
 }
 
-/* Hero orb — uses plain CSS animations to avoid Framer Motion stacking
-   context breaking mix-blend-mode: screen */
-.landing-orb-container {
-  mix-blend-mode: screen;
-}
-
-.landing-orb-inner {
-  width: min(1100px, 130vw);
-  height: min(1100px, 130vw);
-  flex-shrink: 0;
-  -webkit-mask-image: radial-gradient(closest-side, black 55%, transparent 85%);
-  mask-image: radial-gradient(closest-side, black 55%, transparent 85%);
-  animation:
-    landing-orb-appear 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    landing-orb-breathe 14s ease-in-out 1.6s infinite;
-}
-
-@keyframes landing-orb-appear {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes landing-orb-breathe {
-
-  0%,
-  100% {
-    transform: scale(1) rotate(0deg);
-  }
-
-  50% {
-    transform: scale(1.035) rotate(1.2deg);
-  }
-}
-
 /* Hero layout */
 .landing-hero-grid {
   display: grid;
@@ -5424,104 +5385,7 @@ a.dash-row:hover {
   transform: translateY(-1px);
 }
 
-/* ──────────────────────────────────────────────────────────
-   Hero orb — ambient backdrop, not a hero image.
-   Add this to your landing stylesheet (wherever .landing-hero
-   and friends already live).
-   ────────────────────────────────────────────────────────── */
 
-.landing-orb-container {
-  z-index: 0;
-  top: 42%;
-  right: auto;
-  bottom: auto;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  transform: translate(-50%, -50%);
-}
-
-.landing-orb-inner {
-  width: min(1180px, 82vw);
-  height: min(1180px, 82vw);
-  position: relative;
-  animation: orb-rotate 60s linear infinite;
-}
-
-.landing-orb-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-
-  /* drops the orb's black background so only the glow/rings show
-     against --landing-bg underneath */
-  mix-blend-mode: screen;
-
-  /* dissolves the image's hard square edge into transparency
-     well before the frame boundary — this is what was missing */
-  -webkit-mask-image: radial-gradient(circle at 50% 50%,
-      black 0%,
-      black 45%,
-      transparent 78%);
-  mask-image: radial-gradient(circle at 50% 50%,
-      black 0%,
-      black 45%,
-      transparent 78%);
-
-  /* Make the orb glow brighter behind the redesigned typography */
-  filter: brightness(1.15);
-
-  animation: orb-breathe 7s ease-in-out infinite;
-}
-
-@keyframes orb-rotate {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes orb-breathe {
-
-  0%,
-  100% {
-    transform: scale(1);
-    filter: brightness(1.15);
-  }
-
-  50% {
-    transform: scale(1.03);
-    filter: brightness(1.25);
-  }
-}
-
-@media (max-width: 767px) {
-  .landing-orb-container {
-    top: 40%;
-  }
-
-  .landing-orb-inner {
-    width: min(760px, 155vw);
-    height: min(760px, 155vw);
-  }
-}
-
-[data-theme="light"] .opening-orb {
-  display: none;
-}
-
-/* Respect reduced-motion preference */
-@media (prefers-reduced-motion: reduce) {
-
-  .landing-orb-inner,
-  .landing-orb-img {
-    animation: none;
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════════
    Opening Hero — 2026 editorial layout
@@ -5538,62 +5402,6 @@ a.dash-row:hover {
   overflow: hidden;
   border-bottom: 1px solid var(--landing-line);
   content-visibility: auto;
-}
-
-/* ── Background orb ────────────────────────────────────────── */
-.opening-orb {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.opening-orb .landing-orb-inner {
-  width: min(1000px, 80vw);
-  height: min(1000px, 80vw);
-}
-
-/* ── Concentric rings — radiating outward from center ─────── */
-.opening-rings {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.opening-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid var(--landing-line);
-  opacity: 0.35;
-}
-
-.opening-ring-1 {
-  width: min(600px, 55vw);
-  height: min(600px, 55vw);
-  opacity: 0.25;
-}
-
-.opening-ring-2 {
-  width: min(900px, 82vw);
-  height: min(900px, 82vw);
-  opacity: 0.15;
-}
-
-.opening-ring-3 {
-  width: min(1200px, 110vw);
-  height: min(1200px, 110vw);
-  opacity: 0.08;
-}
-
-[data-theme="light"] .opening-ring {
-  border-color: rgba(18, 17, 16, 0.06);
 }
 
 /* ── Ambient dot grid ──────────────────────────────────────── */
