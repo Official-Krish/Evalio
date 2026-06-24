@@ -5904,18 +5904,6 @@ a.dash-row:hover {
   background: var(--color-bg);
 }
 
-.skeleton-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid var(--color-border);
-  border-top-color: var(--color-accent);
-  border-radius: 50%;
-  animation: skeleton-spin 0.8s linear infinite;
-}
-
-@keyframes skeleton-spin {
-  to { transform: rotate(360deg); }
-}
 
 /* ── Custom Interviews section ────────────────────────────── */
 
@@ -6097,10 +6085,7 @@ a.dash-row:hover {
   .opening-scroll-thumb {
     animation: none;
   }
-  .skeleton-spinner {
-    animation: none;
-    opacity: 0.4;
-  }
+
 }
 
 /* ── Sticky Scroll Overlap Layout ────────────────────────── */

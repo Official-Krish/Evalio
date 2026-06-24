@@ -35,7 +35,7 @@ const interviews = [
       "Real-time AI co-pilot",
       "Tradeoff probing",
     ],
-    status: { label: "Coming Soon", color: "var(--landing-accent)" },
+    status: { label: "Live now", color: "var(--landing-accent)" },
   },
 ];
 

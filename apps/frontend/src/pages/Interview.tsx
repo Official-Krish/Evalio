@@ -8,6 +8,8 @@ import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import { InterviewSocket } from "../lib/ws";
 import { api } from "../lib/api";
 import { DsaPanel } from "../components/interview/DsaPanel";
+import { WhiteboardPanel } from "@/components/system-design/WhiteboardPanel";
+import type { CanvasDiffAction } from "@evalio/shared";
 import { SEO } from "@/components/SEO";
 import { Ambient } from "@/components/landing/Ambient";
 import { PresenceOrb } from "@/components/interview/PresenceOrb";
@@ -95,10 +97,19 @@ export function InterviewPage() {
   } | null>(null);
   const [dsaLoading, setDsaLoading] = useState(false);
   const isDsa = interviewMeta?.mode === "DSA";
+  const isSystemDesign = interviewMeta?.mode === "SYSTEM_DESIGN";
 
   const dsaPanelVisible = useMemo(() => {
     return isDsa && !!dsaSessionData;
   }, [isDsa, dsaSessionData]);
+
+  // System Design state
+  const [sdTopic, setSdTopic] = useState({
+    title: "System Design",
+    description: "Designing the system...",
+  });
+  const [canvasDiff, setCanvasDiff] = useState<CanvasDiffAction[] | null>(null);
+  const sdPanelVisible = isSystemDesign;
 
   // Load DSA session on mount if DSA mode
   const { mutate: loadDsaSession } = useMutation({
@@ -279,8 +290,8 @@ export function InterviewPage() {
   }, [feedbackReady]);
 
   useEffect(() => {
-    isDsaRef.current = isDsa;
-  }, [isDsa]);
+    isDsaRef.current = isDsa || isSystemDesign;
+  }, [isDsa, isSystemDesign]);
 
   useEffect(() => {
     document.documentElement.classList.add("landing-active");
@@ -503,6 +514,32 @@ export function InterviewPage() {
       }
     });
 
+    // System Design WS events
+    socket.on("canvas_diff", (data: unknown) => {
+      const msg = data as { actions?: CanvasDiffAction[] };
+      if (msg.actions && msg.actions.length > 0) {
+        setCanvasDiff(msg.actions);
+      }
+    });
+
+    socket.on("canvas_example", (data: unknown) => {
+      const msg = data as {
+        title?: string;
+        nodes?: unknown[];
+        edges?: unknown[];
+      };
+      toast(`AI shared a reference architecture: ${msg.title ?? "example"}`, {
+        duration: 5000,
+      });
+    });
+
+    socket.on("task_description", (data: unknown) => {
+      const msg = data as { title?: string; description?: string };
+      if (msg.title && msg.description) {
+        setSdTopic({ title: msg.title, description: msg.description });
+      }
+    });
+
     // Time cap events
     socket.on("time_limit", (data: unknown) => {
       const msg = data as Record<string, unknown>;
@@ -649,11 +686,12 @@ export function InterviewPage() {
 
       <div
         className="relative z-10 flex flex-col min-h-[100dvh]"
-        style={
-          isDsa && dsaPanelVisible
-            ? { marginRight: "min(520px, 45vw)" }
-            : undefined
-        }
+        style={(() => {
+          if (isDsa && dsaPanelVisible)
+            return { marginRight: "min(520px, 45vw)" };
+          if (isSystemDesign && sdPanelVisible) return { marginRight: "65vw" };
+          return undefined;
+        })()}
       >
         <div className="landing-container pt-6">
           <SessionHeader
@@ -760,6 +798,19 @@ export function InterviewPage() {
             />
           )}
         </>
+      )}
+
+      {isSystemDesign && (
+        <WhiteboardPanel
+          visible={sdPanelVisible}
+          topicTitle={sdTopic.title}
+          topicDescription={sdTopic.description}
+          onCanvasSnapshot={(snapshot) => {
+            socketRef.current?.sendCanvasSnapshot(snapshot);
+          }}
+          canvasDiff={canvasDiff}
+          onClearCanvasDiff={() => setCanvasDiff(null)}
+        />
       )}
 
       <ConfirmDialog

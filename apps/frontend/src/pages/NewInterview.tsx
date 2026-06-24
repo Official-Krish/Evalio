@@ -44,7 +44,9 @@ export function NewInterviewPage() {
   const [interviewDepth, setInterviewDepth] =
     useState<InterviewDepth>("STANDARD");
   const interviewMode = useMemo((): InterviewMode => {
-    return selectedRound === "Coding Round (DSA)" ? "DSA" : "VOICE";
+    if (selectedRound === "Coding Round (DSA)") return "DSA";
+    if (selectedRound === "System Design") return "SYSTEM_DESIGN";
+    return "VOICE";
   }, [selectedRound]);
 
   // Auto-scroll to top on step change
@@ -335,6 +337,23 @@ export function NewInterviewPage() {
       <SEO title="New Interview" noindex />
       <span
         className="inline-flex items-center gap-1.5 absolute top-0 -right-20 text-[10px] tracking-[0.12em] uppercase px-2 py-1"
+        style={{
+          color: "var(--color-accent)",
+          border: "1px solid var(--color-accent-border)",
+          borderRadius: 3,
+        }}
+      >
+        <span
+          className="w-1.5 h-1.5 rounded-full"
+          style={{
+            background: "var(--color-accent)",
+            boxShadow: "0 0 6px var(--color-accent-border)",
+          }}
+        />
+        System Design round is live now
+      </span>
+      <span
+        className="inline-flex items-center gap-1.5 absolute top-9 -right-20 text-[10px] tracking-[0.12em] uppercase px-2 py-1"
         style={{
           color: "var(--color-accent)",
           border: "1px solid var(--color-accent-border)",
