@@ -302,7 +302,6 @@ export const api = {
     return data as unknown as {
       title: string;
       description: string;
-      fullBreakdown: string;
       difficulty: string;
     };
   },

@@ -28,6 +28,7 @@ export function resetSilenceState(conn: InterviewConnection) {
   conn.lastAudioTime = Date.now();
   conn.lastCodePreviewTime = 0;
   conn.lastCanvasSnapshotTime = 0;
+  conn.lastCanvasSnapshotData = null;
   conn.silencePromptCount = 0;
   conn.lastSilencePromptTime = 0;
   conn.silencePromptActive = false;

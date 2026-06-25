@@ -241,6 +241,7 @@ export interface CanvasSnapshot {
   timestamp: number;
   nodes: CanvasNode[];
   edges: CanvasEdge[];
+  scene?: Record<string, unknown>[];
 }
 
 export type CanvasDiffAction =
