@@ -684,8 +684,7 @@ async function generateSystemDesignEvaluation(
       }
 
       return JSON.parse(text) as SystemDesignEvaluationResult;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+    } catch {
       if (attempt < 1) {
         await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
       }
@@ -809,5 +808,7 @@ Return ONLY valid JSON matching the schema.`;
         },
       }),
     ]);
-  } catch (err) {}
+  } catch {
+    /* evaluation failed silently */
+  }
 }

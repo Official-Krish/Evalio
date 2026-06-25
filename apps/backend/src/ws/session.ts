@@ -29,6 +29,14 @@ export class InterviewConnection {
   lastAudioTime = 0;
   canvasInactivityTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // Silence detection
+  silenceTimer: ReturnType<typeof setInterval> | null = null;
+  lastCodePreviewTime = 0;
+  lastCanvasSnapshotTime = 0;
+  silencePromptCount = 0;
+  lastSilencePromptTime = 0;
+  silencePromptActive = false;
+
   // Rate limiter: max 20 WS messages per second per connection
   private messageTimestamps: number[] = [];
   private readonly MAX_WS_MSGS_PER_SEC = 20;
@@ -125,6 +133,7 @@ export class InterviewConnection {
 
       case "code_preview": {
         if (!this.gemini || this.closingMode) return;
+        this.lastCodePreviewTime = Date.now();
         const prevMsg = msg as {
           code?: string;
           language?: string;
@@ -307,6 +316,7 @@ export class InterviewConnection {
         if (!this.gemini || this.closingMode || !this.isSystemDesign) {
           break;
         }
+        this.lastCanvasSnapshotTime = Date.now();
         const canvasMsg = msg as { state?: unknown };
         if (!canvasMsg.state) {
           break;

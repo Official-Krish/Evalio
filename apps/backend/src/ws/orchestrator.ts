@@ -13,6 +13,7 @@ import {
   initiateClosing,
   handleTurnCompleteDuringClosing,
 } from "./helpers/cleanup";
+import { startSilenceTimer, resetSilenceState } from "./helpers/silence";
 import type { InterviewConnection } from "./session";
 import { DSA_PHASES } from "../services/dsaPrompt";
 
@@ -202,6 +203,14 @@ export async function startInterview(
       // Reset waitingForAiResponse on turnComplete
       if (turnComplete && conn.waitingForAiResponse && !conn.closingMode) {
         conn.waitingForAiResponse = false;
+
+        // If a silence prompt just completed, reset the silence timer
+        // so the next silence window starts fresh from this response
+        if (conn.silencePromptActive) {
+          conn.lastAudioTime = Date.now();
+          conn.silencePromptActive = false;
+        }
+
         if (isChallengeMode(conn) && isNewQuestion(conn.questionBuf)) {
           await flushChallengeTurn(conn);
           conn.currentTurnId = null;
@@ -240,6 +249,8 @@ export async function startInterview(
   });
 
   console.log("[ws] sending ready signal to client");
+  resetSilenceState(conn);
+  startSilenceTimer(conn);
   await conn.safeSend({ type: "ready" });
   await conn.safeSend({ type: "time_limit", limitMs: timeLimitMs });
 

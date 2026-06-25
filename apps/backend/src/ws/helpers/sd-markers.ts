@@ -28,7 +28,9 @@ export async function handleSdMarkers(conn: InterviewConnection) {
         await conn.safeSend({ type: "canvas_diff", actions });
         canvasDiffCount++;
         lastCanvasDiffTime = now;
-      } catch {}
+      } catch {
+        /* invalid JSON */
+      }
     }
   }
 
@@ -45,7 +47,9 @@ export async function handleSdMarkers(conn: InterviewConnection) {
         await conn.safeSend({ type: "canvas_example", ...payload });
         canvasExampleCount++;
         lastCanvasExampleTime = now;
-      } catch {}
+      } catch {
+        /* invalid JSON */
+      }
     }
   }
 }

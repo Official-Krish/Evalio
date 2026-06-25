@@ -8,9 +8,11 @@ import {
   mergeAnswerBuf,
   isChallengeMode,
 } from "./turn";
+import { stopSilenceTimer } from "./silence";
 
 export async function cleanup(conn: InterviewConnection, reason?: string) {
   stopHeartbeat(conn);
+  stopSilenceTimer(conn);
   if (conn.timeWarningTimer) clearTimeout(conn.timeWarningTimer);
   if (conn.timeCapTimer) clearTimeout(conn.timeCapTimer);
   if (conn.canvasInactivityTimer) clearTimeout(conn.canvasInactivityTimer);
