@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "motion/react";
@@ -11,16 +11,23 @@ import toast from "react-hot-toast";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const loginMutation = useLogin();
   const { data: session, isLoading } = useSession();
   const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   });
+
+  useEffect(() => {
+    const email = searchParams.get("email");
+    if (email) setValue("email", email);
+  }, [searchParams, setValue]);
 
   const onSubmit = (data: LoginInput) => {
     loginMutation.mutate(data, {

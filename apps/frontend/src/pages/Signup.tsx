@@ -38,7 +38,15 @@ export function SignupPage() {
         );
         navigate(`/verify-otp?email=${encodeURIComponent(data.email)}`);
       },
-      onError: (err) => toast.error(err.message),
+      onError: (err) => {
+        const msg = err.message;
+        if (msg.includes("sign in with your credentials")) {
+          toast("Account already exists. Redirecting you to sign in…");
+          navigate(`/login?email=${encodeURIComponent(data.email)}`);
+        } else {
+          toast.error(msg);
+        }
+      },
     });
   };
 
