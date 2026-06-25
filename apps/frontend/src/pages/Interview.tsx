@@ -187,10 +187,8 @@ export function InterviewPage() {
     onSuccess: (data) => {
       if (data.title && data.description) {
         setSdTopic({ title: data.title, description: data.description });
-      }
-      if (data.fullBreakdown && !sdFullProblemTextRef.current) {
-        sdFullProblemTextRef.current = data.fullBreakdown;
-        setSdFullProblemText(data.fullBreakdown);
+        sdFullProblemTextRef.current = data.description;
+        setSdFullProblemText(data.description);
       }
     },
   });
@@ -434,11 +432,6 @@ export function InterviewPage() {
           ...prev,
           { role: "assistant", text: outputText, id: `ai-${Date.now()}` },
         ]);
-
-        if (isSystemDesign && !sdFullProblemTextRef.current) {
-          sdFullProblemTextRef.current = outputText;
-          setSdFullProblemText(outputText);
-        }
 
         // Detect AI signaling end-of-interview — auto-trigger closing
         if (outputText.includes("Thank you for interviewing with Evalio")) {

@@ -254,6 +254,7 @@ export async function handleInit(
       candidateHistory: pastInterviews.map((iv) => ({
         date: iv.createdAt.toISOString(),
         role: iv.roleTitle ?? iv.position,
+        mode: (iv as { mode?: string }).mode,
         overallScore: iv.overallScore,
         strengths: (iv.summary?.strengths as string[]) ?? [],
         weaknesses: (iv.summary?.weaknesses as string[]) ?? [],
@@ -300,6 +301,7 @@ export async function handleInit(
       candidateHistory: pastInterviews.map((iv) => ({
         date: iv.createdAt.toISOString(),
         role: iv.roleTitle ?? iv.position,
+        mode: (iv as { mode?: string }).mode,
         overallScore: iv.overallScore,
         strengths: (iv.summary?.strengths as string[]) ?? [],
         weaknesses: (iv.summary?.weaknesses as string[]) ?? [],

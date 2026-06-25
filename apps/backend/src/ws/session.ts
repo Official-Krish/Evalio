@@ -33,6 +33,7 @@ export class InterviewConnection {
   silenceTimer: ReturnType<typeof setInterval> | null = null;
   lastCodePreviewTime = 0;
   lastCanvasSnapshotTime = 0;
+  lastCanvasSnapshotData: unknown = null;
   silencePromptCount = 0;
   lastSilencePromptTime = 0;
   silencePromptActive = false;
@@ -321,6 +322,7 @@ export class InterviewConnection {
         if (!canvasMsg.state) {
           break;
         }
+        this.lastCanvasSnapshotData = canvasMsg.state;
 
         try {
           await prisma.interviewSession.update({

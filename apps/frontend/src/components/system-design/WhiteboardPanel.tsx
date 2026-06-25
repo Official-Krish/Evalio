@@ -143,7 +143,20 @@ export function WhiteboardPanel({
       {tab === "problem" ? (
         <div className="flex-1 overflow-y-auto px-6 py-5 text-sm leading-relaxed text-[var(--color-text-secondary)] prose dark:prose-invert max-w-none sd-problem-text">
           {problemHtml ? (
-            <div dangerouslySetInnerHTML={{ __html: problemHtml }} />
+            <>
+              <div dangerouslySetInnerHTML={{ __html: problemHtml }} />
+              <div
+                className="mt-6 p-4 rounded-lg text-xs font-mono border"
+                style={{
+                  borderColor: "var(--landing-line, rgba(255, 255, 255, 0.08))",
+                  background: "var(--color-bg-card, rgba(18, 18, 18, 0.4))",
+                  color: "var(--color-text-muted, rgba(255, 255, 255, 0.4))",
+                }}
+              >
+                Discuss the detailed requirements with the interviewer —
+                clarifying questions are part of the evaluation.
+              </div>
+            </>
           ) : (
             <p className="text-[var(--color-text-muted)] font-mono text-xs">
               Waiting for the interviewer to present the problem...
