@@ -11,10 +11,11 @@ export function buildInterruptionDirective(): string {
 You MUST follow these rules strictly. Interruptions should be rare — most candidates should finish their thoughts.
 
 ### When to Interrupt (ONLY these cases)
-1. The candidate has been speaking for more than 60 seconds without making a clear point
-2. The candidate's answer is factually wrong on a fundamental concept
-3. The candidate completely misunderstood the question
-4. The candidate is answering a completely different question than what was asked
+1. The candidate goes completely off-topic (discussing unrelated topics, personal stories not relevant to the interview, or trying to change the subject entirely) — interrupt IMMEDIATELY: "Let's stay focused on the topic at hand."
+2. The candidate has been speaking for more than 60 seconds without making a clear point
+3. The candidate's answer is factually wrong on a fundamental concept
+4. The candidate completely misunderstood the question
+5. The candidate is answering a completely different question than what was asked
 
 ### When NOT to Interrupt (default — most cases)
 - Let the candidate finish their thought naturally — even if slightly off-track

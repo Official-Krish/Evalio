@@ -3,6 +3,7 @@ import { COMPANIES } from "@evalio/shared";
 import { buildInterviewPrompt, type PromptInput } from "../../prompt";
 import { buildDsaSystemPrompt } from "../../services/dsaPrompt";
 import { buildSystemDesignPrompt } from "../../prompt";
+import { getSdQuestion } from "../../routes/sd";
 import { verifyWsToken, startInterview } from "../orchestrator";
 import { tryActivate, enqueue as queueEnqueue } from "../../lib/queue";
 import type { InterviewConnection } from "../session";
@@ -122,6 +123,14 @@ export async function handleInit(
   const isSystemDesign = mode === "SYSTEM_DESIGN";
   conn.isDsaMode = isDsa;
   conn.isSystemDesign = isSystemDesign;
+  console.log(
+    "[init] mode:",
+    mode,
+    "isDsa:",
+    isDsa,
+    "isSystemDesign:",
+    isSystemDesign,
+  );
 
   let systemPrompt: string;
 
@@ -205,9 +214,14 @@ export async function handleInit(
         weakest: skillProfile?.weakestSkill ?? null,
       },
     );
+    console.log("[init] built DSA prompt:", systemPrompt.slice(0, 200));
   } else if (isSystemDesign) {
+    console.log("[init] building System Design prompt");
+    const sdQuestion = getSdQuestion(interview.id);
+    console.log("[init] sdQuestion found:", !!sdQuestion);
     systemPrompt = buildSystemDesignPrompt({
       position: interview.position,
+      sdQuestion: sdQuestion ?? undefined,
       candidateName: interview.user.name,
       companyName: interview.companyName ?? null,
       companyCulture: companyConfig?.culture ?? null,
@@ -250,6 +264,7 @@ export async function handleInit(
       overallPatterns: (skillProfile?.commonPatterns as string[]) ?? [],
       scoreTrendLast5,
     });
+    console.log("[init] built SD prompt:", systemPrompt.slice(0, 200));
   } else {
     const promptInput = {
       position: interview.position,
@@ -303,6 +318,14 @@ export async function handleInit(
   };
 
   const slotOpen = await tryActivate(conn.interviewId);
+  console.log(
+    "[init] slotOpen:",
+    slotOpen,
+    "mode:",
+    mode,
+    "prompt length:",
+    systemPrompt?.length,
+  );
   if (slotOpen) {
     conn.wsMap.set(conn.interviewId, conn.client);
     conn.startCallbacks.set(conn.interviewId, startFn);

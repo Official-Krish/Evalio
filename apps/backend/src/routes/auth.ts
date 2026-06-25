@@ -55,6 +55,13 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
           where: { email: body.email },
         });
         if (existing) {
+          if (!existing.emailVerified) {
+            set.status = 409;
+            return {
+              error:
+                "An account with this email already exists. Please sign in with your credentials.",
+            };
+          }
           set.status = 409;
           return { error: "Email already registered" };
         }

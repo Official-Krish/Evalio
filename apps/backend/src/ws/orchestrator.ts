@@ -55,6 +55,10 @@ export async function startInterview(
   timeLimitMs: number,
 ) {
   conn.isQueued = false;
+  console.log(
+    "[orchestrator] startInterview, isSystemDesign:",
+    conn.isSystemDesign,
+  );
   await prisma.interviewSession.update({
     where: { id: conn.interviewId! },
     data: { status: "ACTIVE", startedAt: new Date() },
@@ -62,7 +66,10 @@ export async function startInterview(
 
   try {
     conn.gemini = await createGeminiSession(systemPrompt);
-    if (conn.isSystemDesign) resetSdCounters();
+    if (conn.isSystemDesign) {
+      console.log("[orchestrator] resetting SD counters");
+      resetSdCounters();
+    }
   } catch (err) {
     console.error("[ws] Gemini session failed:", err);
     await conn.safeSend({
@@ -156,19 +163,19 @@ export async function startInterview(
           .map((p: Record<string, unknown>) => p.text as string)
           .join(" ") ?? "";
 
-      // Prefer raw text for accumulation (preserves markers), fall back to STT
+      // Accumulate raw text for marker extraction (preserves <canvas_diff>, READY_FOR_NEXT, etc.)
       const markerText =
         ((conn.isDsaMode || conn.isSystemDesign) && rawText) || outputText;
 
-      if ((conn.isDsaMode || conn.isSystemDesign) && rawText) {
-        console.log(
-          `[${conn.isDsaMode ? "dsa" : "sd"}] rawText:`,
-          JSON.stringify(rawText).slice(0, 300),
-        );
-      }
+      // Accumulate clean spoken text for DB storage (avoids Gemini internal reasoning)
+      const cleanText = outputText || rawText;
 
       if (markerText && conn.interviewId) {
         conn.questionBuf = dedupAppend(conn.questionBuf, markerText);
+      }
+
+      if (cleanText && conn.interviewId) {
+        conn.cleanQuestionBuf = dedupAppend(conn.cleanQuestionBuf, cleanText);
       }
 
       if (inputText && conn.interviewId) {
@@ -187,12 +194,8 @@ export async function startInterview(
         await handleDsaMarkers(conn);
       }
 
-      // System Design mode: detect canvas_diff / canvas_example / task_description markers
+      // System Design mode: detect canvas_diff / canvas_example markers
       if (turnComplete && conn.isSystemDesign) {
-        console.log(
-          "[sd] turnComplete, extracting canvas markers:",
-          JSON.stringify(conn.questionBuf).slice(0, 200),
-        );
         await handleSdMarkers(conn);
       }
 

@@ -11,6 +11,7 @@ export class InterviewConnection {
   gemini: GeminiSession | null = null;
   currentTurnId: string | null = null;
   questionBuf = "";
+  cleanQuestionBuf = "";
   answerBuf = "";
   nextOrderNumber = 1;
   finalized = false;
@@ -25,6 +26,8 @@ export class InterviewConnection {
   isSystemDesign = false;
   heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   pongTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  lastAudioTime = 0;
+  canvasInactivityTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Rate limiter: max 20 WS messages per second per connection
   private messageTimestamps: number[] = [];
@@ -301,9 +304,13 @@ export class InterviewConnection {
         break;
 
       case "canvas_snapshot": {
-        if (!this.gemini || this.closingMode || !this.isSystemDesign) break;
+        if (!this.gemini || this.closingMode || !this.isSystemDesign) {
+          break;
+        }
         const canvasMsg = msg as { state?: unknown };
-        if (!canvasMsg.state) break;
+        if (!canvasMsg.state) {
+          break;
+        }
 
         try {
           await prisma.interviewSession.update({
@@ -334,6 +341,28 @@ export class InterviewConnection {
             },
           }),
         );
+
+        // Auto-flush canvas-only silence: if the user is drawing without speaking,
+        // send a turn complete after a delay so Gemini responds to the canvas state.
+        if (!this.waitingForAiResponse) {
+          const silenceMs = Date.now() - this.lastAudioTime;
+          if (silenceMs > 8_000 && !this.canvasInactivityTimer) {
+            this.canvasInactivityTimer = setTimeout(() => {
+              this.canvasInactivityTimer = null;
+              if (this.gemini && !this.closingMode && !this.finalized) {
+                this.gemini.send(
+                  JSON.stringify({
+                    clientContent: {
+                      turns: [],
+                      turnComplete: true,
+                    },
+                  }),
+                );
+                this.waitingForAiResponse = true;
+              }
+            }, 5_000);
+          }
+        }
         break;
       }
 

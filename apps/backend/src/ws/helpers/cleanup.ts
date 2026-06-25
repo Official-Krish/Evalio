@@ -13,6 +13,7 @@ export async function cleanup(conn: InterviewConnection, reason?: string) {
   stopHeartbeat(conn);
   if (conn.timeWarningTimer) clearTimeout(conn.timeWarningTimer);
   if (conn.timeCapTimer) clearTimeout(conn.timeCapTimer);
+  if (conn.canvasInactivityTimer) clearTimeout(conn.canvasInactivityTimer);
 
   if (conn.interviewId) {
     if (conn.isQueued) {
@@ -76,7 +77,7 @@ export async function initiateClosing(conn: InterviewConnection) {
       console.log("[ws] closing safety timeout — forcing cleanup");
       cleanup(conn);
     }
-  }, 20_000);
+  }, 120_000);
 }
 
 export async function handleTurnCompleteDuringClosing(

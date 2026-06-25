@@ -1,6 +1,10 @@
 import { prisma } from "../../lib/prisma";
 import type { InterviewConnection } from "../session";
 
+function cleanQuestionText(conn: InterviewConnection): string {
+  return conn.cleanQuestionBuf || conn.questionBuf;
+}
+
 export function isNewQuestion(text: string): boolean {
   const lower = text.toLowerCase();
   const newQIndicators = [
@@ -45,7 +49,8 @@ export async function createTurn(
 
 export async function flushTurn(conn: InterviewConnection) {
   if (!conn.interviewId || !conn.questionBuf) return;
-  const turnId = await createTurn(conn, conn.questionBuf);
+  const qText = cleanQuestionText(conn);
+  const turnId = await createTurn(conn, qText);
   if (conn.answerBuf) {
     await prisma.interviewTurn.update({
       where: { id: turnId },
@@ -54,6 +59,7 @@ export async function flushTurn(conn: InterviewConnection) {
   }
   conn.currentTurnId = turnId;
   conn.questionBuf = "";
+  conn.cleanQuestionBuf = "";
   conn.answerBuf = "";
 }
 

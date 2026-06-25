@@ -680,14 +680,12 @@ async function generateSystemDesignEvaluation(
 
       const text = response.text;
       if (!text) {
-        console.warn(`[sd-evaluate] empty response, attempt ${attempt + 1}`);
         throw new Error("No response from Gemini");
       }
 
       return JSON.parse(text) as SystemDesignEvaluationResult;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.warn(`[sd-evaluate] attempt ${attempt + 1}/2 failed: ${message}`);
       if (attempt < 1) {
         await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
       }
@@ -708,14 +706,13 @@ export async function evaluateSystemDesignSession(interviewId: string) {
     });
 
     if (!interview) {
-      console.warn(`[sd-evaluate] interview ${interviewId} not found`);
       return;
     }
 
     // Filter AI-origin nodes from graph history for evolution analysis
-    const graphHistory =
-      (interview as { canvasGraphHistory?: unknown[] }).canvasGraphHistory ??
-      [];
+    const rawGraphHistory = (interview as Record<string, unknown>)
+      .canvasGraphHistory;
+    const graphHistory = Array.isArray(rawGraphHistory) ? rawGraphHistory : [];
     const userOnlyHistory = graphHistory.map((snapshot: unknown) => {
       const s = snapshot as { nodes?: { origin?: string }[] };
       if (!s.nodes) return snapshot;
@@ -765,37 +762,52 @@ Return ONLY valid JSON matching the schema.`;
 
     const result = await generateSystemDesignEvaluation(prompt);
     if (!result) {
-      console.error(
-        `[sd-evaluate] evaluation failed for interview ${interviewId}`,
-      );
       return;
     }
 
-    await prisma.interviewSession.update({
-      where: { id: interviewId },
-      data: {
-        overallScore: result.overallScore,
-        technicalScore: Math.round(
-          (result.dimensions.highLevelArchitecture +
-            result.dimensions.dataModel +
-            result.dimensions.scalability +
-            result.dimensions.faultTolerance +
-            result.dimensions.tradeoffsAndDepth) /
-            5,
-        ),
-        problemSolvingScore: Math.round(
-          (result.dimensions.requirementsGathering +
-            result.dimensions.estimation +
-            result.dimensions.highLevelArchitecture) /
-            3,
-        ),
-      },
-    });
-
-    console.log(
-      `[sd-evaluate] completed for interview ${interviewId}: ${result.overallScore}/100`,
-    );
-  } catch (err) {
-    console.error(`[sd-evaluate] error:`, err);
-  }
+    await prisma.$transaction([
+      prisma.interviewSession.update({
+        where: { id: interviewId },
+        data: {
+          overallScore: result.overallScore,
+          technicalScore: Math.round(
+            (result.dimensions.highLevelArchitecture +
+              result.dimensions.dataModel +
+              result.dimensions.scalability +
+              result.dimensions.faultTolerance +
+              result.dimensions.tradeoffsAndDepth) /
+              5,
+          ),
+          problemSolvingScore: Math.round(
+            (result.dimensions.requirementsGathering +
+              result.dimensions.estimation +
+              result.dimensions.highLevelArchitecture) /
+              3,
+          ),
+        },
+      }),
+      prisma.interviewSummary.upsert({
+        where: { interviewId },
+        create: {
+          interviewId,
+          summary: result.summary,
+          strengths: result.canvasFeedback.strongDecisions,
+          weaknesses: result.canvasFeedback.weakDecisions,
+          improvementAreas: result.improvements,
+          recommendedTopics: [],
+          resumeStrengths: [],
+          resumeWeaknesses: [],
+        },
+        update: {
+          summary: result.summary,
+          strengths: result.canvasFeedback.strongDecisions,
+          weaknesses: result.canvasFeedback.weakDecisions,
+          improvementAreas: result.improvements,
+          recommendedTopics: [],
+          resumeStrengths: [],
+          resumeWeaknesses: [],
+        },
+      }),
+    ]);
+  } catch (err) {}
 }

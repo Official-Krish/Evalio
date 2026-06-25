@@ -17,6 +17,11 @@ export async function handleAudioChunk(
     });
     return;
   }
+  conn.lastAudioTime = Date.now();
+  if (conn.canvasInactivityTimer) {
+    clearTimeout(conn.canvasInactivityTimer);
+    conn.canvasInactivityTimer = null;
+  }
   try {
     conn.gemini.send(
       JSON.stringify({
@@ -46,7 +51,11 @@ export async function handleAudioStreamEnd(
     });
     return;
   }
-  console.log("[ws] audio_stream_end from client \u2192 Gemini");
+  conn.lastAudioTime = Date.now();
+  if (conn.canvasInactivityTimer) {
+    clearTimeout(conn.canvasInactivityTimer);
+    conn.canvasInactivityTimer = null;
+  }
 
   const isInterrupted = (msg as { interrupted?: boolean }).interrupted === true;
 
@@ -59,6 +68,7 @@ export async function handleAudioStreamEnd(
     conn.answerBuf = "";
     conn.currentTurnId = null;
     conn.questionBuf = "";
+    conn.cleanQuestionBuf = "";
     conn.waitingForAiResponse = true;
 
     try {
