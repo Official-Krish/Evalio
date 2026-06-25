@@ -6,6 +6,7 @@ import {
   useMotionValueEvent,
   type MotionValue,
 } from "motion/react";
+import ScrollStack, { ScrollStackItem } from "../ui/ScrollStack";
 
 const TRAITS = [
   {
@@ -575,8 +576,10 @@ export function IdentityEmergence({ className }: IdentityEmergenceProps) {
   });
 
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [progressVal, setProgressVal] = useState(0);
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    setProgressVal(latest);
     const active = Math.min(Math.floor(latest * TOTAL), TOTAL - 1);
     setActiveIndex(latest > 0.01 ? active : -1);
   });
@@ -683,18 +686,96 @@ export function IdentityEmergence({ className }: IdentityEmergenceProps) {
               </div>
 
               {/* ─── RIGHT: Stacking Card Deck ─── */}
-              <div className="col-span-7 flex items-center justify-center relative w-full h-[380px] max-w-[520px] ml-auto">
+              <ScrollStack
+                progress={progressVal}
+                useWindowScroll={false}
+                itemDistance={50}
+                itemScale={0.03}
+                itemStackDistance={15}
+                stackPosition="10%"
+                scaleEndPosition="5%"
+                baseScale={0.85}
+                className="col-span-7 relative w-full h-[450px] max-w-[520px] ml-auto scrollbar-none"
+                innerClassName="pt-4 pb-96 w-full"
+              >
                 {TRAITS.map((trait, idx) => (
-                  <StackingCard
+                  <ScrollStackItem
                     key={trait.label}
-                    trait={trait}
-                    index={idx}
-                    progress={scrollYProgress}
-                    isActive={activeIndex === idx}
-                    isMobile={false}
-                  />
+                    itemClassName="h-[340px] p-8 rounded-2xl bg-[#fdfcfa]/95 dark:bg-[#111111]/95 backdrop-blur-xl border flex flex-col justify-between overflow-hidden group select-none transition-colors duration-500"
+                    style={{
+                      borderColor:
+                        activeIndex === idx
+                          ? "rgba(184, 168, 138, 0.4)"
+                          : "var(--landing-line)",
+                      boxShadow:
+                        activeIndex === idx
+                          ? "0 20px 40px -15px rgba(0, 0, 0, 0.12), 0 0 24px -4px rgba(184, 168, 138, 0.05)"
+                          : "0 16px 32px -20px rgba(0, 0, 0, 0.2)",
+                      zIndex: 10 * idx,
+                    }}
+                  >
+                    {/* Technical Grid Background */}
+                    <div
+                      className="absolute inset-0 pointer-events-none opacity-20 dark:opacity-10"
+                      style={{
+                        backgroundImage: `linear-gradient(rgba(184, 168, 138, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(184, 168, 138, 0.1) 1px, transparent 1px)`,
+                        backgroundSize: "20px 20px",
+                      }}
+                      aria-hidden
+                    />
+
+                    {/* Sci-Fi Corner Brackets */}
+                    <div className="absolute top-2 left-2 w-2 h-2 border-t border-l border-[var(--landing-accent)] opacity-40 transition-opacity duration-300 pointer-events-none" />
+                    <div className="absolute top-2 right-2 w-2 h-2 border-t border-r border-[var(--landing-accent)] opacity-40 transition-opacity duration-300 pointer-events-none" />
+                    <div className="absolute bottom-2 left-2 w-2 h-2 border-b border-l border-[var(--landing-accent)] opacity-40 transition-opacity duration-300 pointer-events-none" />
+                    <div className="absolute bottom-2 right-2 w-2 h-2 border-b border-r border-[var(--landing-accent)] opacity-40 transition-opacity duration-300 pointer-events-none" />
+
+                    {/* Soft trait glow */}
+                    <div
+                      className="absolute inset-0 pointer-events-none opacity-50 dark:opacity-30"
+                      style={{
+                        background: `radial-gradient(circle 220px at 70% 30%, ${trait.glow}, transparent 80%)`,
+                      }}
+                      aria-hidden
+                    />
+
+                    <div className="flex flex-row items-center justify-between h-full w-full relative z-10 gap-6">
+                      <div
+                        className="flex flex-col justify-between h-full flex-1 py-1"
+                        style={{ transform: "translateZ(15px)" }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-[12px] tracking-[0.14em] text-[var(--landing-accent)] font-semibold">
+                            {trait.num}
+                          </span>
+                          <span className="text-[9px] tracking-[0.14em] text-[var(--landing-fg-faint)] font-bold">
+                            // {trait.metric}
+                          </span>
+                        </div>
+                        <div className="my-auto pr-2">
+                          <h3 className="font-serif italic text-2xl text-[var(--landing-fg)] mb-3">
+                            {trait.label}
+                          </h3>
+                          <p className="font-sans text-[13px] leading-relaxed text-[var(--landing-fg-muted)] max-w-[280px] font-normal">
+                            {trait.desc}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="text-[9px] tracking-[0.14em] uppercase border border-[var(--landing-line)] px-2.5 py-0.5 rounded bg-[var(--landing-surface)] text-[var(--landing-fg-faint)] font-semibold">
+                            {trait.weight} WEIGHT
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-[145px] h-[145px] flex-shrink-0 flex items-center justify-center border border-[var(--landing-line)] rounded-xl bg-[var(--landing-surface)]/20 shadow-inner overflow-hidden">
+                        <CardGraphic
+                          index={idx}
+                          isActive={activeIndex === idx}
+                        />
+                      </div>
+                    </div>
+                  </ScrollStackItem>
                 ))}
-              </div>
+              </ScrollStack>
             </div>
           </div>
         </div>

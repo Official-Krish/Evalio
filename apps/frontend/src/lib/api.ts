@@ -293,4 +293,17 @@ export const api = {
     if (error) throw new Error(errorMessage(error.value));
     return data as unknown as { session: Record<string, unknown> };
   },
+
+  startSdSession: async (interviewId: string) => {
+    const { data, error } = await client.api.sd.start.post({
+      interviewId,
+    });
+    if (error) throw new Error(errorMessage(error.value));
+    return data as unknown as {
+      title: string;
+      description: string;
+      fullBreakdown: string;
+      difficulty: string;
+    };
+  },
 };

@@ -54,7 +54,6 @@ export class InterviewSocket {
             "dsa_code_update",
             "canvas_diff",
             "canvas_example",
-            "task_description",
           ];
           if (
             typeof data.type === "string" &&

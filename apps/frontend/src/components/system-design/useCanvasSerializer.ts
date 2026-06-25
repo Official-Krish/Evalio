@@ -94,7 +94,10 @@ function extractNodesAndEdges(elements: readonly Record<string, unknown>[]): {
         id,
         type: customData.sdType as string,
         label,
-        origin: (customData.origin as "user" | "ai") ?? "user",
+        origin:
+          customData.origin === "user" || customData.origin === "ai"
+            ? customData.origin
+            : "user",
         confidence: 1.0,
         inference: "explicit",
       });
@@ -148,6 +151,7 @@ export function useCanvasSerializer(
       timestamp: Date.now(),
       nodes,
       edges,
+      scene: elementsRef.current.map((el) => ({ ...el })),
     };
     snapshotRef.current = snapshot;
     onSnapshot(snapshot);

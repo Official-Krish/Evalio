@@ -6266,3 +6266,8 @@ a.dash-row:hover {
     justify-content: flex-start !important;
   }
 }
+
+/* Hide scrollbars for Webkit browsers */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

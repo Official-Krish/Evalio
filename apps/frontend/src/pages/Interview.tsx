@@ -64,6 +64,7 @@ export function InterviewPage() {
   const dsaLastTransitionRef = useRef(-1);
   const dsaPendingRef = useRef<{ index?: number | null } | null>(null);
   const isDsaRef = useRef(false);
+  const sdFullProblemTextRef = useRef("");
 
   const [isConnecting, setIsConnecting] = useState(true);
   const [closing, setClosing] = useState(false);
@@ -109,9 +110,10 @@ export function InterviewPage() {
     description: "Designing the system...",
   });
   const [canvasDiff, setCanvasDiff] = useState<CanvasDiffAction[] | null>(null);
+  const [sdFullProblemText, setSdFullProblemText] = useState("");
   const sdPanelVisible = isSystemDesign;
 
-  // Load DSA session on mount if DSA mode
+  // Load DSA / SD session on mount
   const { mutate: loadDsaSession } = useMutation({
     mutationFn: () => {
       setDsaLoading(true);
@@ -144,7 +146,6 @@ export function InterviewPage() {
       if (firstProblem) {
         setDsaCode((firstProblem.code as string) ?? "");
       }
-      // Apply any pending transition that arrived before session data loaded
       const pending = dsaPendingRef.current;
       if (pending) {
         dsaPendingRef.current = null;
@@ -171,16 +172,36 @@ export function InterviewPage() {
                 }
               : prev,
           );
-          setDsaCode("");
+          const nextProblem = problems[nextIdx];
+          if (nextProblem) {
+            setDsaCode((nextProblem.code as string) ?? "");
+          }
         }
       }
     },
     onError: () => setDsaLoading(false),
   });
 
+  const { mutate: loadSdSession } = useMutation({
+    mutationFn: () => api.startSdSession(id!),
+    onSuccess: (data) => {
+      if (data.title && data.description) {
+        setSdTopic({ title: data.title, description: data.description });
+      }
+      if (data.fullBreakdown && !sdFullProblemTextRef.current) {
+        sdFullProblemTextRef.current = data.fullBreakdown;
+        setSdFullProblemText(data.fullBreakdown);
+      }
+    },
+  });
+
   useEffect(() => {
     if (isDsa && id) loadDsaSession();
   }, [isDsa, id, loadDsaSession]);
+
+  useEffect(() => {
+    if (isSystemDesign && id) loadSdSession();
+  }, [isSystemDesign, id, loadSdSession]);
 
   // Refs for stable cross-render access to latest values
   const latestCodeRef = useRef(dsaCode);
@@ -414,6 +435,11 @@ export function InterviewPage() {
           { role: "assistant", text: outputText, id: `ai-${Date.now()}` },
         ]);
 
+        if (isSystemDesign && !sdFullProblemTextRef.current) {
+          sdFullProblemTextRef.current = outputText;
+          setSdFullProblemText(outputText);
+        }
+
         // Detect AI signaling end-of-interview — auto-trigger closing
         if (outputText.includes("Thank you for interviewing with Evalio")) {
           autoEndPendingRef.current = true;
@@ -533,13 +559,6 @@ export function InterviewPage() {
       });
     });
 
-    socket.on("task_description", (data: unknown) => {
-      const msg = data as { title?: string; description?: string };
-      if (msg.title && msg.description) {
-        setSdTopic({ title: msg.title, description: msg.description });
-      }
-    });
-
     // Time cap events
     socket.on("time_limit", (data: unknown) => {
       const msg = data as Record<string, unknown>;
@@ -582,7 +601,7 @@ export function InterviewPage() {
     return () => clearInterval(interval);
   }, [phase]);
 
-  // Safety timeout: if closing takes >30s, force-navigate to results
+  // Safety timeout: if closing takes >2min, force-navigate to results
   useEffect(() => {
     if (!closing || feedbackReady) return;
     const timer = setTimeout(() => {
@@ -591,7 +610,7 @@ export function InterviewPage() {
         teardown();
         navigate(`/results/${id}`, { replace: true });
       }
-    }, 30_000);
+    }, 120_000);
     return () => clearTimeout(timer);
   }, [closing, feedbackReady, id, navigate, teardown]);
 
@@ -689,7 +708,7 @@ export function InterviewPage() {
         style={(() => {
           if (isDsa && dsaPanelVisible)
             return { marginRight: "min(520px, 45vw)" };
-          if (isSystemDesign && sdPanelVisible) return { marginRight: "65vw" };
+          if (isSystemDesign && sdPanelVisible) return { marginRight: "60vw" };
           return undefined;
         })()}
       >
@@ -805,6 +824,7 @@ export function InterviewPage() {
           visible={sdPanelVisible}
           topicTitle={sdTopic.title}
           topicDescription={sdTopic.description}
+          fullProblemText={sdFullProblemText}
           onCanvasSnapshot={(snapshot) => {
             socketRef.current?.sendCanvasSnapshot(snapshot);
           }}

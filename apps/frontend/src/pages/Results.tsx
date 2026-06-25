@@ -16,6 +16,8 @@ import { FeedbackCTA } from "../components/Result/FeedbackCTA";
 import { TurnRow } from "../components/Result/TurnRow";
 import { DsaResultsSection } from "../components/Result/DsaResultsSection";
 import type { DsaSessionData } from "../components/Result/types";
+import { SdDesignSection } from "../components/Result/SdDesignSection";
+import type { CanvasSnapshot } from "@evalio/shared";
 
 export function ResultsPage() {
   const { id } = useParams<{ id: string }>();
@@ -209,6 +211,13 @@ export function ResultsPage() {
   const recommendedTopics: string[] =
     (interview.summary?.recommendedTopics as string[] | undefined) ?? [];
 
+  const interviewMode = (interview as unknown as Record<string, unknown>)
+    .mode as string | undefined;
+  const isSd = interviewMode === "SYSTEM_DESIGN";
+  const isDsa = interviewMode === "DSA";
+  const finalDiagram = (interview as unknown as Record<string, unknown>)
+    .finalDiagram as CanvasSnapshot | null | undefined;
+
   return (
     <div className="max-w-[840px] mx-auto pb-20 px-4">
       <SEO title="Results" noindex />
@@ -296,6 +305,18 @@ export function ResultsPage() {
 
       <StudyRecommendations topics={recommendedTopics} />
 
+      {isDsa &&
+        !!(interview as unknown as Record<string, unknown>).dsaSession && (
+          <DsaResultsSection
+            session={
+              (interview as unknown as Record<string, unknown>)
+                .dsaSession as DsaSessionData
+            }
+          />
+        )}
+
+      {isSd && <SdDesignSection finalDiagram={finalDiagram ?? null} />}
+
       {turns.length > 0 && (
         <div className="pb-12">
           <div className="flex items-center justify-between mb-5">
@@ -303,7 +324,7 @@ export function ResultsPage() {
               className="text-[11px] tracking-[0.1em] uppercase m-0 font-semibold"
               style={{ color: "var(--landing-fg-muted)" }}
             >
-              QUESTIONS & ANSWERS
+              {isSd || isDsa ? "AI QUESTIONS" : "QUESTIONS & ANSWERS"}
             </p>
             <span
               className="text-[11px] px-[10px] py-[2px] rounded-full border"
@@ -318,22 +339,15 @@ export function ResultsPage() {
           </div>
           <div className="res-qa-timeline">
             {turns.map((turn, i) => (
-              <TurnRow key={turn.id} turn={turn} index={i} />
+              <TurnRow
+                key={turn.id}
+                turn={turn}
+                index={i}
+                showQuestionOnly={isSd || isDsa}
+              />
             ))}
           </div>
         </div>
-      )}
-
-      {!!(
-        (interview as unknown as Record<string, unknown>).mode === "DSA" &&
-        (interview as unknown as Record<string, unknown>).dsaSession
-      ) && (
-        <DsaResultsSection
-          session={
-            (interview as unknown as Record<string, unknown>)
-              .dsaSession as DsaSessionData
-          }
-        />
       )}
 
       <FeedbackCTA />

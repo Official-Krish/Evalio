@@ -163,7 +163,10 @@ export function RoundPicker({
   const baseRounds = company?.interviewRounds ?? [];
   const isStartup = companyId === "startup";
   const dsaRound = technical && !isStartup ? ["Coding Round (DSA)"] : [];
-  const rounds = isStartup ? baseRounds : [...dsaRound, ...baseRounds];
+  const sdRound = ["System Design"];
+  const rounds = isStartup
+    ? baseRounds
+    : [...new Set([...dsaRound, ...sdRound, ...baseRounds])];
   const commonRounds = technical
     ? COMMON_ROUNDS
     : COMMON_ROUNDS.filter((r) => r !== "Coding Round (DSA)");

@@ -184,9 +184,7 @@ export function SiteLoader({ isReady, children }: SiteLoaderProps) {
     }
   }, [phase]);
 
-  if (phase === "complete") {
-    return <>{children}</>;
-  }
+  const overlayHidden = phase === "complete";
 
   // Define colors based on active theme
   const bgColor = isLight ? "#f6f4f0" : "#08080D";
@@ -200,7 +198,7 @@ export function SiteLoader({ isReady, children }: SiteLoaderProps) {
     zoom: {
       opacity: [1, 1, 0],
       transition: {
-        times: [0, 0.66, 1], // Stays opaque for ~300ms, then fades in ~150ms
+        times: [0, 0.66, 1],
         duration: 0.45,
         ease: "easeOut" as const,
       },
@@ -210,6 +208,12 @@ export function SiteLoader({ isReady, children }: SiteLoaderProps) {
       transition: {
         duration: 0.3,
         ease: "easeInOut" as const,
+      },
+    },
+    complete: {
+      opacity: 0,
+      transition: {
+        duration: 0,
       },
     },
   };
@@ -230,11 +234,11 @@ export function SiteLoader({ isReady, children }: SiteLoaderProps) {
     },
     zoom: {
       scale: 22,
-      opacity: [1, 1, 0.4, 0], // Fades out at the end of the zoom transition
+      opacity: [1, 1, 0.4, 0],
       transition: {
         scale: {
           duration: 0.45,
-          ease: [0.6, 0, 1, 1] as const, // cubic-bezier accelerating hard
+          ease: [0.6, 0, 1, 1] as const,
         },
         opacity: {
           duration: 0.45,
@@ -249,14 +253,23 @@ export function SiteLoader({ isReady, children }: SiteLoaderProps) {
         ease: "easeInOut" as const,
       },
     },
+    complete: {
+      opacity: 0,
+      transition: {
+        duration: 0,
+      },
+    },
   };
 
   return (
     <>
-      {/* Site content underneath: keep at opacity 0 during loading in cold load to prevent flash, then fade in during zoom/fadeout */}
       <div
         style={{
-          opacity: phase === "zoom" || phase === "fadeout" ? 1 : 0,
+          opacity: overlayHidden
+            ? 1
+            : phase === "zoom" || phase === "fadeout"
+              ? 1
+              : 0,
           transition: "opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
           willChange: "opacity",
           height: "100%",
@@ -266,44 +279,46 @@ export function SiteLoader({ isReady, children }: SiteLoaderProps) {
         {children}
       </div>
 
-      <motion.div
-        aria-hidden="true"
-        variants={overlayVariants}
-        initial="initial"
-        animate={phase}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 9999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: bgColor,
-          willChange: "opacity",
-        }}
-      >
+      {!overlayHidden && (
         <motion.div
-          variants={logoVariants}
-          initial="loading"
+          aria-hidden="true"
+          variants={overlayVariants}
+          initial="initial"
           animate={phase}
           style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            willChange: "transform, opacity",
-            transformStyle: "preserve-3d",
-            // Sized ~128px on mobile, ~176px on desktop responsive (doubled size)
-            width: "clamp(128px, 14vw, 176px)",
-            height: "clamp(128px, 14vw, 176px)",
+            backgroundColor: bgColor,
+            willChange: "opacity",
+            pointerEvents: "none",
           }}
         >
-          <AnimatedLogo
-            size={192} // Let standard parent bounds contain/clamp it (doubled)
-            isLight={isLight}
-            shouldAnimate={shouldAnimate}
-          />
+          <motion.div
+            variants={logoVariants}
+            initial="loading"
+            animate={phase}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              willChange: "transform, opacity",
+              transformStyle: "preserve-3d",
+              width: "clamp(128px, 14vw, 176px)",
+              height: "clamp(128px, 14vw, 176px)",
+            }}
+          >
+            <AnimatedLogo
+              size={192}
+              isLight={isLight}
+              shouldAnimate={shouldAnimate}
+            />
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </>
   );
 }
