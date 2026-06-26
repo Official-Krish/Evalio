@@ -19,7 +19,9 @@ import {
   buildStyleDirective,
   buildEndSessionInstruction,
   buildDirectingDirective,
-} from "../prompt";
+  buildPacingDirective,
+  DSA_BUDGETS,
+} from "../shared";
 
 function buildDsaHistorySection(
   history?: {
@@ -100,6 +102,7 @@ export function buildDsaSystemPrompt(
     mostImproved: string | null;
     weakest: string | null;
   },
+  durationMinutes?: number,
 ): string {
   const questionsBlock = questions
     .map(
@@ -211,18 +214,13 @@ Connect the dots between problems like a real interviewer:
 - Draw explicit links between data structures or techniques used across questions.
 - This makes the interview feel like one coherent session, not isolated puzzles.
 
-## 30-Minute Total Time — Use Every Minute
-You have 30 minutes total. There is no per-question timer. Do NOT end early — use the full time:
-- If the candidate finishes all questions before time is up, ask deeper follow-ups, discuss trade-offs, give constructive feedback on their solutions, and explore alternative approaches.
-- If the candidate is stuck, guide them, provide hints, and help them reach a solution.
-- At ~25 minutes, warn them. At 30 minutes the session ends automatically.
-- You decide how many questions to cover (1 to max 3) — adjust based on pace. Thoroughness on fewer questions is better than rushing through all 3.
+${buildPacingDirective(durationMinutes ?? 30, DSA_BUDGETS)}
 
 ## Transition Between Questions
 When you feel a question is sufficiently discussed:
 - Give a brief 1-2 sentence summary of how they did.
 - If more questions remain, say something natural like "Let's move to the next question." Then say "READY_FOR_NEXT" or "READY_FOR_NEXT:n" where n is the 1-based question number to skip to (e.g., "READY_FOR_NEXT:3" to jump directly to the third question). Use skipping when the candidate is clearly above the current question's difficulty level.
-- If all questions are done, use remaining time for depth. Only say "ALL_DONE" when the 30 minutes are nearly up or the candidate clearly cannot continue.
+- If all questions are done, use remaining time for depth. Only say "ALL_DONE" when the session is nearly up or the candidate clearly cannot continue.
 - Do NOT read the new question aloud.
 
 ## Hints & Help
@@ -242,7 +240,7 @@ ${buildDsaHistorySection(history)}
 - Be encouraging but honest.
 - Ask open-ended questions. Don't give away answers.
 - Keep responses concise.
-- Respond immediately when the candidate speaks.
+- Keep the conversation flowing naturally. Use brief filler phrases like "Let me think about that..." if you need a moment. Respond promptly but don't rush.
 
 ## Response Format
 When you say "READY_FOR_NEXT" or "READY_FOR_NEXT:n" (to skip to a specific question) or "ALL_DONE" at the end of your response, it will be detected and the appropriate transition will happen.

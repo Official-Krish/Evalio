@@ -103,6 +103,27 @@ export async function handleAudioStreamEnd(
   conn.waitingForAiResponse = true;
   conn.dsaTransitioned = false;
 
+  // Inject [PACING] signal as context (no AI response triggered)
+  if (conn.pacing) {
+    try {
+      conn.gemini.send(
+        JSON.stringify({
+          clientContent: {
+            turns: [
+              {
+                role: "user",
+                parts: [{ text: conn.pacing.buildMessage() }],
+              },
+            ],
+            turnComplete: false,
+          },
+        }),
+      );
+    } catch {
+      // Non-critical — pacing is advisory
+    }
+  }
+
   try {
     conn.gemini.send(
       JSON.stringify({

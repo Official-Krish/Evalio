@@ -1,11 +1,4 @@
-/**
- * Interruption rules for the AI interviewer.
- *
- * The AI should only interrupt in specific cases. This module provides
- * the prompt instruction that governs when interruptions happen.
- */
-
-export function buildInterruptionDirective(): string {
+export function buildInterruptionRules(): string {
   return `## Interruption Rules
 
 You MUST follow these rules strictly. Interruptions should be rare — most candidates should finish their thoughts.

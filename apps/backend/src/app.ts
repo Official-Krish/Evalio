@@ -119,6 +119,14 @@ export const app = new Elysia()
       exp: "7d",
     }),
   )
+  .onError(({ error, set }) => {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      set.status = 401;
+      return {
+        error: "You are logged out. Please sign in to continue.",
+      };
+    }
+  })
   .group("/api", (app) =>
     app
       .use(authRoutes)

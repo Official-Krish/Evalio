@@ -4,7 +4,7 @@ const SILENCE_CHECK_INTERVAL = 10_000;
 const MAX_SILENCE_PROMPTS = 3;
 const SILENCE_COOLDOWN = 60_000;
 const VOICE_SILENCE_THRESHOLD = 30_000;
-const DSA_SILENCE_THRESHOLD = 240_000;
+const DSA_SILENCE_THRESHOLD = 120_000;
 const SD_SILENCE_THRESHOLD = 180_000;
 const DSA_CODE_ACTIVITY_WINDOW = 30_000;
 const SD_CANVAS_ACTIVITY_WINDOW = 15_000;
@@ -77,7 +77,7 @@ function sendSilencePrompt(
     mode === "voice"
       ? `[SYSTEM: The candidate has been silent for 30 seconds. If appropriate for the current moment in the interview, gently encourage them to share their thoughts. You might ask an open-ended question like "Take your time — what are you thinking?" or "Feel free to think out loud." Only prompt if it feels natural — don't interrupt their thinking if they seem to be working through something.]`
       : mode === "dsa"
-        ? `[SYSTEM: The candidate has been coding silently for 4 minutes without speaking. Do NOT look at or analyze their code directly. Instead, ask a process-oriented question about their approach. For example: "Could you walk me through your approach so far?" or "What's your current thinking on the time complexity?" If they seem stuck, offer a subtle hint or ask a leading question rather than pointing out errors. Use probing questions to keep them talking about their solution without giving it away.]`
+        ? `[SYSTEM: The candidate has been coding silently for 2 minutes without speaking. Do NOT look at or analyze their code directly. Instead, ask a process-oriented question about their approach. For example: "Could you walk me through your approach so far?" or "What's your current thinking on the time complexity?" If they seem stuck, offer a subtle hint or ask a leading question rather than pointing out errors. Use probing questions to keep them talking about their solution without giving it away.]`
         : buildSdSilencePrompt(conn.lastCanvasSnapshotData);
 
   conn.gemini.send(

@@ -5,7 +5,7 @@ import {
   fetchCompanyQuestions,
   getOrCreateQuestion,
 } from "../services/questionPool";
-import { DSA_PHASES } from "../services/dsaPrompt";
+import { DSA_PHASES } from "../prompt/dsa";
 
 export const dsaRoutes = new Elysia({ prefix: "/dsa" })
   .use(authGuard)

@@ -5,6 +5,7 @@ import { safeIndex, safePhase } from "./orchestrator";
 import { handleInit } from "./handlers/init";
 import { handleAudioChunk, handleAudioStreamEnd } from "./handlers/audio";
 import { prisma } from "../lib/prisma";
+import type { PacingTracker } from "./helpers/pacing";
 
 export class InterviewConnection {
   interviewId: string | null = null;
@@ -37,6 +38,10 @@ export class InterviewConnection {
   silencePromptCount = 0;
   lastSilencePromptTime = 0;
   silencePromptActive = false;
+
+  // Pacing system
+  pacing: PacingTracker | null = null;
+  pacingTimer: ReturnType<typeof setInterval> | null = null;
 
   // Rate limiter: max 20 WS messages per second per connection
   private messageTimestamps: number[] = [];

@@ -15,7 +15,7 @@ import {
 } from "./helpers/cleanup";
 import { startSilenceTimer, resetSilenceState } from "./helpers/silence";
 import type { InterviewConnection } from "./session";
-import { DSA_PHASES } from "../services/dsaPrompt";
+import { DSA_PHASES } from "../prompt/dsa";
 
 const SECRET = Bun.env.JWT_SECRET;
 const encoder = new TextEncoder();
@@ -200,6 +200,14 @@ export async function startInterview(
         await handleSdMarkers(conn);
       }
 
+      // Parse [STAGE:name] markers from model output for pacing advancement
+      if (turnComplete && conn.pacing) {
+        const stageMatch = (markerText || "").match(/\[STAGE:(\w+(?:-\w+)*)\]/);
+        if (stageMatch) {
+          conn.pacing.advanceTo(stageMatch[1]);
+        }
+      }
+
       // Reset waitingForAiResponse on turnComplete
       if (turnComplete && conn.waitingForAiResponse && !conn.closingMode) {
         conn.waitingForAiResponse = false;
@@ -248,6 +256,32 @@ export async function startInterview(
     conn.safeSend({ error: "Gemini connection error" });
   });
 
+  // Start pacing timer (30s heartbeat to keep [PACING] fresh during monologues)
+  if (conn.pacing) {
+    conn.pacingTimer = setInterval(() => {
+      if (conn.gemini && conn.pacing) {
+        const pacingMsg = conn.pacing.buildMessage();
+        try {
+          conn.gemini.send(
+            JSON.stringify({
+              clientContent: {
+                turns: [
+                  {
+                    role: "user",
+                    parts: [{ text: pacingMsg }],
+                  },
+                ],
+                turnComplete: false,
+              },
+            }),
+          );
+        } catch {
+          // Non-critical
+        }
+      }
+    }, 30_000);
+  }
+
   console.log("[ws] sending ready signal to client");
   resetSilenceState(conn);
   startSilenceTimer(conn);
@@ -257,6 +291,30 @@ export async function startInterview(
   conn.timeWarningTimer = setTimeout(
     () => {
       conn.safeSend({ type: "time_warning", remainingMs: 60_000 });
+      // Also signal the AI that 60 seconds remain
+      if (conn.gemini) {
+        try {
+          conn.gemini.send(
+            JSON.stringify({
+              clientContent: {
+                turns: [
+                  {
+                    role: "user",
+                    parts: [
+                      {
+                        text: `[SYSTEM: 1 minute remaining. Wrap up current topic and begin closing. Do NOT start new discussions.]`,
+                      },
+                    ],
+                  },
+                ],
+                turnComplete: false,
+              },
+            }),
+          );
+        } catch {
+          // Non-critical
+        }
+      }
     },
     Math.max(0, timeLimitMs - 60_000),
   );

@@ -1,13 +1,15 @@
 import { prisma } from "../../lib/prisma";
 import { COMPANIES } from "@evalio/shared";
 import { buildInterviewPrompt, type PromptInput } from "../../prompt";
-import { buildDsaSystemPrompt } from "../../services/dsaPrompt";
+import { buildDsaSystemPrompt } from "../../prompt/dsa";
 import { buildSystemDesignPrompt } from "../../prompt";
 import { getSdQuestion } from "../../routes/sd";
 import { verifyWsToken, startInterview } from "../orchestrator";
 import { tryActivate, enqueue as queueEnqueue } from "../../lib/queue";
 import type { InterviewConnection } from "../session";
 import { startHeartbeat } from "../helpers/heartbeat";
+import { PacingTracker } from "../helpers/pacing";
+import { VOICE_BUDGETS, DSA_BUDGETS, SD_BUDGETS } from "../../prompt";
 
 export async function handleInit(
   conn: InterviewConnection,
@@ -132,6 +134,11 @@ export async function handleInit(
     isSystemDesign,
   );
 
+  let pacingBudgets = VOICE_BUDGETS;
+  if (isDsa) pacingBudgets = DSA_BUDGETS;
+  else if (isSystemDesign) pacingBudgets = SD_BUDGETS;
+  conn.pacing = new PacingTracker(timeLimitMs, pacingBudgets);
+
   let systemPrompt: string;
 
   if (isDsa) {
@@ -213,6 +220,7 @@ export async function handleInit(
         mostImproved: skillProfile?.mostImprovedSkill ?? null,
         weakest: skillProfile?.weakestSkill ?? null,
       },
+      durationMinutes,
     );
     console.log("[init] built DSA prompt:", systemPrompt.slice(0, 200));
   } else if (isSystemDesign) {
