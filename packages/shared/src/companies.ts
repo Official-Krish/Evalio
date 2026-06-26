@@ -1,3 +1,5 @@
+import type { RoleCategory } from "./categories";
+
 export type InterviewStyle =
   | "SUPPORTIVE"
   | "PROFESSIONAL"
@@ -12,6 +14,8 @@ export type InterviewDepth =
 export interface CompanyRole {
   title: string;
   description: string;
+  category: RoleCategory;
+  seniorityLabel?: string;
   topics: string[];
   evaluationCriteria: string[];
   mustProbe: string[];
@@ -58,6 +62,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Backend Engineer",
         description: "API design, data modeling, scale",
+        category: "engineering",
         topics: ["Distributed Systems", "Databases", "APIs", "Caching"],
         evaluationCriteria: ["Architecture", "Scalability", "Technical Depth"],
         mustProbe: [
@@ -70,6 +75,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Payments Engineer",
         description: "Financial systems, reliability, fraud",
+        category: "engineering",
         topics: [
           "Payment Systems",
           "Reliability",
@@ -91,6 +97,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Platform Engineer",
         description: "Infrastructure, developer tools, CI",
+        category: "devops",
         topics: [
           "Infrastructure",
           "Developer Tools",
@@ -142,6 +149,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "SDE",
         description: "Software development at Amazon scale",
+        category: "engineering",
         topics: ["Algorithms", "System Design", "Distributed Systems"],
         evaluationCriteria: [
           "Technical Depth",
@@ -154,6 +162,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Product Manager",
         description: "Strategy, execution, customer obsession",
+        category: "product",
         topics: ["Strategy", "Execution", "Customer Focus", "Metrics"],
         evaluationCriteria: ["Product Thinking", "Execution", "Communication"],
         mustProbe: [
@@ -166,6 +175,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Solutions Architect",
         description: "Enterprise solutions, cloud architecture",
+        category: "devops",
         topics: ["Cloud Architecture", "Enterprise", "Scalability", "Security"],
         evaluationCriteria: [
           "Architecture",
@@ -212,6 +222,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Software Engineer",
         description: "Full stack, algorithms, system design",
+        category: "engineering",
         topics: [
           "Algorithms",
           "Data Structures",
@@ -233,6 +244,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Data Scientist",
         description: "ML modelling, experimentation, statistics",
+        category: "data",
         topics: ["ML", "Statistics", "Experimentation", "Data Analysis"],
         evaluationCriteria: [
           "Statistical Rigor",
@@ -245,6 +257,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "UX Engineer",
         description: "Prototyping, interaction design, accessibility",
+        category: "product",
         topics: [
           "Prototyping",
           "Interaction Design",
@@ -296,6 +309,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Frontend Engineer",
         description: "UI architecture, performance, product",
+        category: "engineering",
         topics: [
           "UI Architecture",
           "Performance",
@@ -317,6 +331,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "ML Engineer",
         description: "Recommendation systems, ranking, AI",
+        category: "data",
         topics: ["ML Systems", "Recommendations", "Ranking", "Data Pipelines"],
         evaluationCriteria: ["ML Depth", "System Design", "Experimentation"],
         mustProbe: [
@@ -329,6 +344,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Infrastructure Engineer",
         description: "Distributed systems, data warehouse",
+        category: "devops",
         topics: [
           "Distributed Systems",
           "Databases",
@@ -376,6 +392,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Backend Engineer",
         description: "Microservices, API gateways, CDN",
+        category: "engineering",
         topics: ["Microservices", "APIs", "Content Delivery", "Reliability"],
         evaluationCriteria: ["Technical Depth", "System Design", "Ownership"],
         mustProbe: [
@@ -388,6 +405,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Data Engineer",
         description: "Data pipelines, analytics, A/B testing",
+        category: "data",
         topics: ["Data Pipelines", "Analytics", "A/B Testing", "Streaming"],
         evaluationCriteria: [
           "Data Architecture",
@@ -404,6 +422,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "SRE",
         description: "Chaos engineering, reliability, automation",
+        category: "devops",
         topics: [
           "Chaos Engineering",
           "Reliability",
@@ -455,6 +474,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Software Engineer",
         description: "Enterprise software, cloud services",
+        category: "engineering",
         topics: [
           "Design Patterns",
           "Cloud Services",
@@ -472,6 +492,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "DevOps Engineer",
         description: "Azure, CI/CD, infrastructure as code",
+        category: "devops",
         topics: ["Azure", "CI/CD", "Infrastructure as Code", "Automation"],
         evaluationCriteria: ["Infrastructure", "Automation", "Reliability"],
         mustProbe: [
@@ -484,6 +505,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "AI Engineer",
         description: "LLMs, Copilot, AI integration",
+        category: "data",
         topics: ["LLMs", "AI Integration", "Prompt Engineering", "ML Systems"],
         evaluationCriteria: ["AI Depth", "System Design", "Product Thinking"],
         mustProbe: [
@@ -526,6 +548,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "iOS Engineer",
         description: "SwiftUI, UIKit, performance",
+        category: "engineering",
         topics: ["SwiftUI", "UIKit", "Performance", "Architecture"],
         evaluationCriteria: ["Technical Depth", "Craftsmanship", "Performance"],
         mustProbe: [
@@ -538,6 +561,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Hardware Engineer",
         description: "SoC design, firmware, integration",
+        category: "engineering",
         topics: ["SoC", "Firmware", "Hardware Integration", "Power Management"],
         evaluationCriteria: ["Hardware Depth", "System Thinking", "Precision"],
         mustProbe: [
@@ -550,6 +574,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Security Engineer",
         description: "Privacy, cryptography, device security",
+        category: "devops",
         topics: [
           "Privacy",
           "Cryptography",
@@ -597,6 +622,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Backend Engineer",
         description: "Real-time systems, microservices, scale",
+        category: "engineering",
         topics: ["Real-time Systems", "Microservices", "Scale", "Latency"],
         evaluationCriteria: ["System Design", "Reliability", "Technical Depth"],
         mustProbe: [
@@ -609,6 +635,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Mobile Engineer",
         description: "Cross-platform, maps, real-time UX",
+        category: "engineering",
         topics: ["Mobile", "Maps", "Real-time UX", "Performance"],
         evaluationCriteria: ["Mobile Depth", "UX", "Performance"],
         mustProbe: [
@@ -621,6 +648,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Data Scientist",
         description: "Marketplace dynamics, forecasting, ML",
+        category: "data",
         topics: ["Marketplace", "Forecasting", "ML", "Experimentation"],
         evaluationCriteria: ["Analytical Rigor", "ML Depth", "Business Impact"],
         mustProbe: [
@@ -663,6 +691,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Fullstack Engineer",
         description: "Web, mobile, design systems",
+        category: "engineering",
         topics: ["Fullstack", "Design Systems", "A/B Testing", "Performance"],
         evaluationCriteria: [
           "Technical Breadth",
@@ -679,6 +708,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Design Engineer",
         description: "Design tools, prototyping, animation",
+        category: "product",
         topics: ["Design Tools", "Prototyping", "Animation", "Frontend"],
         evaluationCriteria: [
           "Design Thinking",
@@ -695,6 +725,8 @@ export const companies: CompanyConfig[] = [
       {
         title: "Staff Engineer",
         description: "Architecture, mentorship, technical strategy",
+        category: "engineering",
+        seniorityLabel: "Staff",
         topics: [
           "Architecture",
           "Mentorship",
@@ -746,6 +778,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "SRE",
         description: "Monitoring, incident response, reliability",
+        category: "devops",
         topics: [
           "Monitoring",
           "Incident Response",
@@ -767,6 +800,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Cloud Engineer",
         description: "Multi-cloud, Kubernetes, infrastructure",
+        category: "devops",
         topics: ["Multi-cloud", "Kubernetes", "Infrastructure", "Networking"],
         evaluationCriteria: [
           "Infrastructure Depth",
@@ -783,6 +817,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Support Engineer",
         description: "Customer-facing technical support, debugging",
+        category: "engineering",
         topics: ["Customer Support", "Debugging", "Documentation", "APIs"],
         evaluationCriteria: [
           "Technical Communication",
@@ -829,6 +864,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Consultant",
         description: "Client delivery, strategy, analysis",
+        category: "consulting",
         topics: ["Client Delivery", "Strategy", "Analysis", "Frameworks"],
         evaluationCriteria: [
           "Structured Thinking",
@@ -845,6 +881,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Data Analyst",
         description: "Data modelling, visualization, insights",
+        category: "data",
         topics: ["Data Modelling", "Visualization", "Insights", "SQL"],
         evaluationCriteria: [
           "Analytical Rigor",
@@ -861,6 +898,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Cloud Architect",
         description: "Cloud migration, architecture, best practices",
+        category: "devops",
         topics: [
           "Cloud Migration",
           "Architecture",
@@ -908,6 +946,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Quant Developer",
         description: "Low-latency trading, financial modelling",
+        category: "data",
         topics: [
           "Low-latency",
           "Financial Modelling",
@@ -929,6 +968,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Risk Analyst",
         description: "Risk modelling, compliance, reporting",
+        category: "data",
         topics: ["Risk Modelling", "Compliance", "Reporting", "Regulation"],
         evaluationCriteria: [
           "Analytical Rigor",
@@ -945,6 +985,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Platform Engineer",
         description: "Trading platforms, data pipelines, infra",
+        category: "devops",
         topics: [
           "Trading Platforms",
           "Data Pipelines",
@@ -992,6 +1033,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Forward Deployed Engineer",
         description: "Customer-facing, data integration, deployment",
+        category: "engineering",
         topics: [
           "Customer-facing",
           "Data Integration",
@@ -1013,6 +1055,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Data Engineer",
         description: "Data pipelines, ontology, ETL",
+        category: "data",
         topics: ["Data Pipelines", "Ontology", "ETL", "Data Modeling"],
         evaluationCriteria: [
           "Data Architecture",
@@ -1029,6 +1072,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Security Engineer",
         description: "Security, authentication, compliance",
+        category: "devops",
         topics: ["Security", "Authentication", "Compliance", "Threat Modeling"],
         evaluationCriteria: ["Security Depth", "System Thinking", "Compliance"],
         mustProbe: [
@@ -1071,6 +1115,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Design Engineer",
         description: "Design systems, prototyping, creative coding",
+        category: "product",
         topics: ["Design Systems", "Prototyping", "Creative Coding", "WebGL"],
         evaluationCriteria: [
           "Design Thinking",
@@ -1087,6 +1132,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Frontend Engineer",
         description: "Web rendering, performance, collaboration",
+        category: "engineering",
         topics: ["Rendering", "Performance", "Collaboration", "WebAssembly"],
         evaluationCriteria: ["Frontend Depth", "Performance", "System Design"],
         mustProbe: [
@@ -1099,6 +1145,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Platform Engineer",
         description: "Plugin API, infrastructure, editor core",
+        category: "devops",
         topics: ["Plugin API", "Infrastructure", "Editor Core", "Scalability"],
         evaluationCriteria: [
           "Platform Thinking",
@@ -1146,6 +1193,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Fullstack Engineer",
         description: "Blocks, databases, cross-platform",
+        category: "engineering",
         topics: ["Blocks", "Databases", "Cross-platform", "Real-time"],
         evaluationCriteria: [
           "Technical Breadth",
@@ -1162,6 +1210,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Mobile Engineer",
         description: "React Native, offline, performance",
+        category: "engineering",
         topics: [
           "React Native",
           "Offline",
@@ -1179,6 +1228,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Infrastructure Engineer",
         description: "Real-time sync, storage, reliability",
+        category: "devops",
         topics: [
           "Real-time Sync",
           "Storage",
@@ -1226,6 +1276,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Startup CTO",
         description: "Technical vision, team building, architecture",
+        category: "management",
         topics: [
           "Technical Vision",
           "Team Building",
@@ -1247,6 +1298,7 @@ export const companies: CompanyConfig[] = [
       {
         title: "Series A Founder",
         description: "Product-market fit, fundraising, growth",
+        category: "management",
         topics: ["Product-market Fit", "Fundraising", "Growth", "Strategy"],
         evaluationCriteria: ["Strategic Thinking", "Execution", "Resilience"],
         mustProbe: [
@@ -1259,6 +1311,8 @@ export const companies: CompanyConfig[] = [
       {
         title: "Staff Engineer",
         description: "Deep IC, technical strategy, mentorship",
+        category: "engineering",
+        seniorityLabel: "Staff",
         topics: ["Technical Strategy", "Mentorship", "Deep IC", "Architecture"],
         evaluationCriteria: [
           "Technical Depth",

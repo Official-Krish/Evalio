@@ -6,6 +6,12 @@ export {
   getDefaultStyleDepth,
 } from "./companies";
 export type { CompanyConfig, CompanyRole } from "./companies";
+export {
+  ROLE_CATEGORIES,
+  CATEGORY_ROUNDS,
+  FALLBACK_ROUNDS,
+} from "./categories";
+export type { RoleCategory } from "./categories";
 
 // ── Password validation ──
 export const passwordSchema = z
@@ -84,6 +90,7 @@ export const createInterviewSchema = z.object({
   companyId: z.string().optional(),
   companyName: z.string().optional(),
   roleTitle: z.string().optional(),
+  roleCategory: z.string().optional(),
   interviewRound: z.string().optional(),
   interviewStyle: interviewStyleSchema.optional(),
   interviewDepth: interviewDepthSchema.optional(),
@@ -155,6 +162,7 @@ export interface InterviewSession {
   companyId?: string | null;
   companyName?: string | null;
   roleTitle?: string | null;
+  roleCategory?: string | null;
   finalDiagram?: CanvasSnapshot | null;
   canvasGraphHistory?: CanvasSnapshot[] | null;
 }

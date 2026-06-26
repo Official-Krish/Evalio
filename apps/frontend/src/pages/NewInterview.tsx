@@ -7,6 +7,7 @@ import { useSession } from "../lib/auth";
 import { ResumePreview } from "../components/ResumePreview";
 import { ProgressStepper } from "../components/Create-Interview/ProgressStepper";
 import { StepCompany } from "../components/Create-Interview/StepCompany";
+import { StepCategory } from "../components/Create-Interview/StepCategory";
 import { StepRole } from "../components/Create-Interview/StepRole";
 import { StepRound } from "../components/Create-Interview/StepRound";
 import { StepStyle } from "../components/Create-Interview/StepStyle";
@@ -29,6 +30,7 @@ export function NewInterviewPage() {
   const retryId = searchParams.get("retry");
   const [step, setStep] = useState(0);
 
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
     null,
   );
@@ -44,8 +46,18 @@ export function NewInterviewPage() {
   const [interviewDepth, setInterviewDepth] =
     useState<InterviewDepth>("STANDARD");
   const interviewMode = useMemo((): InterviewMode => {
-    if (selectedRound === "Coding Round (DSA)") return "DSA";
-    if (selectedRound === "System Design") return "SYSTEM_DESIGN";
+    if (
+      selectedRound === "Coding Round (DSA)" ||
+      selectedRound === "SQL & Analytics"
+    )
+      return "DSA";
+    if (
+      selectedRound === "System Design" ||
+      selectedRound === "Infrastructure Design" ||
+      selectedRound === "Data Architecture" ||
+      selectedRound === "ML System Design"
+    )
+      return "SYSTEM_DESIGN";
     return "VOICE";
   }, [selectedRound]);
 
@@ -66,7 +78,7 @@ export function NewInterviewPage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedCompanyId(match.id);
       setCustomCompanyName("");
-      setStep(1);
+      setStep(2);
     }
   }, [customCompanyName, selectedCompanyId]);
 
@@ -115,6 +127,14 @@ export function NewInterviewPage() {
     retryPrefilled.current = true;
     startTransition(() => {
       const iv = retryInterview;
+      // Try to infer category from role or company role
+      if (iv.roleCategory) {
+        setSelectedCategory(iv.roleCategory);
+      } else if (iv.roleTitle) {
+        const company = COMPANIES.find((c) => c.id === iv.companyId);
+        const role = company?.roles.find((r) => r.title === iv.roleTitle);
+        if (role?.category) setSelectedCategory(role.category);
+      }
       if (iv.companyId && iv.roleTitle) {
         setSelectedCompanyId(iv.companyId);
         setSelectedRoleTitle(iv.roleTitle);
@@ -325,6 +345,7 @@ export function NewInterviewPage() {
       companyId: effectiveCompanyId ?? undefined,
       companyName: effectiveCompanyName ?? undefined,
       roleTitle: selectedRoleTitle ?? undefined,
+      roleCategory: selectedCategory ?? undefined,
       interviewRound: effectiveRound,
       interviewStyle,
       interviewDepth,
@@ -371,7 +392,7 @@ export function NewInterviewPage() {
       </span>
       <div
         className="lg:grid lg:grid-cols-[1fr_280px] lg:gap-10 max-w-5xl mx-auto"
-        style={{ paddingBottom: step === 4 ? "0" : "160px" }}
+        style={{ paddingBottom: step === 5 ? "0" : "160px" }}
       >
         <div ref={contentRef}>
           <ResumePreview
@@ -387,6 +408,14 @@ export function NewInterviewPage() {
 
           <AnimatePresence mode="wait">
             {step === 0 && (
+              <StepCategory
+                selectedCategory={selectedCategory}
+                onSelectCategory={setSelectedCategory}
+                onContinue={() => setStep(1)}
+              />
+            )}
+
+            {step === 1 && (
               <StepCompany
                 selectedCompanyId={selectedCompanyId}
                 customCompanyName={customCompanyName}
@@ -395,12 +424,12 @@ export function NewInterviewPage() {
                   if (id !== "__custom__") setCustomCompanyName("");
                 }}
                 onCustomCompanyChange={setCustomCompanyName}
-                onContinue={() => setStep(1)}
-                onSkip={() => setStep(4)}
+                onContinue={() => setStep(2)}
+                onSkip={() => setStep(5)}
               />
             )}
 
-            {step === 1 && (
+            {step === 2 && (
               <StepRole
                 companyId={selectedCompanyId}
                 companyName={selectedCompany?.name ?? null}
@@ -409,42 +438,43 @@ export function NewInterviewPage() {
                 effectivePosition={effectivePosition}
                 onSelectRole={setSelectedRoleTitle}
                 onCustomRoleChange={setCustomRole}
-                onContinue={() => setStep(2)}
-                onBack={() => setStep(0)}
+                onContinue={() => setStep(3)}
+                onBack={() => setStep(1)}
               />
             )}
 
-            {step === 2 && (
+            {step === 3 && (
               <StepRound
                 companyId={selectedCompanyId}
                 companyName={selectedCompany?.name ?? null}
                 roleTitle={selectedRoleTitle}
+                category={selectedCategory}
                 selectedRound={selectedRound}
                 customRound={customRound}
                 onSelectRound={setSelectedRound}
                 onCustomRoundChange={setCustomRound}
-                onContinue={() => setStep(3)}
-                onBack={() => setStep(1)}
+                onContinue={() => setStep(4)}
+                onBack={() => setStep(2)}
                 onSkip={() => {
-                  setStep(3);
+                  setStep(4);
                   setSelectedRound(null);
                   setCustomRound("");
                 }}
               />
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <StepStyle
                 style={interviewStyle}
                 depth={interviewDepth}
                 onStyleChange={setInterviewStyle}
                 onDepthChange={setInterviewDepth}
-                onContinue={() => setStep(4)}
-                onBack={() => setStep(2)}
+                onContinue={() => setStep(5)}
+                onBack={() => setStep(3)}
               />
             )}
 
-            {step === 4 && (
+            {step === 5 && (
               <StepResume
                 companyId={selectedCompanyId}
                 companyName={effectiveCompanyName}
@@ -482,7 +512,7 @@ export function NewInterviewPage() {
                   }
                 }}
                 onJobDescriptionChange={setJobDescription}
-                onBack={() => setStep(3)}
+                onBack={() => setStep(4)}
                 onCreate={handleCreate}
               />
             )}
@@ -495,6 +525,7 @@ export function NewInterviewPage() {
             companyName={effectiveCompanyName}
             roleTitle={selectedRoleTitle}
             customRole={customRole}
+            selectedCategory={selectedCategory}
             interviewRound={selectedRound}
             interviewStyle={interviewStyle}
             interviewDepth={interviewDepth}

@@ -73,9 +73,6 @@ export async function handleInit(
 
   const github = interview.user.githubProfile;
   const userRole = interview.user.role ?? "FREE";
-  const timeLimitMs =
-    userRole === "ADMIN" || userRole === "PRO" ? 1_800_000 : 900_000;
-  const durationMinutes = timeLimitMs / 60_000;
   const companyConfig = interview.companyId
     ? COMPANIES.find((c) => c.id === interview.companyId)
     : null;
@@ -125,6 +122,20 @@ export async function handleInit(
   const isSystemDesign = mode === "SYSTEM_DESIGN";
   conn.isDsaMode = isDsa;
   conn.isSystemDesign = isSystemDesign;
+
+  const roleCategory = (interview as { roleCategory?: string | null })
+    .roleCategory;
+  const isEngineeringDsaOrSd =
+    roleCategory === "engineering" && (isDsa || isSystemDesign);
+
+  // Engineering privilege: DSA and SD rounds always get 30 min
+  const effectiveTimeLimitMs = isEngineeringDsaOrSd
+    ? 1_800_000
+    : userRole === "ADMIN" || userRole === "PRO"
+      ? 1_800_000
+      : 900_000;
+  const durationMinutes = effectiveTimeLimitMs / 60_000;
+
   console.log(
     "[init] mode:",
     mode,
@@ -132,12 +143,16 @@ export async function handleInit(
     isDsa,
     "isSystemDesign:",
     isSystemDesign,
+    "roleCategory:",
+    roleCategory,
+    "durationMinutes:",
+    durationMinutes,
   );
 
   let pacingBudgets = VOICE_BUDGETS;
   if (isDsa) pacingBudgets = DSA_BUDGETS;
   else if (isSystemDesign) pacingBudgets = SD_BUDGETS;
-  conn.pacing = new PacingTracker(timeLimitMs, pacingBudgets);
+  conn.pacing = new PacingTracker(effectiveTimeLimitMs, pacingBudgets);
 
   let systemPrompt: string;
 
@@ -324,7 +339,7 @@ export async function handleInit(
   }
 
   const startFn = async () => {
-    await startInterview(conn, systemPrompt, timeLimitMs);
+    await startInterview(conn, systemPrompt, effectiveTimeLimitMs);
   };
 
   const slotOpen = await tryActivate(conn.interviewId);
@@ -339,7 +354,7 @@ export async function handleInit(
   if (slotOpen) {
     conn.wsMap.set(conn.interviewId, conn.client);
     conn.startCallbacks.set(conn.interviewId, startFn);
-    await startInterview(conn, systemPrompt, timeLimitMs);
+    await startInterview(conn, systemPrompt, effectiveTimeLimitMs);
     startHeartbeat(conn);
   } else {
     conn.isQueued = true;

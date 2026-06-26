@@ -98,6 +98,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
                 ...(body.companyId && { companyId: body.companyId }),
                 ...(body.companyName && { companyName: body.companyName }),
                 ...(body.roleTitle && { roleTitle: body.roleTitle }),
+                ...(body.roleCategory && { roleCategory: body.roleCategory }),
                 ...(body.interviewRound && {
                   interviewRound: body.interviewRound,
                 }),
@@ -121,6 +122,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
               companyId: t.Optional(t.String()),
               companyName: t.Optional(t.String()),
               roleTitle: t.Optional(t.String()),
+              roleCategory: t.Optional(t.String()),
               interviewRound: t.Optional(t.String()),
               interviewStyle: t.Optional(
                 t.Enum({

@@ -1,4 +1,4 @@
-import { COMPANIES } from "@evalio/shared";
+import { COMPANIES, ROLE_CATEGORIES } from "@evalio/shared";
 import type {
   InterviewStyle,
   InterviewDepth,
@@ -12,6 +12,7 @@ import {
   IconFingerprint,
   IconSettings,
   IconRadio,
+  IconCategory,
 } from "@tabler/icons-react";
 
 interface SessionSummaryProps {
@@ -19,6 +20,7 @@ interface SessionSummaryProps {
   companyName: string | null;
   roleTitle: string | null;
   customRole: string;
+  selectedCategory: string | null;
   interviewRound: string | null;
   interviewStyle: InterviewStyle;
   interviewDepth: InterviewDepth;
@@ -44,6 +46,7 @@ export function SessionSummary({
   companyName,
   roleTitle,
   customRole,
+  selectedCategory,
   interviewRound,
   interviewStyle,
   interviewDepth,
@@ -54,7 +57,17 @@ export function SessionSummary({
       ? (COMPANIES.find((c) => c.id === companyId) ?? null)
       : null;
 
+  const categoryLabel =
+    ROLE_CATEGORIES.find((c) => c.id === selectedCategory)?.label ??
+    selectedCategory ??
+    "—";
+
   const selections = [
+    {
+      label: "Field",
+      value: categoryLabel,
+      icon: IconCategory,
+    },
     {
       label: "Company",
       value: company?.name ?? companyName ?? "—",
