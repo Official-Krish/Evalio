@@ -6,15 +6,7 @@ interface SdDesignSectionProps {
 }
 
 export function SdDesignSection({ finalDiagram }: SdDesignSectionProps) {
-  const [Excalidraw, setExcalidraw] = useState<React.ComponentType<{
-    viewModeEnabled?: boolean;
-    initialData?: {
-      elements: never[];
-      appState: { viewBackgroundColor: string };
-      scrollToContent: boolean;
-    };
-    theme?: string;
-  }> | null>(null);
+  const [Excalidraw, setExcalidraw] = useState<React.ElementType | null>(null);
 
   useEffect(() => {
     import("@excalidraw/excalidraw").then((mod) => {

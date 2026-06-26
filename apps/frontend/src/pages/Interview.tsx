@@ -99,6 +99,7 @@ export function InterviewPage() {
   const [dsaLoading, setDsaLoading] = useState(false);
   const isDsa = interviewMeta?.mode === "DSA";
   const isSystemDesign = interviewMeta?.mode === "SYSTEM_DESIGN";
+  const sdConnectedRef = useRef(false);
 
   const dsaPanelVisible = useMemo(() => {
     return isDsa && !!dsaSessionData;
@@ -183,13 +184,29 @@ export function InterviewPage() {
   });
 
   const { mutate: loadSdSession } = useMutation({
-    mutationFn: () => api.startSdSession(id!),
+    mutationFn: () => {
+      setSdStarting(true);
+      return api.startSdSession(id!);
+    },
     onSuccess: (data) => {
+      setSdStarting(false);
       if (data.title && data.description) {
         setSdTopic({ title: data.title, description: data.description });
-        sdFullProblemTextRef.current = data.description;
-        setSdFullProblemText(data.description);
+        sdFullProblemTextRef.current = data.fullBreakdown;
+        setSdFullProblemText(data.fullBreakdown);
       }
+      if (!sdConnectedRef.current) {
+        sdConnectedRef.current = true;
+        connectSocket().catch((err: Error) => {
+          if (mountedRef.current && !endedRef.current) {
+            setError(err.message);
+            toast.error(err.message);
+          }
+        });
+      }
+    },
+    onError: () => {
+      setSdStarting(false);
     },
   });
 
@@ -201,7 +218,7 @@ export function InterviewPage() {
     if (isSystemDesign && id) loadSdSession();
   }, [isSystemDesign, id, loadSdSession]);
 
-  // Refs for stable cross-render access to latest values
+  const [sdStarting, setSdStarting] = useState(false);
   const latestCodeRef = useRef(dsaCode);
   const sessionDataRef = useRef(dsaSessionData);
   useEffect(() => {
@@ -579,13 +596,15 @@ export function InterviewPage() {
   }, [user, id, playPcm, stopAudio, teardown, navigate, stopMic]);
 
   useEffect(() => {
+    if (!interviewMeta) return;
+    if (isSystemDesign) return;
     connectSocket().catch((err: Error) => {
       if (mountedRef.current && !endedRef.current) {
         setError(err.message);
         toast.error(err.message);
       }
     });
-  }, [connectSocket]);
+  }, [connectSocket, interviewMeta, isSystemDesign]);
 
   useEffect(() => {
     if (phase === "ended" || phase === "connecting" || phase === "queued")
@@ -638,11 +657,26 @@ export function InterviewPage() {
 
     try {
       isUserSpeakingRef.current = true;
-      await startMic((base64) => {
-        if (!endedRef.current) {
-          socketRef.current?.sendAudio(base64);
-        }
-      });
+      await startMic(
+        (base64) => {
+          if (!endedRef.current) {
+            socketRef.current?.sendAudio(base64);
+          }
+        },
+        {
+          onSilenceEnd: () => {
+            if (
+              endedRef.current ||
+              closingRef.current ||
+              feedbackReadyRef.current
+            )
+              return;
+            isUserSpeakingRef.current = false;
+            stopMic();
+            socketRef.current?.sendAudioStreamEnd();
+          },
+        },
+      );
     } catch {
       isUserSpeakingRef.current = false;
       toast.error("Microphone access denied");
@@ -675,7 +709,7 @@ export function InterviewPage() {
   }
 
   if (phase === "connecting") {
-    return <InterviewConnecting />;
+    return <InterviewConnecting sdStarting={sdStarting} />;
   }
 
   if (phase === "queued") {

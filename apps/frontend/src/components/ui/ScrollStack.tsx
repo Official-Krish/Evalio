@@ -165,15 +165,6 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
 
     const endElementTop = endElement ? getElementOffset(endElement) : 0;
 
-    console.log("[ScrollStack Debug]", {
-      scrollTop,
-      containerHeight,
-      endElement: !!endElement,
-      endElementTop,
-      cardsCount: cardsRef.current.length,
-      progress,
-    });
-
     cardsRef.current.forEach((card, i) => {
       if (!card) return;
 
