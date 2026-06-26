@@ -5,9 +5,11 @@ import type { InterviewTurn } from "@evalio/shared";
 export function TurnRow({
   turn,
   index,
+  showQuestionOnly,
 }: {
   turn: InterviewTurn;
   index: number;
+  showQuestionOnly?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showModel, setShowModel] = useState(false);
@@ -25,6 +27,26 @@ export function TurnRow({
     turn.answerEndMs && turn.answerStartMs
       ? Math.max(0, (turn.answerEndMs - turn.answerStartMs) / 1000)
       : null;
+
+  if (showQuestionOnly) {
+    return (
+      <div className="res-qa-row">
+        <div className="res-qa-header" style={{ cursor: "default" }}>
+          <div className="flex items-start gap-4 flex-1 min-w-0">
+            <span className="res-qa-label">Q{index + 1}</span>
+            <p className="res-qa-question">{turn.questionText}</p>
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {score != null && (
+              <span className={`res-qa-score-badge ${scoreClass}`}>
+                {score}/10
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="res-qa-row">

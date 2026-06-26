@@ -1,15 +1,12 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { COMPANIES } from "@evalio/shared";
-import toast from "react-hot-toast";
-
-const COMING_SOON_ROUNDS = ["System Design"];
 
 const COMMON_ROUNDS = [
   "Coding Round (DSA)",
+  "System Design",
   "Phone Screen",
   "Technical Coding",
-  "System Design",
   "Behavioral",
 ];
 
@@ -166,7 +163,10 @@ export function RoundPicker({
   const baseRounds = company?.interviewRounds ?? [];
   const isStartup = companyId === "startup";
   const dsaRound = technical && !isStartup ? ["Coding Round (DSA)"] : [];
-  const rounds = isStartup ? baseRounds : [...dsaRound, ...baseRounds];
+  const sdRound = ["System Design"];
+  const rounds = isStartup
+    ? baseRounds
+    : [...new Set([...dsaRound, ...sdRound, ...baseRounds])];
   const commonRounds = technical
     ? COMMON_ROUNDS
     : COMMON_ROUNDS.filter((r) => r !== "Coding Round (DSA)");
@@ -198,12 +198,6 @@ export function RoundPicker({
               <motion.button
                 key={round}
                 onClick={() => {
-                  if (COMING_SOON_ROUNDS.includes(round)) {
-                    toast("System Design interviews are coming soon!", {
-                      duration: 3000,
-                    });
-                    return;
-                  }
                   if (!active) {
                     onSelectRound(round);
                     onCustomRoundChange("");
@@ -213,11 +207,9 @@ export function RoundPicker({
                     onSelectRound(null);
                   }
                 }}
-                whileTap={
-                  COMING_SOON_ROUNDS.includes(round) ? {} : { scale: 0.98 }
-                }
+                whileTap={{ scale: 0.98 }}
                 data-active={active || undefined}
-                {...(COMING_SOON_ROUNDS.includes(round) ? {} : hoverProps)}
+                {...hoverProps}
                 style={{
                   textAlign: "left",
                   padding: "18px 20px",
@@ -228,10 +220,7 @@ export function RoundPicker({
                   background: active
                     ? "var(--app-accent-bg, rgba(184,168,138,0.06))"
                     : "transparent",
-                  cursor: COMING_SOON_ROUNDS.includes(round)
-                    ? "not-allowed"
-                    : "pointer",
-                  opacity: COMING_SOON_ROUNDS.includes(round) ? 0.55 : 1,
+                  cursor: "pointer",
                   transition: "all 0.2s ease",
                 }}
               >
@@ -248,7 +237,8 @@ export function RoundPicker({
                     }}
                   >
                     {round}
-                    {round === "Coding Round (DSA)" && (
+                    {(round === "Coding Round (DSA)" ||
+                      round === "System Design") && (
                       <span
                         className="inline-flex items-center gap-1 live-badge"
                         style={{
@@ -270,22 +260,6 @@ export function RoundPicker({
                           }}
                         />
                         Live
-                      </span>
-                    )}
-                    {COMING_SOON_ROUNDS.includes(round) && (
-                      <span
-                        style={{
-                          fontSize: "8px",
-                          letterSpacing: "0.12em",
-                          textTransform: "uppercase",
-                          color: "rgba(200,180,120,0.9)",
-                          border: "1px solid rgba(200,180,120,0.25)",
-                          borderRadius: 3,
-                          padding: "1px 5px",
-                          lineHeight: "14px",
-                        }}
-                      >
-                        Coming soon
                       </span>
                     )}
                   </p>
@@ -405,12 +379,6 @@ export function RoundPicker({
                 <motion.button
                   key={round}
                   onClick={() => {
-                    if (COMING_SOON_ROUNDS.includes(round)) {
-                      toast("System Design interviews are coming soon!", {
-                        duration: 3000,
-                      });
-                      return;
-                    }
                     if (!active) {
                       onSelectRound(round);
                       onCustomRoundChange("");
@@ -420,11 +388,9 @@ export function RoundPicker({
                       onSelectRound(null);
                     }
                   }}
-                  whileTap={
-                    COMING_SOON_ROUNDS.includes(round) ? {} : { scale: 0.98 }
-                  }
+                  whileTap={{ scale: 0.98 }}
                   data-active={active || undefined}
-                  {...(COMING_SOON_ROUNDS.includes(round) ? {} : hoverProps)}
+                  {...hoverProps}
                   style={{
                     textAlign: "left",
                     padding: "18px 20px",
@@ -435,10 +401,7 @@ export function RoundPicker({
                     background: active
                       ? "var(--app-accent-bg, rgba(184,168,138,0.06))"
                       : "transparent",
-                    cursor: COMING_SOON_ROUNDS.includes(round)
-                      ? "not-allowed"
-                      : "pointer",
-                    opacity: COMING_SOON_ROUNDS.includes(round) ? 0.55 : 1,
+                    cursor: "pointer",
                     transition: "all 0.2s ease",
                   }}
                 >
@@ -455,7 +418,8 @@ export function RoundPicker({
                       }}
                     >
                       {round}
-                      {round === "Coding Round (DSA)" && (
+                      {(round === "Coding Round (DSA)" ||
+                        round === "System Design") && (
                         <span
                           className="inline-flex items-center gap-1 live-badge"
                           style={{
@@ -477,22 +441,6 @@ export function RoundPicker({
                             }}
                           />
                           Live
-                        </span>
-                      )}
-                      {COMING_SOON_ROUNDS.includes(round) && (
-                        <span
-                          style={{
-                            fontSize: "8px",
-                            letterSpacing: "0.12em",
-                            textTransform: "uppercase",
-                            color: "rgba(200,180,120,0.9)",
-                            border: "1px solid rgba(200,180,120,0.25)",
-                            borderRadius: 3,
-                            padding: "1px 5px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          Coming soon
                         </span>
                       )}
                     </p>

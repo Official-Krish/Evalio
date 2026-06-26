@@ -1,6 +1,9 @@
 import { prisma } from "../lib/prisma";
-import { evaluateInterview } from "../services/evaluate";
-import { evaluateDsaSession } from "../services/evaluate";
+import {
+  evaluateInterview,
+  evaluateDsaSession,
+  evaluateSystemDesignSession,
+} from "../services/evaluate";
 
 export async function finalizeInterview(interviewId: string) {
   try {
@@ -32,6 +35,10 @@ export async function finalizeInterview(interviewId: string) {
     if (interview.mode === "DSA") {
       evaluateDsaSession(interviewId).catch((err) => {
         console.error("DSA evaluation failed:", err);
+      });
+    } else if (interview.mode === "SYSTEM_DESIGN") {
+      evaluateSystemDesignSession(interviewId).catch((err) => {
+        console.error("System Design evaluation failed:", err);
       });
     } else {
       evaluateInterview(interviewId).catch((err) => {

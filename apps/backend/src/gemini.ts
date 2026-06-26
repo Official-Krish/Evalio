@@ -48,7 +48,9 @@ class GeminiSessionAdapter implements GeminiSession {
 
     if (message.clientContent) {
       this.session.sendClientContent({
-        turns: message.clientContent.turns,
+        turns: message.clientContent.turns?.length
+          ? message.clientContent.turns
+          : undefined,
         turnComplete: message.clientContent.turnComplete,
       });
       return;

@@ -771,45 +771,6 @@ html.landing-active {
   border-color: rgba(18, 17, 16, 0.06);
 }
 
-/* Hero orb — uses plain CSS animations to avoid Framer Motion stacking
-   context breaking mix-blend-mode: screen */
-.landing-orb-container {
-  mix-blend-mode: screen;
-}
-
-.landing-orb-inner {
-  width: min(1100px, 130vw);
-  height: min(1100px, 130vw);
-  flex-shrink: 0;
-  -webkit-mask-image: radial-gradient(closest-side, black 55%, transparent 85%);
-  mask-image: radial-gradient(closest-side, black 55%, transparent 85%);
-  animation:
-    landing-orb-appear 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    landing-orb-breathe 14s ease-in-out 1.6s infinite;
-}
-
-@keyframes landing-orb-appear {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes landing-orb-breathe {
-
-  0%,
-  100% {
-    transform: scale(1) rotate(0deg);
-  }
-
-  50% {
-    transform: scale(1.035) rotate(1.2deg);
-  }
-}
-
 /* Hero layout */
 .landing-hero-grid {
   display: grid;
@@ -5424,104 +5385,7 @@ a.dash-row:hover {
   transform: translateY(-1px);
 }
 
-/* ──────────────────────────────────────────────────────────
-   Hero orb — ambient backdrop, not a hero image.
-   Add this to your landing stylesheet (wherever .landing-hero
-   and friends already live).
-   ────────────────────────────────────────────────────────── */
 
-.landing-orb-container {
-  z-index: 0;
-  top: 42%;
-  right: auto;
-  bottom: auto;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  transform: translate(-50%, -50%);
-}
-
-.landing-orb-inner {
-  width: min(1180px, 82vw);
-  height: min(1180px, 82vw);
-  position: relative;
-  animation: orb-rotate 60s linear infinite;
-}
-
-.landing-orb-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-
-  /* drops the orb's black background so only the glow/rings show
-     against --landing-bg underneath */
-  mix-blend-mode: screen;
-
-  /* dissolves the image's hard square edge into transparency
-     well before the frame boundary — this is what was missing */
-  -webkit-mask-image: radial-gradient(circle at 50% 50%,
-      black 0%,
-      black 45%,
-      transparent 78%);
-  mask-image: radial-gradient(circle at 50% 50%,
-      black 0%,
-      black 45%,
-      transparent 78%);
-
-  /* Make the orb glow brighter behind the redesigned typography */
-  filter: brightness(1.15);
-
-  animation: orb-breathe 7s ease-in-out infinite;
-}
-
-@keyframes orb-rotate {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes orb-breathe {
-
-  0%,
-  100% {
-    transform: scale(1);
-    filter: brightness(1.15);
-  }
-
-  50% {
-    transform: scale(1.03);
-    filter: brightness(1.25);
-  }
-}
-
-@media (max-width: 767px) {
-  .landing-orb-container {
-    top: 40%;
-  }
-
-  .landing-orb-inner {
-    width: min(760px, 155vw);
-    height: min(760px, 155vw);
-  }
-}
-
-[data-theme="light"] .opening-orb {
-  display: none;
-}
-
-/* Respect reduced-motion preference */
-@media (prefers-reduced-motion: reduce) {
-
-  .landing-orb-inner,
-  .landing-orb-img {
-    animation: none;
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════════
    Opening Hero — 2026 editorial layout
@@ -5538,62 +5402,6 @@ a.dash-row:hover {
   overflow: hidden;
   border-bottom: 1px solid var(--landing-line);
   content-visibility: auto;
-}
-
-/* ── Background orb ────────────────────────────────────────── */
-.opening-orb {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.opening-orb .landing-orb-inner {
-  width: min(1000px, 80vw);
-  height: min(1000px, 80vw);
-}
-
-/* ── Concentric rings — radiating outward from center ─────── */
-.opening-rings {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.opening-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid var(--landing-line);
-  opacity: 0.35;
-}
-
-.opening-ring-1 {
-  width: min(600px, 55vw);
-  height: min(600px, 55vw);
-  opacity: 0.25;
-}
-
-.opening-ring-2 {
-  width: min(900px, 82vw);
-  height: min(900px, 82vw);
-  opacity: 0.15;
-}
-
-.opening-ring-3 {
-  width: min(1200px, 110vw);
-  height: min(1200px, 110vw);
-  opacity: 0.08;
-}
-
-[data-theme="light"] .opening-ring {
-  border-color: rgba(18, 17, 16, 0.06);
 }
 
 /* ── Ambient dot grid ──────────────────────────────────────── */
@@ -6096,17 +5904,180 @@ a.dash-row:hover {
   background: var(--color-bg);
 }
 
-.skeleton-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid var(--color-border);
-  border-top-color: var(--color-accent);
-  border-radius: 50%;
-  animation: skeleton-spin 0.8s linear infinite;
+
+/* ── Custom Interviews section ────────────────────────────── */
+
+.custom-card {
+  scroll-margin: 4rem;
 }
 
-@keyframes skeleton-spin {
-  to { transform: rotate(360deg); }
+.custom-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+.custom-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.custom-feature-pill {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border: 1px solid var(--landing-line);
+  color: var(--landing-fg-muted);
+  border-radius: 3px;
+}
+
+/* ── Code mockup ─────────────────────────────────────────── */
+.custom-code-block {
+  width: min(420px, 90vw);
+  border: 1px solid var(--landing-line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--landing-surface);
+}
+
+.custom-code-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--landing-line);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.custom-code-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.custom-code-filename {
+  margin-left: auto;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--landing-fg-faint);
+}
+
+.custom-code-pre {
+  padding: 14px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.8;
+  font-family: var(--font-mono);
+  overflow-x: auto;
+}
+
+.custom-code-line {
+  display: block;
+  white-space: pre;
+}
+
+.custom-code-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-top: 1px solid var(--landing-line);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.custom-code-pass {
+  font-size: 10px;
+  color: rgba(160, 200, 160, 0.9);
+  font-family: var(--font-mono);
+}
+
+.custom-code-complexity {
+  font-size: 9px;
+  color: var(--landing-fg-faint);
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+}
+
+/* ── Architecture diagram ────────────────────────────────── */
+.custom-arch {
+  width: min(420px, 90vw);
+}
+
+.custom-arch-canvas {
+  border: 1px solid var(--landing-line);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--landing-surface);
+  background-image:
+    radial-gradient(circle, var(--landing-line) 1px, transparent 1px);
+  background-size: 16px 16px;
+  overflow: hidden;
+}
+
+.custom-arch-node {
+  transition: opacity 0.15s;
+}
+
+.custom-arch-node:hover {
+  opacity: 0.85;
+}
+
+.custom-arch-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.custom-arch-panel {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--landing-line);
+  border-radius: 8px;
+  background: var(--landing-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Light theme ─────────────────────────────────────────── */
+[data-theme="light"] .custom-code-block {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .custom-code-header {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .custom-code-footer {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .custom-arch-canvas {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* ── Mobile ──────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .custom-card {
+    text-align: center;
+  }
+  .custom-card .custom-status {
+    align-self: center;
+  }
+  .custom-card .max-w-sm {
+    max-width: 100%;
+  }
 }
 
 /* ── Reduced motion ────────────────────────────────────────── */
@@ -6114,8 +6085,189 @@ a.dash-row:hover {
   .opening-scroll-thumb {
     animation: none;
   }
-  .skeleton-spinner {
-    animation: none;
-    opacity: 0.4;
+
+}
+
+/* ── Sticky Scroll Overlap Layout ────────────────────────── */
+.custom-interviews-section {
+  position: relative;
+  height: 280vh;
+}
+
+.custom-interviews-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.grid-overlap {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+.grid-overlap-item {
+  grid-area: 1 / 1 / 2 / 2;
+}
+
+/* ── MemoryTimeline Wide Layout ──────────────────────────── */
+/* Every row uses the SAME grid: a fixed-width first column (which
+   contains the dot) and a flexible second column (which contains the
+   content). This guarantees `dot[i].x === dot[0].x` for every i —
+   dot x is decoupled from content width and never alternates. */
+
+.timeline-wide-row {
+  --timeline-gap: 160px;
+  display: grid;
+  grid-template-columns: 1fr var(--timeline-gap) 1fr;
+  align-items: center;
+  padding-top: clamp(3rem, 5vw, 4.5rem);
+  padding-bottom: clamp(3rem, 5vw, 4.5rem);
+  position: relative;
+  width: 100%;
+}
+
+.timeline-wide-left .timeline-wide-dot {
+  grid-column: 2;
+  justify-self: end;
+  margin-right: -10px;
+  margin-top: 0;
+}
+
+.timeline-wide-left .timeline-card-wrapper {
+  grid-column: 1;
+  justify-self: end;
+  padding-right: 40px;
+}
+
+.timeline-wide-right .timeline-wide-dot {
+  grid-column: 2;
+  justify-self: start;
+  margin-left: -10px;
+  margin-top: 0;
+}
+
+.timeline-wide-right .timeline-card-wrapper {
+  grid-column: 3;
+  justify-self: start;
+  padding-left: 40px;
+}
+
+.timeline-wide-dot {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  z-index: 20;
+}
+
+.timeline-card-wrapper {
+  width: 100%;
+  max-width: 320px;
+}
+
+.timeline-node-content {
+  width: 100%;
+}
+
+.timeline-node-right {
+  text-align: right;
+}
+
+.timeline-step-num {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  font-style: italic;
+  color: var(--landing-accent);
+  line-height: 1;
+  display: block;
+  margin-bottom: 0.35rem;
+  opacity: 0.5;
+}
+
+.timeline-step-title {
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+  font-weight: 500;
+  color: var(--landing-fg);
+  margin-bottom: 0.15rem;
+  letter-spacing: -0.01em;
+}
+
+.timeline-step-round {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--landing-fg-faint);
+  margin-bottom: 0.75rem;
+}
+
+.timeline-step-desc {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--landing-fg-muted);
+}
+
+.timeline-step-metrics {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--landing-line);
+}
+
+@media (max-width: 1023px) {
+  .timeline-wide-row {
+    display: flex !important;
+    flex-direction: row !important;
+    padding-left: 2rem !important;
+    padding-right: 1.5rem !important;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    gap: 1.25rem;
   }
+
+  .timeline-wide-dot {
+    grid-column: auto;
+    justify-self: auto;
+    margin-top: 1.25rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .timeline-card-wrapper {
+    grid-column: auto;
+    justify-self: auto;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-width: 100%;
+  }
+
+  .timeline-node-content {
+    max-width: 100%;
+  }
+
+  .timeline-node-right {
+    text-align: left;
+  }
+
+  .timeline-step-num {
+    font-size: 1.25rem;
+  }
+
+  .timeline-step-metrics {
+    justify-content: flex-start !important;
+  }
+}
+
+/* Hide scrollbars for Webkit browsers */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

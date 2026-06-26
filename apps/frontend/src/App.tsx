@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterProvider,
@@ -6,10 +6,13 @@ import {
   Navigate,
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { motion } from "motion/react";
 import { useSession } from "./lib/auth";
 import { ThemeProvider } from "./lib/theme";
+import { useTheme } from "./lib/use-theme";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AppLayout } from "./components/layout/AppLayout";
+import { SiteLoader, AnimatedLogo } from "./components/layout/SiteLoader";
 
 const lazyPage = <K extends string>(
   imp: () => Promise<Record<K, React.ComponentType>>,
@@ -164,9 +167,31 @@ const router = createBrowserRouter([
 ]);
 
 function PageSkeleton() {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
   return (
     <div className="page-skeleton">
-      <div className="skeleton-spinner" />
+      <motion.div
+        animate={{
+          scale: [1, 1.03, 1],
+        }}
+        transition={{
+          duration: 1.2,
+          ease: "easeInOut",
+          repeat: Infinity,
+          repeatType: "reverse",
+        }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 64,
+          height: 64,
+          willChange: "transform",
+        }}
+      >
+        <AnimatedLogo size={64} isLight={isLight} />
+      </motion.div>
     </div>
   );
 }
@@ -181,13 +206,49 @@ export function App() {
       }),
   );
 
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkReady = async () => {
+      // 1. Wait for fonts if document.fonts is supported
+      if (document.fonts) {
+        try {
+          await document.fonts.ready;
+        } catch (e) {
+          console.warn("Failed to load fonts", e);
+        }
+      }
+
+      // 2. Wait for window load event if document is not complete yet
+      if (document.readyState !== "complete") {
+        await new Promise((resolve) => {
+          window.addEventListener("load", resolve, { once: true });
+        });
+      }
+
+      if (isMounted) {
+        setIsReady(true);
+      }
+    };
+
+    checkReady();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ErrorBoundary>
-          <Suspense fallback={<PageSkeleton />}>
-            <RouterProvider router={router} />
-          </Suspense>
+          <SiteLoader isReady={isReady}>
+            <Suspense fallback={<PageSkeleton />}>
+              <RouterProvider router={router} />
+            </Suspense>
+          </SiteLoader>
         </ErrorBoundary>
         <Toaster
           position="top-center"

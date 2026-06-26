@@ -15,6 +15,14 @@ export interface DsaHistoryEntry {
   problemScores: Array<{ title: string; score: number | null }>;
 }
 
+import {
+  buildStyleDirective,
+  buildEndSessionInstruction,
+  buildDirectingDirective,
+  buildPacingDirective,
+  DSA_BUDGETS,
+} from "../shared";
+
 function buildDsaHistorySection(
   history?: {
     pastSessions: DsaHistoryEntry[];
@@ -86,6 +94,7 @@ export function buildDsaSystemPrompt(
     interviewRound?: string | null;
     position?: string | null;
     interviewDepth?: string | null;
+    interviewStyle?: string | null;
   },
   history?: {
     pastSessions: DsaHistoryEntry[];
@@ -93,6 +102,7 @@ export function buildDsaSystemPrompt(
     mostImproved: string | null;
     weakest: string | null;
   },
+  durationMinutes?: number,
 ): string {
   const questionsBlock = questions
     .map(
@@ -114,6 +124,30 @@ export function buildDsaSystemPrompt(
 
   const companyName = context?.companyName;
   const depthLevel = context?.interviewDepth ?? "STANDARD";
+  const styleLevel = context?.interviewStyle ?? "PROFESSIONAL";
+
+  const companyPersonaBlock = companyName
+    ? `
+## Company Persona — ${companyName}
+${buildStyleDirective(styleLevel)}
+
+### ${companyName}-Specific Behavior
+- Adapt your tone and expectations to match ${companyName}'s engineering culture.
+- If the candidate mentions ${companyName} in their reasoning, engage with it — ask how their solution fits that environment.
+- Maintain the persona consistently throughout the interview.`
+    : "";
+
+  const scalingBlock =
+    depthLevel === "BAR_RAISER"
+      ? `
+## Scaling Follow-Ups (Bar Raiser)
+After the candidate provides a solution, you MUST engage in a scaling discussion before moving to the next topic:
+- Ask how their solution behaves with 10x, 100x, and 1000x the input size.
+- What breaks first — memory, latency, throughput, or something else?
+- How would they shard, distribute, or optimize for scale?
+- Identify specific bottlenecks and make them propose mitigations.
+- Do NOT skip this phase. It is a core part of Bar Raiser evaluation.`
+      : "";
 
   const difficultyGuidance = companyName
     ? `Use your knowledge of ${companyName} to calibrate the coding question difficulty. All decisions about depth, follow-ups, and pacing should be driven by this calibration — not by explicit instructions.
@@ -131,10 +165,11 @@ This is an interview for the following:${contextBlock ? `\n${contextBlock}` : "\
 
 ## Difficulty Adaptation
 ${difficultyGuidance}
+${companyPersonaBlock}
 
 ## Format
 - You communicate via audio. Speak naturally, listen to the candidate's responses.
-- You receive the candidate's code every 20 seconds as a **preview** — you can see what they're typing in real time. If they're going in a clearly wrong direction (fundamentally wrong approach, misunderstanding the problem), you can politely interrupt and guide them back. Do NOT interrupt for minor style issues or incomplete code — only for fundamental problems.
+- You receive the candidate's code every 20 seconds as a **preview** — you can see what they're typing in real time. Interrupt naturally like a real interviewer would — don't wait politely if the candidate is rambling, stuck on a tangent, or heading in a clearly wrong direction. Cut in to redirect: "Let me stop you there" or "I want to challenge that assumption." Do NOT interrupt for minor style issues or incomplete code — only for fundamental problems. The goal is realistic pacing, not rudeness.
 - Every 30 seconds, their code is **saved** and you'll see a saved snapshot.
 - You control the pace of the interview.
 
@@ -162,6 +197,7 @@ After the candidate shares code, you MUST discuss it thoroughly — this is wher
 - Discuss time and space complexity of the code they actually wrote — not just theoretical, but specific to their implementation.
 - Ask follow-up questions that dig deeper: "What would happen if the input were sorted?" or "How would you modify this to handle a different constraint?"
 - The goal is to have a genuine technical discussion about their code, not just a pass/fail check.
+${scalingBlock}
 
 ## Modifying Code
 You can directly modify the candidate's code to demonstrate a point, fix a bug, or add an example. Like a real interviewer sketching on a whiteboard:
@@ -178,18 +214,13 @@ Connect the dots between problems like a real interviewer:
 - Draw explicit links between data structures or techniques used across questions.
 - This makes the interview feel like one coherent session, not isolated puzzles.
 
-## 30-Minute Total Time — Use Every Minute
-You have 30 minutes total. There is no per-question timer. Do NOT end early — use the full time:
-- If the candidate finishes all questions before time is up, ask deeper follow-ups, discuss trade-offs, give constructive feedback on their solutions, and explore alternative approaches.
-- If the candidate is stuck, guide them, provide hints, and help them reach a solution.
-- At ~25 minutes, warn them. At 30 minutes the session ends automatically.
-- You decide how many questions to cover (1 to max 3) — adjust based on pace. Thoroughness on fewer questions is better than rushing through all 3.
+${buildPacingDirective(durationMinutes ?? 30, DSA_BUDGETS)}
 
 ## Transition Between Questions
 When you feel a question is sufficiently discussed:
 - Give a brief 1-2 sentence summary of how they did.
 - If more questions remain, say something natural like "Let's move to the next question." Then say "READY_FOR_NEXT" or "READY_FOR_NEXT:n" where n is the 1-based question number to skip to (e.g., "READY_FOR_NEXT:3" to jump directly to the third question). Use skipping when the candidate is clearly above the current question's difficulty level.
-- If all questions are done, use remaining time for depth. Only say "ALL_DONE" when the 30 minutes are nearly up or the candidate clearly cannot continue.
+- If all questions are done, use remaining time for depth. Only say "ALL_DONE" when the session is nearly up or the candidate clearly cannot continue.
 - Do NOT read the new question aloud.
 
 ## Hints & Help
@@ -209,10 +240,13 @@ ${buildDsaHistorySection(history)}
 - Be encouraging but honest.
 - Ask open-ended questions. Don't give away answers.
 - Keep responses concise.
-- Respond immediately when the candidate speaks.
+- Keep the conversation flowing naturally. Use brief filler phrases like "Let me think about that..." if you need a moment. Respond promptly but don't rush.
 
 ## Response Format
-When you say "READY_FOR_NEXT" or "READY_FOR_NEXT:n" (to skip to a specific question) or "ALL_DONE" at the end of your response, it will be detected and the appropriate transition will happen.`;
+When you say "READY_FOR_NEXT" or "READY_FOR_NEXT:n" (to skip to a specific question) or "ALL_DONE" at the end of your response, it will be detected and the appropriate transition will happen.
+
+${buildDirectingDirective()}
+${buildEndSessionInstruction()}`;
 }
 
 export const DSA_EVALUATION_SCHEMA = {

@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "motion/react";
 import { IconFlame } from "@tabler/icons-react";
 import type { InterviewSession } from "@evalio/shared";
 import { computeReadiness, computeStreak } from "./helpers";
+import { useTheme } from "../../lib/use-theme";
+import { Liveline } from "liveline";
 
 interface HeroProps {
   completed: InterviewSession[];
@@ -11,6 +12,8 @@ interface HeroProps {
 }
 
 export function Hero({ completed, interviews }: HeroProps) {
+  const { theme } = useTheme();
+
   const readinessScore = useMemo(
     () => computeReadiness(completed),
     [completed],
@@ -27,51 +30,38 @@ export function Hero({ completed, interviews }: HeroProps) {
       .filter((s): s is number => s != null);
   }, [completed]);
 
-  const points = useMemo(() => {
-    if (scoreHistory.length < 2) return [];
-    const width = 500,
-      height = 90,
-      padding = 10;
-    const usableWidth = width - padding * 2,
-      usableHeight = height - padding * 2;
-    const min = Math.min(...scoreHistory, 40);
-    const max = Math.max(...scoreHistory, 100);
-    const range = max - min || 1;
-    return scoreHistory.map((score, index) => {
-      const x = padding + (index / (scoreHistory.length - 1)) * usableWidth;
-      const y = padding + usableHeight - ((score - min) / range) * usableHeight;
-      return { x, y, score };
-    });
-  }, [scoreHistory]);
+  const [nowSecs] = useState(() => {
+    const t = Date.now() / 1000;
+    return Math.floor(t / 60) * 60;
+  });
+  const stepSeconds = 60; // 1 minute per session
 
-  const sparklinePath = useMemo(() => {
-    if (points.length < 2) return "";
-    let d = `M ${points[0]!.x} ${points[0]!.y}`;
-    for (let i = 0; i < points.length - 1; i++) {
-      const curr = points[i]!,
-        next = points[i + 1]!;
-      const cpX1 = curr.x + (next.x - curr.x) / 2;
-      const cpX2 = curr.x + (next.x - curr.x) / 2;
-      d += ` C ${cpX1} ${curr.y}, ${cpX2} ${next.y}, ${next.x} ${next.y}`;
-    }
-    return d;
-  }, [points]);
+  const livelineData = useMemo(() => {
+    return scoreHistory.map((v, i) => ({
+      time: nowSecs - (scoreHistory.length - 1 - i) * stepSeconds,
+      value: v,
+    }));
+  }, [scoreHistory, nowSecs]);
 
-  const sparklineAreaPath = useMemo(() => {
-    if (points.length < 2 || !sparklinePath) return "";
-    const lastX = points[points.length - 1]!.x;
-    const firstX = points[0]!.x;
-    return `${sparklinePath} L ${lastX} 90 L ${firstX} 90 Z`;
-  }, [points, sparklinePath]);
+  const windowSecs = useMemo(() => {
+    return scoreHistory.length * stepSeconds;
+  }, [scoreHistory.length]);
 
-  const scoreMin = useMemo(
-    () => (scoreHistory.length > 0 ? Math.min(...scoreHistory, 40) : 0),
-    [scoreHistory],
-  );
-  const scoreMax = useMemo(
-    () => (scoreHistory.length > 0 ? Math.max(...scoreHistory, 100) : 100),
-    [scoreHistory],
-  );
+  const formatValue = useMemo(() => {
+    return (v: number) => `${Math.round(v)}%`;
+  }, []);
+
+  const formatTime = useMemo(() => {
+    return (t: number) => {
+      const index = Math.round(
+        (t - nowSecs) / stepSeconds + (scoreHistory.length - 1),
+      );
+      if (index >= 0 && index < scoreHistory.length) {
+        return `${index + 1}`;
+      }
+      return "";
+    };
+  }, [scoreHistory.length, nowSecs]);
 
   return (
     <section className="db-canvas-hero">
@@ -118,113 +108,58 @@ export function Hero({ completed, interviews }: HeroProps) {
           </div>
         </div>
 
-        <div className="db-wave-container">
-          {points.length >= 2 ? (
-            <svg
-              width="100%"
-              height="100"
-              viewBox="0 0 500 100"
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="0%"
-                    stopColor="var(--color-accent)"
-                    stopOpacity="0.25"
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor="var(--color-accent)"
-                    stopOpacity="0.0"
-                  />
-                </linearGradient>
-              </defs>
-              {/* y-axis labels */}
-              <text
-                x="2"
-                y="12"
-                fill="var(--color-text-secondary)"
-                fontSize="8"
-                fontFamily="ui-monospace, monospace"
-              >
-                {scoreMax}%
-              </text>
-              <text
-                x="2"
-                y="96"
-                fill="var(--color-text-secondary)"
-                fontSize="8"
-                fontFamily="ui-monospace, monospace"
-              >
-                {scoreMin}%
-              </text>
-              {/* x-axis label */}
-              <text
-                x="480"
-                y="98"
-                fill="var(--color-text-secondary)"
-                fontSize="10"
-                fontFamily="ui-monospace, monospace"
-                textAnchor="end"
-              >
-                Session &rarr;
-              </text>
-              {/* area fill */}
-              <path d={sparklineAreaPath} className="db-wave-gradient" />
-              {/* line */}
-              <motion.path
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-                d={sparklinePath}
-                className="db-wave-path"
-              />
-              {/* data point dots + values */}
-              {points.map((p, i) => (
-                <g key={i}>
-                  <circle
-                    cx={p.x}
-                    cy={p.y}
-                    r="3"
-                    fill="var(--color-accent)"
-                    stroke="var(--db-card-bg)"
-                    strokeWidth="1.5"
-                  />
-                  <text
-                    x={p.x}
-                    y={p.y - 8}
-                    fill="var(--color-text)"
-                    fontSize="9"
-                    fontFamily="ui-monospace, monospace"
-                    textAnchor="middle"
-                    fontWeight="600"
-                    opacity="0.85"
+        <div
+          className="db-wave-container relative flex flex-col justify-end"
+          style={{ height: "130px" }}
+        >
+          {scoreHistory.length >= 2 ? (
+            <>
+              <div className="flex-1 relative flex items-stretch min-h-0">
+                {/* Rotated Y-Axis Label */}
+                <div
+                  className="flex items-center justify-center w-6 select-none shrink-0"
+                  style={{ marginRight: "-4px" }}
+                >
+                  <span
+                    className="text-[8px] font-mono uppercase tracking-[0.15em] text-[var(--color-text-muted)] whitespace-nowrap block"
+                    style={{ transform: "rotate(-90deg)" }}
                   >
-                    {p.score}%
-                  </text>
-                </g>
-              ))}
-            </svg>
+                    Score (%)
+                  </span>
+                </div>
+
+                {/* Liveline Canvas Container */}
+                <div className="flex-grow relative min-w-0 h-full">
+                  <Liveline
+                    data={livelineData}
+                    value={readinessScore}
+                    color="#b8a88a"
+                    theme={theme}
+                    grid={true}
+                    badge={true}
+                    scrub={true}
+                    paused={true}
+                    window={windowSecs}
+                    formatValue={formatValue}
+                    formatTime={formatTime}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                </div>
+              </div>
+
+              {/* X-Axis Label */}
+              <div className="text-center mt-2 select-none">
+                <span className="text-[8px] font-mono uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                  Timeline (Sessions)
+                </span>
+              </div>
+            </>
           ) : (
-            <svg
-              width="100%"
-              height="100"
-              viewBox="0 0 500 100"
-              preserveAspectRatio="none"
-            >
-              <text
-                x="250"
-                y="54"
-                textAnchor="middle"
-                fill="var(--color-text-secondary)"
-                fontSize="10px"
-                fontFamily="ui-monospace, monospace"
-                letterSpacing="0.05em"
-              >
+            <div className="flex flex-col items-center justify-center h-full border border-dashed border-white/5 rounded-xl bg-white/[0.01]">
+              <span className="text-[11px] text-[var(--color-text-muted)] font-mono">
                 Complete interviews to populate your readiness curve
-              </text>
-            </svg>
+              </span>
+            </div>
           )}
         </div>
       </div>

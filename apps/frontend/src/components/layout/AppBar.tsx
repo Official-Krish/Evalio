@@ -6,6 +6,7 @@ import { useTheme } from "../../lib/use-theme";
 import { EvalioMark } from "../landing/svg/EvalioMark";
 import { ProfileDropdown } from "./ProfileDropdown";
 import { ScrollProgress } from "./ScrollProgress";
+import { AnimatedThemeToggler } from "../ui/animated-theme-toggler";
 
 const navItems = [
   {
@@ -21,46 +22,6 @@ const navItems = [
   },
 ];
 
-function ThemeToggle() {
-  const { theme, toggle } = useTheme();
-  return (
-    <button
-      onClick={toggle}
-      className="p-1.5 rounded text-[var(--landing-fg-faint)] hover:text-[var(--landing-fg-muted)] transition-colors"
-      aria-label="Toggle theme"
-    >
-      {theme === "dark" ? (
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="12" r="5" />
-          <path d="M12 1v2m0 18v2M4.2 4.2l1.4 1.4m12.8 12.8l1.4 1.4M1 12h2m18 0h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" />
-        </svg>
-      ) : (
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-        </svg>
-      )}
-    </button>
-  );
-}
-
 export function AppBar() {
   const location = useLocation();
   const { data: session } = useSession();
@@ -71,6 +32,7 @@ export function AppBar() {
     ? navItems.filter((item) => item.label !== "Pro")
     : navItems;
   const [menuOpen, setMenuOpen] = useState(false);
+  const { theme, toggle } = useTheme();
 
   return (
     <>
@@ -134,7 +96,13 @@ export function AppBar() {
             )}
 
             <div className="flex items-center gap-1">
-              <ThemeToggle />
+              <AnimatedThemeToggler
+                theme={theme}
+                onThemeChange={toggle}
+                variant="circle"
+                duration={500}
+                className="p-1 rounded text-[var(--landing-fg-faint)] hover:text-[var(--landing-fg-muted)] transition-colors"
+              />
               {user ? (
                 <ProfileDropdown user={user} />
               ) : (

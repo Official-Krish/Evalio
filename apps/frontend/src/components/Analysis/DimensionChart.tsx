@@ -1,13 +1,7 @@
-import { useMemo } from "react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { useMemo, useState } from "react";
+import { Liveline } from "liveline";
 import { motion } from "motion/react";
+import { useTheme } from "../../lib/use-theme";
 
 interface DimensionChartProps {
   label: string;
@@ -18,44 +12,6 @@ interface DimensionChartProps {
   narrative: string;
 }
 
-function CustomTooltip({
-  active,
-  payload,
-  label: tooltipLabel,
-  color,
-}: {
-  active?: boolean;
-  payload?: { value: number }[];
-  label?: string;
-  color: string;
-}) {
-  if (active && payload && payload.length) {
-    return (
-      <div
-        className="rounded-xl border p-3 shadow-2xl backdrop-blur-md transition-all duration-300"
-        style={{
-          background: "rgba(18, 18, 18, 0.8)",
-          borderColor: "rgba(255, 255, 255, 0.08)",
-          boxShadow: `0 8px 30px rgba(0, 0, 0, 0.4), 0 0 15px ${color}10`,
-        }}
-      >
-        <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-text-muted)] mb-1">
-          Session #{tooltipLabel}
-        </p>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-base font-semibold font-mono" style={{ color }}>
-            {payload[0].value}%
-          </span>
-          <span className="text-[10px] text-[var(--color-text-secondary)]">
-            Score
-          </span>
-        </div>
-      </div>
-    );
-  }
-  return null;
-}
-
 export function DimensionChart({
   label,
   values,
@@ -64,21 +20,47 @@ export function DimensionChart({
   currentValue,
   narrative,
 }: DimensionChartProps) {
-  const chartData = useMemo(
-    () =>
-      values.map((v, i) => ({
-        name: labels[i] ?? `${i + 1}`,
-        score: v,
-      })),
-    [values, labels],
-  );
+  const { theme } = useTheme();
 
   const trend = useMemo(() => {
     if (values.length < 2) return null;
     return values[values.length - 1]! - values[0]!;
   }, [values]);
 
-  if (chartData.length < 1) return null;
+  const [nowSecs] = useState(() => {
+    const t = Date.now() / 1000;
+    return Math.floor(t / 60) * 60;
+  });
+  const stepSeconds = 60; // 1 minute per session
+
+  const livelineData = useMemo(() => {
+    return values.map((v, i) => ({
+      time: nowSecs - (values.length - 1 - i) * stepSeconds,
+      value: v,
+    }));
+  }, [values, nowSecs]);
+
+  const windowSecs = useMemo(() => {
+    return values.length * stepSeconds;
+  }, [values.length]);
+
+  const formatValue = useMemo(() => {
+    return (v: number) => `${Math.round(v)}%`;
+  }, []);
+
+  const formatTime = useMemo(() => {
+    return (t: number) => {
+      const index = Math.round(
+        (t - nowSecs) / stepSeconds + (values.length - 1),
+      );
+      if (index >= 0 && index < values.length) {
+        return labels[index] ?? `${index + 1}`;
+      }
+      return "";
+    };
+  }, [values.length, labels, nowSecs]);
+
+  if (values.length < 1) return null;
 
   return (
     <motion.div
@@ -157,71 +139,49 @@ export function DimensionChart({
         </div>
 
         {/* Chart */}
-        <div className="w-full h-[220px] mb-5 relative">
-          {chartData.length >= 2 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={chartData}
-                margin={{ top: 8, right: 8, bottom: 4, left: -20 }}
-              >
-                <defs>
-                  <linearGradient
-                    id={`grad-${label.replace(/\s+/g, "")}`}
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
+        <div className="w-full h-[240px] mb-5 relative flex flex-col justify-end">
+          {values.length >= 2 ? (
+            <>
+              <div className="flex-1 relative flex items-stretch min-h-0">
+                {/* Rotated Y-Axis Label */}
+                <div
+                  className="flex items-center justify-center w-6 select-none shrink-0"
+                  style={{ marginRight: "-4px" }}
+                >
+                  <span
+                    className="text-[9px] font-mono uppercase tracking-[0.15em] text-[var(--color-text-muted)] whitespace-nowrap block"
+                    style={{ transform: "rotate(-90deg)" }}
                   >
-                    <stop offset="5%" stopColor={color} stopOpacity={0.25} />
-                    <stop offset="95%" stopColor={color} stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="name"
-                  tick={{
-                    fontSize: 10,
-                    fill: "var(--color-text-secondary)",
-                    fontFamily: "monospace",
-                  }}
-                  axisLine={{ stroke: "rgba(255,255,255,0.06)" }}
-                  tickLine={{ stroke: "rgba(255,255,255,0.06)" }}
-                  dy={4}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  tick={{
-                    fontSize: 10,
-                    fill: "var(--color-text-secondary)",
-                    fontFamily: "monospace",
-                  }}
-                  axisLine={{ stroke: "rgba(255,255,255,0.06)" }}
-                  tickLine={{ stroke: "rgba(255,255,255,0.06)" }}
-                  width={28}
-                  dx={-2}
-                />
-                <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={{
-                    stroke: "rgba(255,255,255,0.08)",
-                    strokeDasharray: "4 4",
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="score"
-                  stroke={color}
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill={`url(#grad-${label.replace(/\s+/g, "")})`}
-                  activeDot={{
-                    r: 5,
-                    fill: color,
-                    stroke: "var(--color-bg, #080808)",
-                    strokeWidth: 2,
-                  }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+                    Score (%)
+                  </span>
+                </div>
+
+                {/* Liveline Canvas Container */}
+                <div className="flex-grow relative min-w-0 h-full">
+                  <Liveline
+                    data={livelineData}
+                    value={currentValue}
+                    color={color}
+                    theme={theme}
+                    grid={true}
+                    badge={true}
+                    scrub={true}
+                    paused={true}
+                    window={windowSecs}
+                    formatValue={formatValue}
+                    formatTime={formatTime}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                </div>
+              </div>
+
+              {/* X-Axis Label */}
+              <div className="text-center mt-3 select-none">
+                <span className="text-[9px] font-mono uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                  Timeline (Sessions)
+                </span>
+              </div>
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center h-full border border-dashed border-white/5 rounded-xl bg-white/[0.01]">
               <span className="text-[11px] text-[var(--color-text-muted)] font-mono">

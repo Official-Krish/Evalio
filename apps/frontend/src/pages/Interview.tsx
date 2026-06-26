@@ -8,6 +8,8 @@ import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import { InterviewSocket } from "../lib/ws";
 import { api } from "../lib/api";
 import { DsaPanel } from "../components/interview/DsaPanel";
+import { WhiteboardPanel } from "@/components/system-design/WhiteboardPanel";
+import type { CanvasDiffAction } from "@evalio/shared";
 import { SEO } from "@/components/SEO";
 import { Ambient } from "@/components/landing/Ambient";
 import { PresenceOrb } from "@/components/interview/PresenceOrb";
@@ -62,6 +64,7 @@ export function InterviewPage() {
   const dsaLastTransitionRef = useRef(-1);
   const dsaPendingRef = useRef<{ index?: number | null } | null>(null);
   const isDsaRef = useRef(false);
+  const sdFullProblemTextRef = useRef("");
 
   const [isConnecting, setIsConnecting] = useState(true);
   const [closing, setClosing] = useState(false);
@@ -95,12 +98,23 @@ export function InterviewPage() {
   } | null>(null);
   const [dsaLoading, setDsaLoading] = useState(false);
   const isDsa = interviewMeta?.mode === "DSA";
+  const isSystemDesign = interviewMeta?.mode === "SYSTEM_DESIGN";
+  const sdConnectedRef = useRef(false);
 
   const dsaPanelVisible = useMemo(() => {
     return isDsa && !!dsaSessionData;
   }, [isDsa, dsaSessionData]);
 
-  // Load DSA session on mount if DSA mode
+  // System Design state
+  const [sdTopic, setSdTopic] = useState({
+    title: "System Design",
+    description: "Designing the system...",
+  });
+  const [canvasDiff, setCanvasDiff] = useState<CanvasDiffAction[] | null>(null);
+  const [sdFullProblemText, setSdFullProblemText] = useState("");
+  const sdPanelVisible = isSystemDesign;
+
+  // Load DSA / SD session on mount
   const { mutate: loadDsaSession } = useMutation({
     mutationFn: () => {
       setDsaLoading(true);
@@ -133,7 +147,6 @@ export function InterviewPage() {
       if (firstProblem) {
         setDsaCode((firstProblem.code as string) ?? "");
       }
-      // Apply any pending transition that arrived before session data loaded
       const pending = dsaPendingRef.current;
       if (pending) {
         dsaPendingRef.current = null;
@@ -160,18 +173,52 @@ export function InterviewPage() {
                 }
               : prev,
           );
-          setDsaCode("");
+          const nextProblem = problems[nextIdx];
+          if (nextProblem) {
+            setDsaCode((nextProblem.code as string) ?? "");
+          }
         }
       }
     },
     onError: () => setDsaLoading(false),
   });
 
+  const { mutate: loadSdSession } = useMutation({
+    mutationFn: () => {
+      setSdStarting(true);
+      return api.startSdSession(id!);
+    },
+    onSuccess: (data) => {
+      setSdStarting(false);
+      if (data.title && data.description) {
+        setSdTopic({ title: data.title, description: data.description });
+        sdFullProblemTextRef.current = data.fullBreakdown;
+        setSdFullProblemText(data.fullBreakdown);
+      }
+      if (!sdConnectedRef.current) {
+        sdConnectedRef.current = true;
+        connectSocket().catch((err: Error) => {
+          if (mountedRef.current && !endedRef.current) {
+            setError(err.message);
+            toast.error(err.message);
+          }
+        });
+      }
+    },
+    onError: () => {
+      setSdStarting(false);
+    },
+  });
+
   useEffect(() => {
     if (isDsa && id) loadDsaSession();
   }, [isDsa, id, loadDsaSession]);
 
-  // Refs for stable cross-render access to latest values
+  useEffect(() => {
+    if (isSystemDesign && id) loadSdSession();
+  }, [isSystemDesign, id, loadSdSession]);
+
+  const [sdStarting, setSdStarting] = useState(false);
   const latestCodeRef = useRef(dsaCode);
   const sessionDataRef = useRef(dsaSessionData);
   useEffect(() => {
@@ -279,8 +326,8 @@ export function InterviewPage() {
   }, [feedbackReady]);
 
   useEffect(() => {
-    isDsaRef.current = isDsa;
-  }, [isDsa]);
+    isDsaRef.current = isDsa || isSystemDesign;
+  }, [isDsa, isSystemDesign]);
 
   useEffect(() => {
     document.documentElement.classList.add("landing-active");
@@ -503,6 +550,25 @@ export function InterviewPage() {
       }
     });
 
+    // System Design WS events
+    socket.on("canvas_diff", (data: unknown) => {
+      const msg = data as { actions?: CanvasDiffAction[] };
+      if (msg.actions && msg.actions.length > 0) {
+        setCanvasDiff(msg.actions);
+      }
+    });
+
+    socket.on("canvas_example", (data: unknown) => {
+      const msg = data as {
+        title?: string;
+        nodes?: unknown[];
+        edges?: unknown[];
+      };
+      toast(`AI shared a reference architecture: ${msg.title ?? "example"}`, {
+        duration: 5000,
+      });
+    });
+
     // Time cap events
     socket.on("time_limit", (data: unknown) => {
       const msg = data as Record<string, unknown>;
@@ -530,13 +596,15 @@ export function InterviewPage() {
   }, [user, id, playPcm, stopAudio, teardown, navigate, stopMic]);
 
   useEffect(() => {
+    if (!interviewMeta) return;
+    if (isSystemDesign) return;
     connectSocket().catch((err: Error) => {
       if (mountedRef.current && !endedRef.current) {
         setError(err.message);
         toast.error(err.message);
       }
     });
-  }, [connectSocket]);
+  }, [connectSocket, interviewMeta, isSystemDesign]);
 
   useEffect(() => {
     if (phase === "ended" || phase === "connecting" || phase === "queued")
@@ -545,7 +613,7 @@ export function InterviewPage() {
     return () => clearInterval(interval);
   }, [phase]);
 
-  // Safety timeout: if closing takes >30s, force-navigate to results
+  // Safety timeout: if closing takes >2min, force-navigate to results
   useEffect(() => {
     if (!closing || feedbackReady) return;
     const timer = setTimeout(() => {
@@ -554,7 +622,7 @@ export function InterviewPage() {
         teardown();
         navigate(`/results/${id}`, { replace: true });
       }
-    }, 30_000);
+    }, 120_000);
     return () => clearTimeout(timer);
   }, [closing, feedbackReady, id, navigate, teardown]);
 
@@ -589,11 +657,26 @@ export function InterviewPage() {
 
     try {
       isUserSpeakingRef.current = true;
-      await startMic((base64) => {
-        if (!endedRef.current) {
-          socketRef.current?.sendAudio(base64);
-        }
-      });
+      await startMic(
+        (base64) => {
+          if (!endedRef.current) {
+            socketRef.current?.sendAudio(base64);
+          }
+        },
+        {
+          onSilenceEnd: () => {
+            if (
+              endedRef.current ||
+              closingRef.current ||
+              feedbackReadyRef.current
+            )
+              return;
+            isUserSpeakingRef.current = false;
+            stopMic();
+            socketRef.current?.sendAudioStreamEnd();
+          },
+        },
+      );
     } catch {
       isUserSpeakingRef.current = false;
       toast.error("Microphone access denied");
@@ -626,7 +709,7 @@ export function InterviewPage() {
   }
 
   if (phase === "connecting") {
-    return <InterviewConnecting />;
+    return <InterviewConnecting sdStarting={sdStarting} />;
   }
 
   if (phase === "queued") {
@@ -649,11 +732,12 @@ export function InterviewPage() {
 
       <div
         className="relative z-10 flex flex-col min-h-[100dvh]"
-        style={
-          isDsa && dsaPanelVisible
-            ? { marginRight: "min(520px, 45vw)" }
-            : undefined
-        }
+        style={(() => {
+          if (isDsa && dsaPanelVisible)
+            return { marginRight: "min(520px, 45vw)" };
+          if (isSystemDesign && sdPanelVisible) return { marginRight: "60vw" };
+          return undefined;
+        })()}
       >
         <div className="landing-container pt-6">
           <SessionHeader
@@ -760,6 +844,20 @@ export function InterviewPage() {
             />
           )}
         </>
+      )}
+
+      {isSystemDesign && (
+        <WhiteboardPanel
+          visible={sdPanelVisible}
+          topicTitle={sdTopic.title}
+          topicDescription={sdTopic.description}
+          fullProblemText={sdFullProblemText}
+          onCanvasSnapshot={(snapshot) => {
+            socketRef.current?.sendCanvasSnapshot(snapshot);
+          }}
+          canvasDiff={canvasDiff}
+          onClearCanvasDiff={() => setCanvasDiff(null)}
+        />
       )}
 
       <ConfirmDialog

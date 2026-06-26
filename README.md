@@ -1,6 +1,25 @@
 # Evalio
 
-Real-time voice interview simulator. Practice technical and behavioral interviews with AI that adapts to your target company, role, and preferred style — with live audio, interruption handling, and post-interview scoring.
+Real-time AI interview simulator. Practice technical and behavioral interviews with voice, code, and system design — with an AI that adapts to your target company, role, and preferred style.
+
+<p align="center">
+  <img src="./intro.png" alt="Evalio platform screenshot" width="800" />
+</p>
+
+### Features
+
+| Area                 | Capabilities                                                                                              |
+| -------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Voice Interview**  | Real-time bidirectional audio, AI can interrupt, incremental live transcription                           |
+| **DSA Coding**       | LeetCode-style problems, in-browser editor (Python/C++/TS), event-driven code review                      |
+| **System Design**    | Excalidraw whiteboard, AI reads your diagrams, canvas suggestions via structured markers                  |
+| **Company Profiles** | 16 companies with culture, interviewer behavior, and role-specific topics                                 |
+| **Interview Styles** | Supportive, Professional, Challenging, Bar Raiser — each with different interruption and probing patterns |
+| **Depth Levels**     | Standard, Probing, Challenge, Bar Raiser — control how many follow-ups and how hard                       |
+| **Rounds**           | Company-specific round selection (Phone Screen, Technical Deep Dive, System Design, Behavioral)           |
+| **Resume & GitHub**  | Upload resume or link GitHub for personalized, targeted questions                                         |
+| **Evaluation**       | Post-interview AI scoring across 6 dimensions, skill profile tracking over time                           |
+| **Queue System**     | Redis-backed FIFO queue when session limit is reached, real-time position updates                         |
 
 ## Architecture
 

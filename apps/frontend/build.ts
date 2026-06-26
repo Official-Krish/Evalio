@@ -1,6 +1,9 @@
 import tailwind from "bun-plugin-tailwind";
-import { rm, readFile, writeFile } from "node:fs/promises";
+import { rm, readFile, writeFile, cp } from "node:fs/promises";
 import path from "node:path";
+
+// Ensure production condition for package.json exports resolution
+process.env.NODE_ENV = "production";
 
 const outdir = path.join(process.cwd(), "dist");
 await rm(outdir, { recursive: true, force: true });
@@ -32,6 +35,13 @@ const htmlPath = path.join(outdir, "index.html");
 let html = await readFile(htmlPath, "utf-8");
 html = html.replace(/(src|href)="(?:\.\/)?(?!\/|https?:\/\/|data:)/g, '$1="/');
 await writeFile(htmlPath, html);
+
+// Copy static files from public/ to dist/
+try {
+  await cp(path.join(process.cwd(), "public"), outdir, { recursive: true });
+} catch (e) {
+  console.warn("Could not copy public files:", e);
+}
 
 // Generate OG image
 await import("./scripts/generate-og");

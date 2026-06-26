@@ -13,6 +13,7 @@ import { profileRoutes } from "./routes/profile";
 import { contactRoutes } from "./routes/contact";
 import { feedbackRoutes } from "./routes/feedback";
 import { dsaRoutes } from "./routes/dsa";
+import { sdRoutes } from "./routes/sd";
 import { analysisRoutes } from "./routes/analysis";
 import { globalRateLimit } from "./middleware/rateLimit";
 
@@ -108,7 +109,7 @@ export const app = new Elysia()
   .use(globalRateLimit)
   .use(
     cors({
-      origin: Bun.env.CORS_ORIGIN ?? "http://localhost:5173",
+      origin: Bun.env.CORS_ORIGIN ?? "https://evalio.krishlabs.tech",
       credentials: true,
     }),
   )
@@ -118,6 +119,14 @@ export const app = new Elysia()
       exp: "7d",
     }),
   )
+  .onError(({ error, set }) => {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      set.status = 401;
+      return {
+        error: "You are logged out. Please sign in to continue.",
+      };
+    }
+  })
   .group("/api", (app) =>
     app
       .use(authRoutes)
@@ -132,5 +141,6 @@ export const app = new Elysia()
       .use(contactRoutes)
       .use(feedbackRoutes)
       .use(dsaRoutes)
+      .use(sdRoutes)
       .use(analysisRoutes),
   );

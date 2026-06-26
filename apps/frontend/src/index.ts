@@ -10,6 +10,7 @@ serve({
       const url = new URL(req.url);
       return fetch(`${BACKEND_URL}${url.pathname}${url.search}`, req);
     },
+    "/excalidraw.css": () => new Response(Bun.file("public/excalidraw.css")),
     "/*": index,
   },
 
