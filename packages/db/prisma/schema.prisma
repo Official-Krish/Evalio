@@ -31,6 +31,7 @@ model User {
   interviews            InterviewSession[]
   dsaSessions           DsaSession[]
   feedbacks             Feedback[]
+  seenSdQuestions       SdQuestionSeenByUser[]
 }
 
 model CandidateProfile {
@@ -116,6 +117,38 @@ model InterviewSession {
   canvasGraphHistory  Json?              @default("[]")
   createdAt           DateTime           @default(now())
   user                User               @relation(fields: [userId], references: [id])
+}
+
+model SystemDesignQuestion {
+  id                  String                @id @default(cuid())
+  companyName         String?
+  position            String?
+  interviewDepth      InterviewDepth
+  interviewStyle      InterviewStyle
+  title               String
+  description         String                @db.Text
+  fullBreakdown       String                @db.Text
+  backupTitle         String?
+  backupDescription   String?               @db.Text
+  backupFullBreakdown String?               @db.Text
+  lastUsedAt          DateTime?
+  createdAt           DateTime              @default(now())
+  seenBy              SdQuestionSeenByUser[]
+
+  @@index([companyName, position])
+}
+
+model SdQuestionSeenByUser {
+  userId      String
+  questionId  String
+  seenAt      DateTime  @default(now())
+  interviewId String
+
+  user     User                  @relation(fields: [userId], references: [id])
+  question SystemDesignQuestion  @relation(fields: [questionId], references: [id])
+
+  @@id([userId, questionId])
+  @@index([userId])
 }
 
 model LeetCodeQuestion {

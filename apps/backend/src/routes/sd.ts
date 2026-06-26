@@ -15,6 +15,7 @@ interface SdCacheEntry {
   backupDescription: string;
   backupFullBreakdown: string;
   difficulty: string;
+  dbQuestionId: string | null;
 }
 
 const questionCache = new Map<string, SdCacheEntry>();
@@ -25,6 +26,86 @@ export function getSdQuestion(interviewId: string) {
 
 export function clearSdQuestion(interviewId: string) {
   questionCache.delete(interviewId);
+}
+
+async function recordSeen(
+  userId: string,
+  questionId: string,
+  interviewId: string,
+) {
+  await prisma.sdQuestionSeenByUser.upsert({
+    where: { userId_questionId: { userId, questionId } },
+    update: { seenAt: new Date(), interviewId },
+    create: { userId, questionId, interviewId },
+  });
+}
+
+async function pickFromDb(
+  userId: string,
+  companyName: string | null,
+  position: string | null,
+): Promise<(SdCacheEntry & { dbQuestionId: string }) | null> {
+  const seenIds = (
+    await prisma.sdQuestionSeenByUser.findMany({
+      where: { userId },
+      select: { questionId: true },
+    })
+  ).map((r) => r.questionId);
+
+  const where: Record<string, unknown> = {};
+
+  if (companyName) {
+    where.companyName = companyName;
+    if (position) where.position = position;
+  }
+
+  if (seenIds.length > 0) {
+    where.id = { notIn: seenIds };
+  }
+
+  const pool = await prisma.systemDesignQuestion.findMany({ where });
+
+  if (pool.length === 0) return null;
+
+  const pick = pool[Math.floor(Math.random() * pool.length)]!;
+
+  await prisma.systemDesignQuestion.update({
+    where: { id: pick.id },
+    data: { lastUsedAt: new Date() },
+  });
+
+  return {
+    title: pick.title,
+    description: pick.description,
+    fullBreakdown: pick.fullBreakdown,
+    backupTitle: pick.backupTitle ?? "",
+    backupDescription: pick.backupDescription ?? "",
+    backupFullBreakdown: pick.backupFullBreakdown ?? "",
+    difficulty: pick.interviewDepth,
+    dbQuestionId: pick.id,
+  };
+}
+
+function cacheEntry(
+  title: string,
+  description: string,
+  fullBreakdown: string,
+  backupTitle: string,
+  backupDescription: string,
+  backupFullBreakdown: string,
+  difficulty: string,
+  dbQuestionId: string | null,
+): SdCacheEntry {
+  return {
+    title,
+    description,
+    fullBreakdown,
+    backupTitle,
+    backupDescription,
+    backupFullBreakdown,
+    difficulty,
+    dbQuestionId,
+  };
 }
 
 export const sdRoutes = new Elysia({ prefix: "/sd" })
@@ -47,6 +128,7 @@ export const sdRoutes = new Elysia({ prefix: "/sd" })
           return { error: "Interview is not in SYSTEM_DESIGN mode" };
         }
 
+        // 1. In-memory cache hit
         const existing = questionCache.get(interviewId);
         if (existing) {
           return {
@@ -57,8 +139,25 @@ export const sdRoutes = new Elysia({ prefix: "/sd" })
           };
         }
 
-        const company = interview.companyName || "a top tech company";
-        const role = interview.position || "a senior engineering role";
+        const companyName = interview.companyName ?? null;
+        const position = interview.position ?? null;
+
+        // 2. Try DB — pick a question the user hasn't seen
+        const fromDb = await pickFromDb(user.id, companyName, position);
+        if (fromDb) {
+          questionCache.set(interviewId, fromDb);
+          await recordSeen(user.id, fromDb.dbQuestionId, interviewId);
+          return {
+            title: fromDb.title,
+            description: fromDb.description,
+            fullBreakdown: fromDb.fullBreakdown,
+            difficulty: fromDb.difficulty,
+          };
+        }
+
+        // 3. Generate via Gemini
+        const company = companyName || "a top tech company";
+        const role = position || "a senior engineering role";
         const depth =
           (interview as { interviewDepth?: string }).interviewDepth ||
           "PROBING";
@@ -355,23 +454,41 @@ This is a foundational overview. Feel free to dive deeper into any of these area
           return { error: "Generated question missing required fields" };
         }
 
-        const cacheEntry: SdCacheEntry = {
-          title: parsed.primary.title,
-          description: parsed.primary.description,
-          fullBreakdown: parsed.primary.fullBreakdown,
-          backupTitle: parsed.backup.title,
-          backupDescription: parsed.backup.description,
-          backupFullBreakdown: parsed.backup.fullBreakdown,
-          difficulty: depth,
-        };
+        // Persist to DB for future reuse
+        const saved = await prisma.systemDesignQuestion.create({
+          data: {
+            companyName,
+            position,
+            interviewDepth: depth as never,
+            interviewStyle: style as never,
+            title: parsed.primary.title,
+            description: parsed.primary.description,
+            fullBreakdown: parsed.primary.fullBreakdown,
+            backupTitle: parsed.backup.title,
+            backupDescription: parsed.backup.description,
+            backupFullBreakdown: parsed.backup.fullBreakdown,
+          },
+        });
 
-        questionCache.set(interviewId, cacheEntry);
+        const entry = cacheEntry(
+          parsed.primary.title,
+          parsed.primary.description,
+          parsed.primary.fullBreakdown,
+          parsed.backup.title,
+          parsed.backup.description,
+          parsed.backup.fullBreakdown,
+          depth,
+          saved.id,
+        );
+
+        questionCache.set(interviewId, entry);
+        await recordSeen(user.id, saved.id, interviewId);
 
         return {
-          title: cacheEntry.title,
-          description: cacheEntry.description,
-          fullBreakdown: cacheEntry.fullBreakdown,
-          difficulty: cacheEntry.difficulty,
+          title: entry.title,
+          description: entry.description,
+          fullBreakdown: entry.fullBreakdown,
+          difficulty: entry.difficulty,
         };
       },
       {
