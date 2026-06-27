@@ -21,7 +21,10 @@ import {
   buildDirectingDirective,
   buildPacingDirective,
   DSA_BUDGETS,
+  buildRoleContext,
 } from "../shared";
+
+export { buildDsaSqlPrompt } from "./sql";
 
 function buildDsaHistorySection(
   history?: {
@@ -95,6 +98,10 @@ export function buildDsaSystemPrompt(
     position?: string | null;
     interviewDepth?: string | null;
     interviewStyle?: string | null;
+    seniorityLabel?: string | null;
+    roleTopics?: string[] | null;
+    roleEvaluationCriteria?: string[] | null;
+    roleMustProbe?: string[] | null;
   },
   history?: {
     pastSessions: DsaHistoryEntry[];
@@ -111,16 +118,23 @@ export function buildDsaSystemPrompt(
     )
     .join("\n");
 
-  const contextBlock = context
+  const contextLines = context
     ? [
         context.companyName && `Company: ${context.companyName}`,
-        context.roleTitle && `Role: ${context.roleTitle}`,
         context.position && `Position: ${context.position}`,
         context.interviewRound && `Round: ${context.interviewRound}`,
       ]
         .filter(Boolean)
         .join("\n")
     : "";
+  const roleBlock = buildRoleContext(
+    context?.roleTitle ?? null,
+    context?.roleTopics ?? null,
+    context?.roleEvaluationCriteria ?? null,
+    context?.roleMustProbe ?? null,
+    context?.seniorityLabel ?? null,
+  );
+  const contextBlock = [contextLines, roleBlock].filter(Boolean).join("\n");
 
   const companyName = context?.companyName;
   const depthLevel = context?.interviewDepth ?? "STANDARD";

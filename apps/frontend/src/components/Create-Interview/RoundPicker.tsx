@@ -1,6 +1,12 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { COMPANIES, CATEGORY_ROUNDS, FALLBACK_ROUNDS } from "@evalio/shared";
+import {
+  COMPANIES,
+  CATEGORY_ROUNDS,
+  FALLBACK_ROUNDS,
+  getCompany,
+  getRoundPill,
+} from "@evalio/shared";
 
 const COMMON_ROUNDS = [
   "Coding Round (DSA)",
@@ -125,6 +131,36 @@ const descriptions: Record<string, string> = {
     "Generalist mindset and high-velocity decision-making",
   "Case Study & Analysis":
     "Structured problem-solving and analytical frameworks",
+
+  // Category-specific round descriptions
+  "Behavioral / Experience":
+    "Past experience, behavioral questions, and cultural fit assessment",
+  "Case Study": "Business scenario analysis with structured problem-solving",
+  "Client Presentation":
+    "Stakeholder communication and technical presentation skills",
+  "Quantitative Analysis":
+    "Data-driven analysis, metrics, and numerical reasoning",
+  "Product Sense":
+    "Product design thinking, user empathy, and feature prioritization",
+  "Design Critique":
+    "UI/UX evaluation, usability analysis, and improvement suggestions",
+  "Leadership / Behavioral":
+    "Leadership principles, team management, and decision-making",
+  "Strategy & Vision":
+    "Technical strategy, roadmap planning, and organizational impact",
+  "SQL & Analytics":
+    "SQL querying, data analysis, and analytical problem-solving",
+  "ML System Design":
+    "End-to-end ML system architecture, training, and serving",
+  "Data Architecture":
+    "Data modeling, pipeline design, and storage systems at scale",
+  "Infrastructure Design":
+    "Infrastructure architecture, reliability, and platform engineering",
+  "Incident Response":
+    "Production incident diagnosis, mitigation, and post-mortem",
+  "CI/CD & Automation":
+    "Pipeline design, deployment strategies, and automation at scale",
+  Behavioral: "General behavioral assessment covering collaboration and growth",
 };
 
 const hoverProps = {
@@ -180,97 +216,134 @@ export function RoundPicker({
     );
   }
 
+  const company = companyId ? getCompany(companyId) : null;
+  const companyRounds = company?.interviewRounds
+    ?.filter((r) => !rounds.includes(r))
+    ?.sort((a, b) => {
+      const pa = getRoundPill(a) ? 0 : 1;
+      const pb = getRoundPill(b) ? 0 : 1;
+      return pa - pb;
+    });
+  const sortedRounds = [...rounds].sort((a, b) => {
+    const pa = getRoundPill(a) ? 0 : 1;
+    const pb = getRoundPill(b) ? 0 : 1;
+    return pa - pb;
+  });
+
+  function renderRoundButton(round: string) {
+    const active = selectedRound === round;
+    const pill = getRoundPill(round);
+    return (
+      <motion.button
+        key={round}
+        onClick={() => {
+          if (!active) {
+            onSelectRound(round);
+            onCustomRoundChange("");
+            setShowingOther(false);
+            onContinue?.();
+          } else {
+            onSelectRound(null);
+          }
+        }}
+        whileTap={{ scale: 0.98 }}
+        data-active={active || undefined}
+        {...hoverProps}
+        style={{
+          textAlign: "left",
+          padding: "18px 20px",
+          borderRadius: "12px",
+          border: active
+            ? "1.5px solid var(--app-accent, #b8a88a)"
+            : "1px solid var(--color-border-light)",
+          background: active
+            ? "var(--app-accent-bg, rgba(184,168,138,0.06))"
+            : "transparent",
+          cursor: "pointer",
+          transition: "all 0.2s ease",
+        }}
+      >
+        <div>
+          <p
+            style={{
+              fontSize: "15px",
+              fontWeight: 600,
+              color: "var(--color-text)",
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              flexWrap: "wrap",
+            }}
+          >
+            {round}
+            {pill && (
+              <span
+                className="inline-flex items-center gap-1"
+                style={{
+                  fontSize: "9px",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--color-accent)",
+                  border: "1px solid var(--color-accent-border)",
+                  borderRadius: 3,
+                  padding: "1px 5px",
+                  lineHeight: "14px",
+                }}
+              >
+                <span
+                  className="w-1 h-1 rounded-full"
+                  style={{
+                    background: "var(--color-accent)",
+                    boxShadow: "0 0 4px var(--color-accent-border)",
+                  }}
+                />
+                {pill}
+              </span>
+            )}
+          </p>
+          <p
+            style={{
+              fontSize: "12px",
+              color: "var(--color-text-muted)",
+              margin: "4px 0 0",
+            }}
+          >
+            {descriptions[round] ?? ""}
+          </p>
+        </div>
+      </motion.button>
+    );
+  }
+
   return (
     <div>
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        {rounds.map((round) => {
-          const active = selectedRound === round;
-          return (
-            <motion.button
-              key={round}
-              onClick={() => {
-                if (!active) {
-                  onSelectRound(round);
-                  onCustomRoundChange("");
-                  setShowingOther(false);
-                  onContinue?.();
-                } else {
-                  onSelectRound(null);
-                }
-              }}
-              whileTap={{ scale: 0.98 }}
-              data-active={active || undefined}
-              {...hoverProps}
+        {companyRounds && companyRounds.length > 0 && (
+          <>
+            <p
               style={{
-                textAlign: "left",
-                padding: "18px 20px",
-                borderRadius: "12px",
-                border: active
-                  ? "1.5px solid var(--app-accent, #b8a88a)"
-                  : "1px solid var(--color-border-light)",
-                background: active
-                  ? "var(--app-accent-bg, rgba(184,168,138,0.06))"
-                  : "transparent",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
+                fontSize: "10px",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--color-text-muted)",
+                margin: "0 0 2px",
+                padding: "0 4px",
               }}
             >
-              <div>
-                <p
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: 600,
-                    color: "var(--color-text)",
-                    margin: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                >
-                  {round}
-                  {(round === "Coding Round (DSA)" ||
-                    round === "System Design" ||
-                    round === "SQL & Analytics" ||
-                    round === "Infrastructure Design" ||
-                    round === "Data Architecture" ||
-                    round === "ML System Design") && (
-                    <span
-                      className="inline-flex items-center gap-1 live-badge"
-                      style={{
-                        fontSize: "9px",
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        color: "var(--color-accent)",
-                        border: "1px solid var(--color-accent-border)",
-                        borderRadius: 3,
-                        padding: "1px 5px",
-                        lineHeight: "14px",
-                      }}
-                    >
-                      <span
-                        className="w-1 h-1 rounded-full"
-                        style={{
-                          background: "var(--color-accent)",
-                          boxShadow: "0 0 4px var(--color-accent-border)",
-                        }}
-                      />
-                      Live
-                    </span>
-                  )}
-                </p>
-                <p
-                  style={{
-                    fontSize: "12px",
-                    color: "var(--color-text-muted)",
-                    margin: "4px 0 0",
-                  }}
-                >
-                  {descriptions[round] ?? ""}
-                </p>
-              </div>
-            </motion.button>
-          );
-        })}
+              Recommended for {company!.name}
+            </p>
+            {companyRounds.map(renderRoundButton)}
+            <div
+              style={{
+                height: "1px",
+                background: "var(--color-border-light)",
+                margin: "4px 0",
+              }}
+            />
+          </>
+        )}
+        {sortedRounds.map(renderRoundButton)}
 
         <motion.button
           onClick={() => {

@@ -4,6 +4,8 @@ const SILENCE_CHECK_INTERVAL = 10_000;
 const MAX_SILENCE_PROMPTS = 3;
 const SILENCE_COOLDOWN = 60_000;
 const VOICE_SILENCE_THRESHOLD = 30_000;
+const VOICE_EXTENDED_THRESHOLD = 45_000;
+const VOICE_DESIGN_CRITIQUE_THRESHOLD = 40_000;
 const DSA_SILENCE_THRESHOLD = 120_000;
 const SD_SILENCE_THRESHOLD = 180_000;
 const DSA_CODE_ACTIVITY_WINDOW = 30_000;
@@ -57,8 +59,14 @@ function checkSilence(conn: InterviewConnection) {
     return;
   }
 
-  // Fall through to generic silence prompt for all modes
-  if (audioElapsed >= VOICE_SILENCE_THRESHOLD) {
+  // Fall through to generic silence prompt — threshold depends on variant tier
+  const voiceThreshold =
+    conn.silenceTier === "extended"
+      ? VOICE_EXTENDED_THRESHOLD
+      : conn.silenceTier === "design_critique"
+        ? VOICE_DESIGN_CRITIQUE_THRESHOLD
+        : VOICE_SILENCE_THRESHOLD;
+  if (audioElapsed >= voiceThreshold) {
     sendSilencePrompt(conn, "voice");
   }
 }

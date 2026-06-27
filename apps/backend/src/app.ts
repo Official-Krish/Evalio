@@ -13,6 +13,7 @@ import { profileRoutes } from "./routes/profile";
 import { contactRoutes } from "./routes/contact";
 import { feedbackRoutes } from "./routes/feedback";
 import { dsaRoutes } from "./routes/dsa";
+import { sqlRoutes } from "./routes/sql";
 import { sdRoutes } from "./routes/sd";
 import { analysisRoutes } from "./routes/analysis";
 import { globalRateLimit } from "./middleware/rateLimit";
@@ -141,6 +142,7 @@ export const app = new Elysia()
       .use(contactRoutes)
       .use(feedbackRoutes)
       .use(dsaRoutes)
+      .use(sqlRoutes)
       .use(sdRoutes)
       .use(analysisRoutes),
   );

@@ -1,25 +1,11 @@
 import { motion } from "motion/react";
 import { ROLE_CATEGORIES } from "@evalio/shared";
-import type { RoleCategory } from "@evalio/shared";
 
 const stepVariants = {
   enter: { opacity: 0, x: 20 },
   center: { opacity: 1, x: 0 },
   exit: { opacity: 0, x: -20 },
 };
-
-const btnNext = (enabled: boolean): React.CSSProperties => ({
-  padding: "10px 24px",
-  borderRadius: "8px",
-  border: "none",
-  background: enabled ? "var(--landing-fg, #eceae6)" : "var(--color-border)",
-  color: enabled ? "var(--landing-bg, #080808)" : "var(--color-text-muted)",
-  fontSize: "13px",
-  fontWeight: 500,
-  cursor: enabled ? "pointer" : "default",
-  letterSpacing: "-0.01em",
-  opacity: enabled ? 1 : 0.55,
-});
 
 const hoverProps = {
   whileHover: { scale: 1.02 },
@@ -44,15 +30,6 @@ interface StepCategoryProps {
   onSelectCategory: (id: string | null) => void;
   onContinue: () => void;
 }
-
-const CATEGORY_ICONS: Record<string, string> = {
-  engineering: "code",
-  devops: "server",
-  data: "chart",
-  product: "palette",
-  consulting: "briefcase",
-  management: "users",
-};
 
 export function StepCategory({
   selectedCategory,
@@ -118,7 +95,12 @@ export function StepCategory({
             <motion.button
               key={cat.id}
               onClick={() => {
-                onSelectCategory(active ? null : cat.id);
+                if (active) {
+                  onSelectCategory(null);
+                } else {
+                  onSelectCategory(cat.id);
+                  onContinue();
+                }
               }}
               whileTap={{ scale: 0.98 }}
               data-active={active || undefined}
@@ -160,24 +142,6 @@ export function StepCategory({
             </motion.button>
           );
         })}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          marginTop: "24px",
-        }}
-      >
-        <motion.button
-          onClick={() => {
-            if (selectedCategory) onContinue();
-          }}
-          whileHover={{ opacity: 0.88 }}
-          whileTap={{ scale: 0.97 }}
-          style={btnNext(!!selectedCategory)}
-        >
-          Continue →
-        </motion.button>
       </div>
     </motion.div>
   );

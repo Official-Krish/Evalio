@@ -79,7 +79,7 @@ export function StepRound({
             margin: "0 0 6px",
           }}
         >
-          Step 3 of 5
+          Step 4 of 6
         </motion.p>
         <motion.h1
           initial={{ opacity: 0, y: 8 }}

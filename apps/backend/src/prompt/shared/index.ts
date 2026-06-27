@@ -15,3 +15,19 @@ export {
   SD_BUDGETS,
 } from "./pacing";
 export type { PacingBudget } from "../types";
+export {
+  buildSdOpeningSection,
+  buildSdStageHeader,
+  buildSdStageFlow,
+  buildSdStageClarify,
+  buildSdStageRequirements,
+  buildSdStageDeepDive,
+  buildSdStageNewRequirements,
+  buildSdStageTradeoffs,
+  buildSdStageWrapUp,
+  buildSdPressureTesting,
+  buildSdPressureGroundRules,
+  buildSdScopeSection,
+  buildWhiteboardDirective,
+} from "./sd-stages";
+export type { SdStage, DepthQuestions, SdQuestion } from "./sd-stages";

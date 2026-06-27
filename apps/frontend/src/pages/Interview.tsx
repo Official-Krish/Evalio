@@ -98,6 +98,7 @@ export function InterviewPage() {
   } | null>(null);
   const [dsaLoading, setDsaLoading] = useState(false);
   const isDsa = interviewMeta?.mode === "DSA";
+  const isSql = interviewMeta?.interviewRound === "SQL & Analytics";
   const isSystemDesign = interviewMeta?.mode === "SYSTEM_DESIGN";
   const sdConnectedRef = useRef(false);
 
@@ -115,6 +116,38 @@ export function InterviewPage() {
   const sdPanelVisible = isSystemDesign;
 
   // Load DSA / SD session on mount
+  const { mutate: loadSqlSession } = useMutation({
+    mutationFn: () => {
+      setDsaLoading(true);
+      return api.startSqlSession(id!);
+    },
+    onSuccess: (data) => {
+      setDsaLoading(false);
+      const session = data.session as Record<string, unknown>;
+      if (!session) return;
+      const currentIndex = (session.currentIndex as number) ?? 0;
+      const problems =
+        (session.problems as Array<{
+          id: string;
+          index: number;
+          title: string;
+          slug: string;
+          difficulty: string;
+          description: string;
+          code: string | null;
+          codeSnapshots: Record<string, string> | null;
+          currentPhase: string;
+          phasesCompleted: string[];
+        }>) ?? [];
+      setDsaSessionData({
+        problems,
+        currentIndex,
+        language: (session.language as string) ?? "sql",
+      });
+    },
+    onError: () => setDsaLoading(false),
+  });
+
   const { mutate: loadDsaSession } = useMutation({
     mutationFn: () => {
       setDsaLoading(true);
@@ -211,8 +244,10 @@ export function InterviewPage() {
   });
 
   useEffect(() => {
-    if (isDsa && id) loadDsaSession();
-  }, [isDsa, id, loadDsaSession]);
+    if (!id) return;
+    if (isSql) loadSqlSession();
+    else if (isDsa) loadDsaSession();
+  }, [isSql, isDsa, id, loadSqlSession, loadDsaSession]);
 
   useEffect(() => {
     if (isSystemDesign && id) loadSdSession();
@@ -499,6 +534,12 @@ export function InterviewPage() {
       socketRef.current?.forceClose();
       socketRef.current = null;
       navigate(`/results/${id}`, { replace: true });
+    });
+
+    socket.on("question:next", () => {
+      if (!closingRef.current && !endedRef.current) {
+        console.log("[sql] question:next received");
+      }
     });
 
     socket.on("dsa_ready_next", (data) => {
@@ -835,12 +876,16 @@ export function InterviewPage() {
               onRequestHint={() =>
                 socketRef.current?.sendRequestHint(dsaSessionData.currentIndex)
               }
-              onLanguageChange={(lang) => {
-                setDsaSessionData((prev) =>
-                  prev ? { ...prev, language: lang } : prev,
-                );
-                socketRef.current?.sendLanguageChange(lang);
-              }}
+              {...(isSql
+                ? {}
+                : {
+                    onLanguageChange: (lang: string) => {
+                      setDsaSessionData((prev) =>
+                        prev ? { ...prev, language: lang } : prev,
+                      );
+                      socketRef.current?.sendLanguageChange(lang);
+                    },
+                  })}
             />
           )}
         </>

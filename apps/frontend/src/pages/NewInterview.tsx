@@ -13,7 +13,7 @@ import { StepRound } from "../components/Create-Interview/StepRound";
 import { StepStyle } from "../components/Create-Interview/StepStyle";
 import { StepResume } from "../components/Create-Interview/StepResume";
 import { SessionSummary } from "../components/Create-Interview/SessionSummary";
-import { COMPANIES, getDefaultStyleDepth } from "@evalio/shared";
+import { COMPANIES, getDefaultStyleDepth, getRoundPill } from "@evalio/shared";
 import { SEO } from "@/components/SEO";
 import type {
   Resume,
@@ -46,18 +46,9 @@ export function NewInterviewPage() {
   const [interviewDepth, setInterviewDepth] =
     useState<InterviewDepth>("STANDARD");
   const interviewMode = useMemo((): InterviewMode => {
-    if (
-      selectedRound === "Coding Round (DSA)" ||
-      selectedRound === "SQL & Analytics"
-    )
-      return "DSA";
-    if (
-      selectedRound === "System Design" ||
-      selectedRound === "Infrastructure Design" ||
-      selectedRound === "Data Architecture" ||
-      selectedRound === "ML System Design"
-    )
-      return "SYSTEM_DESIGN";
+    const pill = getRoundPill(selectedRound ?? "");
+    if (pill === "Live Code") return "DSA";
+    if (pill === "Live Design") return "SYSTEM_DESIGN";
     return "VOICE";
   }, [selectedRound]);
 
@@ -101,6 +92,8 @@ export function NewInterviewPage() {
     if (prevCompanyId.current !== selectedCompanyId) {
       setSelectedRound(null);
       setCustomRound("");
+      setSelectedRoleTitle(null);
+      setCustomRole("");
     }
     prevCompanyId.current = selectedCompanyId;
   }, [selectedCompanyId]);
@@ -356,40 +349,6 @@ export function NewInterviewPage() {
   return (
     <div className="relative">
       <SEO title="New Interview" noindex />
-      <span
-        className="inline-flex items-center gap-1.5 absolute top-0 -right-20 text-[10px] tracking-[0.12em] uppercase px-2 py-1"
-        style={{
-          color: "var(--color-accent)",
-          border: "1px solid var(--color-accent-border)",
-          borderRadius: 3,
-        }}
-      >
-        <span
-          className="w-1.5 h-1.5 rounded-full"
-          style={{
-            background: "var(--color-accent)",
-            boxShadow: "0 0 6px var(--color-accent-border)",
-          }}
-        />
-        System Design round is live now
-      </span>
-      <span
-        className="inline-flex items-center gap-1.5 absolute top-9 -right-20 text-[10px] tracking-[0.12em] uppercase px-2 py-1"
-        style={{
-          color: "var(--color-accent)",
-          border: "1px solid var(--color-accent-border)",
-          borderRadius: 3,
-        }}
-      >
-        <span
-          className="w-1.5 h-1.5 rounded-full"
-          style={{
-            background: "var(--color-accent)",
-            boxShadow: "0 0 6px var(--color-accent-border)",
-          }}
-        />
-        DSA round is live now
-      </span>
       <div
         className="lg:grid lg:grid-cols-[1fr_280px] lg:gap-10 max-w-5xl mx-auto"
         style={{ paddingBottom: step === 5 ? "0" : "160px" }}
@@ -419,12 +378,21 @@ export function NewInterviewPage() {
               <StepCompany
                 selectedCompanyId={selectedCompanyId}
                 customCompanyName={customCompanyName}
+                category={selectedCategory}
                 onSelectCompany={(id) => {
                   setSelectedCompanyId(id);
                   if (id !== "__custom__") setCustomCompanyName("");
                 }}
                 onCustomCompanyChange={setCustomCompanyName}
-                onContinue={() => setStep(2)}
+                onBack={() => setStep(0)}
+                onContinue={() => {
+                  if (selectedCompanyId === "__custom__") {
+                    setSelectedRoleTitle("__ai_decide__");
+                    setStep(3);
+                  } else {
+                    setStep(2);
+                  }
+                }}
                 onSkip={() => setStep(5)}
               />
             )}
@@ -433,6 +401,7 @@ export function NewInterviewPage() {
               <StepRole
                 companyId={selectedCompanyId}
                 companyName={selectedCompany?.name ?? null}
+                category={selectedCategory}
                 selectedRoleTitle={selectedRoleTitle}
                 customRole={customRole}
                 effectivePosition={effectivePosition}
@@ -454,7 +423,9 @@ export function NewInterviewPage() {
                 onSelectRound={setSelectedRound}
                 onCustomRoundChange={setCustomRound}
                 onContinue={() => setStep(4)}
-                onBack={() => setStep(2)}
+                onBack={() =>
+                  setStep(selectedCompanyId === "__custom__" ? 1 : 2)
+                }
                 onSkip={() => {
                   setStep(4);
                   setSelectedRound(null);

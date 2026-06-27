@@ -11,6 +11,10 @@ import { buildGeneralPrinciples } from "../shared/principles";
 import { buildDirectingDirective } from "../shared/directing";
 import { buildPacingDirective, VOICE_BUDGETS } from "../shared/pacing";
 
+export { buildCaseStudyPrompt } from "./case-study";
+export { buildProductSensePrompt } from "./product-sense";
+export { buildScenarioPrompt } from "./scenario";
+
 export function buildInterviewPrompt(input: PromptInput): string {
   const role =
     input.position?.trim() || "the role the candidate is applying for";
@@ -123,6 +127,7 @@ DEPTH CONTROL:
       input.roleTopics,
       input.roleEvaluationCriteria,
       input.roleMustProbe,
+      input.seniorityLabel,
     ),
   );
   sections.push(buildRoundDirective(input.interviewRound));

@@ -9,6 +9,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
 import { rust } from "@codemirror/lang-rust";
+import { sql, MySQL } from "@codemirror/lang-sql";
 
 const CODE_SAMPLES: Record<string, string> = {
   python: `def solution(nums, target):
@@ -43,6 +44,15 @@ public:
   kotlin: `fun solve(nums: IntArray, target: Int): IntArray {
   // Write your solution here
 }`,
+  sql: `SELECT
+  department,
+  COUNT(*) AS employee_count,
+  ROUND(AVG(salary), 2) AS avg_salary
+FROM employees
+WHERE hire_date >= '2023-01-01'
+GROUP BY department
+HAVING COUNT(*) > 5
+ORDER BY avg_salary DESC;`,
 };
 
 interface CodeEditorProps {
@@ -62,6 +72,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
   rust: "Rust",
   swift: "Swift",
   kotlin: "Kotlin",
+  sql: "SQL",
 };
 
 function buildLanguageExtension(language: string) {
@@ -78,6 +89,8 @@ function buildLanguageExtension(language: string) {
       return cpp();
     case "rust":
       return rust();
+    case "sql":
+      return sql({ dialect: MySQL });
     default:
       return python();
   }

@@ -7,6 +7,7 @@ export const ROLE_CATEGORIES = [
   { id: "product", label: "Product / Design", icon: "palette" },
   { id: "consulting", label: "Consulting / Business", icon: "briefcase" },
   { id: "management", label: "Engineering Management", icon: "users" },
+  { id: "other", label: "Other", icon: "more-horizontal" },
 ] as const;
 
 export type RoleCategory = (typeof ROLE_CATEGORIES)[number]["id"];
@@ -49,9 +50,43 @@ export const CATEGORY_ROUNDS: Record<
     { label: "System Design", mode: "SYSTEM_DESIGN" },
     { label: "Strategy & Vision", mode: "VOICE" },
   ],
+  other: [
+    { label: "Behavioral / Experience", mode: "VOICE" },
+    { label: "Technical Deep Dive", mode: "VOICE" },
+  ],
 };
 
 export const FALLBACK_ROUNDS: { label: string; mode: InterviewMode }[] = [
   { label: "Behavioral / Experience", mode: "VOICE" },
   { label: "Technical Deep Dive", mode: "VOICE" },
 ];
+
+export function getRoundPill(roundName: string): string | null {
+  const dsa = new Set([
+    "Coding Round (DSA)",
+    "SQL & Analytics",
+    "Technical & Coding",
+    "Technical Coding",
+    "Coding & Algorithms",
+    "Coding & Problem Solving",
+  ]);
+  const sd = new Set([
+    "System Design",
+    "Infrastructure Design",
+    "Data Architecture",
+    "ML System Design",
+    "System Design & Architecture",
+    "System Design & Integration",
+    "System Design & Risk",
+    "Real-time Systems Design",
+    "Observability & System Design",
+    "Product Design & Architecture",
+    "Architecture & Strategy",
+    "Rendering & Collaboration",
+    "Blocks & Architecture",
+    "Data Integration & Ontology",
+  ]);
+  if (dsa.has(roundName)) return "Live Code";
+  if (sd.has(roundName)) return "Live Design";
+  return null;
+}

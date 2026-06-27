@@ -200,11 +200,22 @@ export async function startInterview(
         await handleSdMarkers(conn);
       }
 
-      // Parse [STAGE:name] markers from model output for pacing advancement
-      if (turnComplete && conn.pacing) {
-        const stageMatch = (markerText || "").match(/\[STAGE:(\w+(?:-\w+)*)\]/);
-        if (stageMatch) {
-          conn.pacing.advanceTo(stageMatch[1]);
+      // Parse markers from model output — order: [STAGE:] → [QUESTION:next] → [PACING]
+      const markers = markerText || "";
+      if (turnComplete) {
+        if (conn.pacing) {
+          const stageMatch = markers.match(/\[STAGE:(\w+(?:-\w+)*)\]/);
+          if (stageMatch) {
+            conn.pacing.advanceTo(stageMatch[1]);
+          }
+        }
+
+        const questionMatch = markers.match(/\[QUESTION:next\]/i);
+        if (questionMatch) {
+          console.log("[orchestrator] [QUESTION:next] detected");
+          if (conn.isSqlMode) {
+            conn.safeSend({ type: "question:next" });
+          }
         }
       }
 

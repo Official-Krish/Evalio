@@ -23,6 +23,7 @@ export class InterviewConnection {
   waitingForAiResponse = false;
   isQueued = false;
   isDsaMode = false;
+  isSqlMode = false;
   dsaTransitioned = false;
   isSystemDesign = false;
   heartbeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -38,6 +39,7 @@ export class InterviewConnection {
   silencePromptCount = 0;
   lastSilencePromptTime = 0;
   silencePromptActive = false;
+  silenceTier: "standard" | "extended" | "design_critique" = "standard";
 
   // Pacing system
   pacing: PacingTracker | null = null;

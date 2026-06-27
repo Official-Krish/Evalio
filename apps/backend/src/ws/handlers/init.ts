@@ -1,15 +1,20 @@
 import { prisma } from "../../lib/prisma";
 import { COMPANIES } from "@evalio/shared";
-import { buildInterviewPrompt, type PromptInput } from "../../prompt";
-import { buildDsaSystemPrompt } from "../../prompt/dsa";
-import { buildSystemDesignPrompt } from "../../prompt";
 import { getSdQuestion } from "../../routes/sd";
 import { verifyWsToken, startInterview } from "../orchestrator";
 import { tryActivate, enqueue as queueEnqueue } from "../../lib/queue";
 import type { InterviewConnection } from "../session";
 import { startHeartbeat } from "../helpers/heartbeat";
 import { PacingTracker } from "../helpers/pacing";
-import { VOICE_BUDGETS, DSA_BUDGETS, SD_BUDGETS } from "../../prompt";
+import {
+  resolveRoute,
+  buildPromptFromRoute,
+  type PromptInput,
+  type SystemDesignPromptInput,
+  VOICE_BUDGETS,
+  DSA_BUDGETS,
+  SD_BUDGETS,
+} from "../../prompt";
 
 export async function handleInit(
   conn: InterviewConnection,
@@ -81,6 +86,7 @@ export async function handleInit(
 
   const selectedRole =
     companyConfig?.roles.find((r) => r.title === interview.roleTitle) ?? null;
+  const seniorityLabel = selectedRole?.seniorityLabel ?? null;
 
   const pastInterviews = await prisma.interviewSession.findMany({
     where: {
@@ -123,8 +129,35 @@ export async function handleInit(
   conn.isDsaMode = isDsa;
   conn.isSystemDesign = isSystemDesign;
 
-  const roleCategory = (interview as { roleCategory?: string | null })
-    .roleCategory;
+  const route = resolveRoute(
+    (interview as { interviewRound?: string | null }).interviewRound,
+    mode,
+  );
+  console.log("[init] resolved route:", route);
+  conn.isSqlMode = route.builder === "dsa_sql";
+
+  // Set silence tier based on round variant
+  const roundLabel = (interview as { interviewRound?: string | null })
+    .interviewRound;
+  if (roundLabel) {
+    const extendedRounds = [
+      "Case Study",
+      "Product Sense",
+      "Client Presentation",
+      "Quantitative Analysis",
+      "Incident Response",
+      "CI/CD & Automation",
+      "Scenario",
+    ];
+    if (extendedRounds.includes(roundLabel)) {
+      conn.silenceTier = "extended";
+    } else if (roundLabel === "Design Critique") {
+      conn.silenceTier = "design_critique";
+    }
+  }
+
+  const roleCategory = ((interview as { roleCategory?: string | null })
+    .roleCategory ?? null) as string | null;
   const isEngineeringDsaOrSd =
     roleCategory === "engineering" && (isDsa || isSystemDesign);
 
@@ -156,7 +189,7 @@ export async function handleInit(
 
   let systemPrompt: string;
 
-  if (isDsa) {
+  if (route.mode === "DSA") {
     const dsaSession = await prisma.dsaSession.findUnique({
       where: { interviewId: interview.id },
       include: { problems: { orderBy: { index: "asc" } } },
@@ -216,9 +249,9 @@ export async function handleInit(
             ? "declining"
             : "stable";
 
-    systemPrompt = buildDsaSystemPrompt(
-      problems,
-      {
+    systemPrompt = buildPromptFromRoute(route, {
+      dsaQuestions: problems,
+      dsaContext: {
         companyName: interview.companyName,
         roleTitle: (interview as { roleTitle?: string | null }).roleTitle,
         interviewRound: (interview as { interviewRound?: string | null })
@@ -228,21 +261,31 @@ export async function handleInit(
           .interviewDepth,
         interviewStyle: (interview as { interviewStyle?: string | null })
           .interviewStyle,
+        roleCategory,
+        seniorityLabel,
+        roleTopics: selectedRole?.topics ?? null,
+        roleEvaluationCriteria: selectedRole?.evaluationCriteria ?? null,
+        roleMustProbe: selectedRole?.mustProbe ?? null,
       },
-      {
+      dsaHistory: {
         pastSessions: dsaHistoryEntries,
         scoreTrendLast5: dsaScoreTrend,
         mostImproved: skillProfile?.mostImprovedSkill ?? null,
         weakest: skillProfile?.weakestSkill ?? null,
       },
-      durationMinutes,
-    );
+      dsaDurationMinutes: durationMinutes,
+    });
     console.log("[init] built DSA prompt:", systemPrompt.slice(0, 200));
-  } else if (isSystemDesign) {
+  } else if (route.mode === "SYSTEM_DESIGN") {
     console.log("[init] building System Design prompt");
-    const sdQuestion = getSdQuestion(interview.id);
+    const sdQuestion = getSdQuestion(
+      interview.id,
+      roleCategory,
+      interview.companyName ?? null,
+      interview.position ?? null,
+    );
     console.log("[init] sdQuestion found:", !!sdQuestion);
-    systemPrompt = buildSystemDesignPrompt({
+    const sdInput: SystemDesignPromptInput & { sdQuestion?: any } = {
       position: interview.position,
       sdQuestion: sdQuestion ?? undefined,
       candidateName: interview.user.name,
@@ -287,10 +330,13 @@ export async function handleInit(
       overallWeakest: skillProfile?.weakestSkill ?? null,
       overallPatterns: (skillProfile?.commonPatterns as string[]) ?? [],
       scoreTrendLast5,
-    });
+      roleCategory,
+      seniorityLabel,
+    };
+    systemPrompt = buildPromptFromRoute(route, { sdInput });
     console.log("[init] built SD prompt:", systemPrompt.slice(0, 200));
   } else {
-    const promptInput = {
+    const promptInput: PromptInput = {
       position: interview.position,
       candidateName: interview.user.name,
       resumeText: interview.resume?.extractedText ?? null,
@@ -334,8 +380,10 @@ export async function handleInit(
       overallWeakest: skillProfile?.weakestSkill ?? null,
       overallPatterns: (skillProfile?.commonPatterns as string[]) ?? [],
       scoreTrendLast5,
+      roleCategory,
+      seniorityLabel,
     };
-    systemPrompt = buildInterviewPrompt(promptInput);
+    systemPrompt = buildPromptFromRoute(route, { voiceInput: promptInput });
   }
 
   const startFn = async () => {

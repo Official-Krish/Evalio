@@ -25,16 +25,31 @@ export {
 } from "./shared";
 
 // Generic (VOICE)
-export { buildInterviewPrompt } from "./generic";
+export {
+  buildInterviewPrompt,
+  buildCaseStudyPrompt,
+  buildProductSensePrompt,
+  buildScenarioPrompt,
+} from "./generic";
 
 // System Design
-export { buildSystemDesignPrompt, buildWhiteboardDirective } from "./sd";
+export {
+  buildSystemDesignPrompt,
+  buildSdInfraPrompt,
+  buildSdDataArchPrompt,
+  buildSdMlPrompt,
+  buildWhiteboardDirective,
+} from "./sd";
 
 // DSA
 export {
   buildDsaSystemPrompt,
+  buildDsaSqlPrompt,
   buildDsaEvaluationPrompt,
   DSA_PHASES,
   DSA_EVALUATION_SCHEMA,
 } from "./dsa";
 export type { DsaPhase, DsaHistoryEntry } from "./dsa";
+
+// Router
+export { resolveRoute, buildPromptFromRoute } from "./router";

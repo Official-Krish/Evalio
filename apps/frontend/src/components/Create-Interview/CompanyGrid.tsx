@@ -24,6 +24,7 @@ import {
 interface CompanyGridProps {
   selectedCompanyId: string | null;
   onSelect: (companyId: string | null) => void;
+  category?: string | null;
 }
 
 function DeloitteLogo({ size }: { size: number }) {
@@ -87,9 +88,28 @@ const companyIcons: Record<string, IconType> = {
   startup: FaBolt,
 };
 
-export function CompanyGrid({ selectedCompanyId, onSelect }: CompanyGridProps) {
+export function CompanyGrid({
+  selectedCompanyId,
+  onSelect,
+  category,
+}: CompanyGridProps) {
+  const filtered = category
+    ? COMPANIES.filter((c) => c.roles.some((r) => r.category === category))
+    : COMPANIES;
   return (
     <div>
+      {filtered.length === 0 && (
+        <p
+          style={{
+            fontSize: "13px",
+            color: "var(--color-text-muted)",
+            textAlign: "center",
+            padding: "32px 0",
+          }}
+        >
+          No companies found for this category.
+        </p>
+      )}
       <div
         style={{
           display: "grid",
@@ -97,7 +117,7 @@ export function CompanyGrid({ selectedCompanyId, onSelect }: CompanyGridProps) {
           gap: "10px",
         }}
       >
-        {COMPANIES.map((company, i) => {
+        {filtered.map((company, i) => {
           const active = selectedCompanyId === company.id;
           return (
             <motion.button

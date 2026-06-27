@@ -10,6 +10,7 @@ export {
   ROLE_CATEGORIES,
   CATEGORY_ROUNDS,
   FALLBACK_ROUNDS,
+  getRoundPill,
 } from "./categories";
 export type { RoleCategory } from "./categories";
 
@@ -223,6 +224,18 @@ export interface EvaluationStatus {
     technical: number;
     problemSolving: number;
   } | null;
+}
+
+// ── SQL Session Types ──
+
+export interface SqlCachedQuestion {
+  id: number;
+  index: number;
+  title: string;
+  description: string;
+  difficulty: string;
+  schema: string;
+  solution: string;
 }
 
 // ── System Design / Canvas Types ──
