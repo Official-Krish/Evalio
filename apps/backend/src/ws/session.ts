@@ -24,8 +24,11 @@ export class InterviewConnection {
   isQueued = false;
   isDsaMode = false;
   isSqlMode = false;
+  isQuantMode = false;
   dsaTransitioned = false;
   isSystemDesign = false;
+  isCanvasMode = false;
+  canvasQuestionIndex = 0;
   heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   pongTimeoutId: ReturnType<typeof setTimeout> | null = null;
   lastAudioTime = 0;

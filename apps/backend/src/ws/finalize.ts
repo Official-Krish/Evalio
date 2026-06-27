@@ -32,11 +32,11 @@ export async function finalizeInterview(interviewId: string) {
       `[ws] finalizing interview ${interviewId}, triggering evaluation`,
     );
 
-    if (interview.mode === "DSA") {
+    if (interview.mode === "LIVE_CODE") {
       evaluateDsaSession(interviewId).catch((err) => {
         console.error("DSA evaluation failed:", err);
       });
-    } else if (interview.mode === "SYSTEM_DESIGN") {
+    } else if (interview.mode === "LIVE_CANVAS") {
       evaluateSystemDesignSession(interviewId).catch((err) => {
         console.error("System Design evaluation failed:", err);
       });

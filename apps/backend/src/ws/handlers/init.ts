@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma";
 import { COMPANIES } from "@evalio/shared";
 import { getSdQuestion } from "../../routes/sd";
+import { getCanvasQuestion } from "../../routes/canvas";
 import { verifyWsToken, startInterview } from "../orchestrator";
 import { tryActivate, enqueue as queueEnqueue } from "../../lib/queue";
 import type { InterviewConnection } from "../session";
@@ -124,9 +125,9 @@ export async function handleInit(
           : "stable";
 
   const mode = (interview as { mode?: string }).mode;
-  const isDsa = mode === "DSA";
-  const isSystemDesign = mode === "SYSTEM_DESIGN";
-  conn.isDsaMode = isDsa;
+  const isDsaMode = mode === "LIVE_CODE";
+  const isSystemDesign = mode === "LIVE_CANVAS";
+  conn.isDsaMode = isDsaMode;
   conn.isSystemDesign = isSystemDesign;
 
   const route = resolveRoute(
@@ -135,6 +136,7 @@ export async function handleInit(
   );
   console.log("[init] resolved route:", route);
   conn.isSqlMode = route.builder === "dsa_sql";
+  conn.isQuantMode = route.builder === "quant_standard";
 
   // Set silence tier based on round variant
   const roundLabel = (interview as { interviewRound?: string | null })
@@ -159,7 +161,7 @@ export async function handleInit(
   const roleCategory = ((interview as { roleCategory?: string | null })
     .roleCategory ?? null) as string | null;
   const isEngineeringDsaOrSd =
-    roleCategory === "engineering" && (isDsa || isSystemDesign);
+    roleCategory === "engineering" && (isDsaMode || isSystemDesign);
 
   // Engineering privilege: DSA and SD rounds always get 30 min
   const effectiveTimeLimitMs = isEngineeringDsaOrSd
@@ -172,8 +174,8 @@ export async function handleInit(
   console.log(
     "[init] mode:",
     mode,
-    "isDsa:",
-    isDsa,
+    "isDsaMode:",
+    isDsaMode,
     "isSystemDesign:",
     isSystemDesign,
     "roleCategory:",
@@ -183,13 +185,13 @@ export async function handleInit(
   );
 
   let pacingBudgets = VOICE_BUDGETS;
-  if (isDsa) pacingBudgets = DSA_BUDGETS;
+  if (isDsaMode) pacingBudgets = DSA_BUDGETS;
   else if (isSystemDesign) pacingBudgets = SD_BUDGETS;
   conn.pacing = new PacingTracker(effectiveTimeLimitMs, pacingBudgets);
 
   let systemPrompt: string;
 
-  if (route.mode === "DSA") {
+  if (route.mode === "LIVE_CODE") {
     const dsaSession = await prisma.dsaSession.findUnique({
       where: { interviewId: interview.id },
       include: { problems: { orderBy: { index: "asc" } } },
@@ -206,7 +208,7 @@ export async function handleInit(
     const pastDsaInterviews = await prisma.interviewSession.findMany({
       where: {
         userId: interview.userId,
-        mode: "DSA",
+        mode: "LIVE_CODE",
         status: "COMPLETED",
         id: { not: interview.id },
         dsaSession: { isNot: null },
@@ -231,7 +233,7 @@ export async function handleInit(
     const dsaScored = await prisma.interviewSession.findMany({
       where: {
         userId: interview.userId,
-        mode: "DSA",
+        mode: "LIVE_CODE",
         status: "COMPLETED",
         overallScore: { not: null },
       },
@@ -276,18 +278,62 @@ export async function handleInit(
       dsaDurationMinutes: durationMinutes,
     });
     console.log("[init] built DSA prompt:", systemPrompt.slice(0, 200));
-  } else if (route.mode === "SYSTEM_DESIGN") {
-    console.log("[init] building System Design prompt");
-    const sdQuestion = getSdQuestion(
-      interview.id,
-      roleCategory,
-      interview.companyName ?? null,
-      interview.position ?? null,
-    );
+  } else if (route.mode === "LIVE_CANVAS") {
+    console.log("[init] building System Design prompt, round:", roundLabel);
+
+    const canvasRoundLabels = [
+      "Product Sense",
+      "Design Critique",
+      "Strategy & Vision",
+    ];
+    const isCanvasRound = roundLabel
+      ? canvasRoundLabels.includes(roundLabel)
+      : false;
+    conn.isCanvasMode = isCanvasRound;
+
+    const sdQuestion = isCanvasRound
+      ? getCanvasQuestion(
+          interview.id,
+          roundLabel!,
+          conn.interviewDepth,
+          interview.interviewStyle ?? "PROFESSIONAL",
+          roleCategory,
+          interview.companyName ?? null,
+          interview.position ?? null,
+        )
+      : getSdQuestion(
+          interview.id,
+          roleCategory,
+          interview.companyName ?? null,
+          interview.position ?? null,
+        );
     console.log("[init] sdQuestion found:", !!sdQuestion);
-    const sdInput: SystemDesignPromptInput & { sdQuestion?: any } = {
+    const sdQuestions =
+      isCanvasRound && sdQuestion && (sdQuestion as any).questionCount > 1
+        ? [
+            {
+              title: sdQuestion.title,
+              description: sdQuestion.description,
+              fullBreakdown: sdQuestion.fullBreakdown,
+            },
+            {
+              title: (sdQuestion as any).backupTitle,
+              description: (sdQuestion as any).backupDescription,
+              fullBreakdown: (sdQuestion as any).backupFullBreakdown,
+            },
+          ].filter((q) => q.title)
+        : undefined;
+    const sdInput: SystemDesignPromptInput & {
+      sdQuestion?: any;
+      sdQuestions?: any[];
+      questionCount?: number;
+    } = {
       position: interview.position,
       sdQuestion: sdQuestion ?? undefined,
+      sdQuestions,
+      questionCount: isCanvasRound
+        ? ((sdQuestion as any)?.questionCount ?? 1)
+        : 1,
       candidateName: interview.user.name,
       companyName: interview.companyName ?? null,
       companyCulture: companyConfig?.culture ?? null,

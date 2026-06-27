@@ -33,7 +33,7 @@ export const sqlRoutes = new Elysia({ prefix: "/sql" })
             set.status = 404;
             return { error: "Interview not found" };
           }
-          if (interview.mode !== "DSA") {
+          if (interview.mode !== "LIVE_CODE") {
             set.status = 400;
             return { error: "SQL session requires DSA mode interview" };
           }

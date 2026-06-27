@@ -47,8 +47,8 @@ export function NewInterviewPage() {
     useState<InterviewDepth>("STANDARD");
   const interviewMode = useMemo((): InterviewMode => {
     const pill = getRoundPill(selectedRound ?? "");
-    if (pill === "Live Code") return "DSA";
-    if (pill === "Live Design") return "SYSTEM_DESIGN";
+    if (pill === "Live Code") return "LIVE_CODE";
+    if (pill === "Live Design") return "LIVE_CANVAS";
     return "VOICE";
   }, [selectedRound]);
 

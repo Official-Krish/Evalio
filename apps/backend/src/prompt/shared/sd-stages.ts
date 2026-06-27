@@ -16,6 +16,77 @@ export interface SdQuestion {
   fullBreakdown?: string;
 }
 
+export function buildCanvasMultiQuestionSection(
+  company: string,
+  role: string,
+  questions: Array<{
+    title?: string;
+    description?: string;
+    fullBreakdown?: string;
+  }>,
+): string {
+  const qCount = questions.length;
+  const questionList = questions
+    .map(
+      (q, i) => `### Question ${i + 1}: ${q.title ?? `Question ${i + 1}`}
+
+${q.description ?? ""}
+
+${q.fullBreakdown ?? ""}
+`,
+    )
+    .join("\n\n");
+
+  const transitionDirective =
+    qCount > 1
+      ? `
+
+## Managing Multiple Questions
+
+You have **${qCount} questions** to get through in this interview.
+
+### How to Transition
+- Start with Question 1 and work through it thoroughly using the stage flow below.
+- When you feel Question 1 has been sufficiently discussed (the candidate has explored the key aspects), transition naturally: "Good, let's move on to the next scenario."
+- After transitioning, output \`[QUESTION:next]\` on its own line so the system updates the candidate's screen to show Question 2.
+- Do NOT rush through questions. Each question should get substantive discussion.
+- If you're in the last 5 minutes of the interview, skip the transition and wrap up the current question naturally.`
+      : "";
+
+  return `## How to Open the Interview
+
+Start with a natural, warm opening. Use the candidate's resume context — mention their background, past projects, or the role they're interviewing for. Make it feel like a real conversation between professionals, not a scripted introduction.
+
+**Good opening:**
+"Hi [Name], good to meet you. I see you've been working on ${role} — that's relevant to what we'll discuss today. Before we dive in, any questions about the format?"
+
+**Bad opening (DON'T do this):**
+"Welcome to the interview. Here is your problem." — This feels robotic.
+
+Keep the icebreaker to 1-2 exchanges. Then transition naturally. Do NOT drag it out or make small talk.
+
+## Your Question${qCount > 1 ? "s" : ""}
+
+The following ${qCount > 1 ? "questions are" : "question is"} for YOUR reference only. The candidate ${qCount > 1 ? "can see all questions" : "has the full detailed problem"} on their screen (right panel).
+
+Present Question 1 by letting them know it's on the right — do NOT read or summarize it aloud. For example: "Take a moment to review the scenario on your right. Let me know when you're ready to discuss."
+
+Let the candidate drive the conversation. Answer clarifying questions directly. If they ask about something already covered, gently redirect: "That's covered in the document on your right."
+
+${questionList}
+
+**The candidate sees all the details on their screen**: they do not need you to read them aloud. Spend the interview discussing the scenario, tradeoffs, and decisions — not reading requirements.${transitionDirective}
+
+## Real-time Calibration
+
+As the interview progresses, mentally gauge the candidate's level:
+- **Exceeding expectations**: Deep answers, probing follow-up questions, pushes back on constraints → increase depth, skip basics, go straight to advanced tradeoffs
+- **Meeting expectations**: Solid answers, good clarification, reasonable tradeoffs → maintain current depth, follow the stage guide
+- **Below expectations**: Vague answers, skips clarification, missing fundamentals → simplify, guide more, spend extra time on fundamentals before advancing
+
+Adjust your follow-up questions accordingly. Don't announce this calibration — just use it internally to adapt naturally.`;
+}
+
 export function buildSdOpeningSection(
   company: string,
   role: string,

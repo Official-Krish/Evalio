@@ -652,8 +652,8 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Technical Coding",
-      "System Design & Architecture",
+      "Coding Round (DSA)",
+      "System Design",
       "Leadership Principles & Behavior",
     ],
   },
@@ -680,6 +680,43 @@ export const companies: CompanyConfig[] = [
     durationMinutes: 12,
     roles: [
       // ── Engineering ──
+      {
+        title: "SDE I",
+        description:
+          "Entry-level software development, learns Netflix's systems",
+        category: "engineering",
+        topics: [
+          "Algorithms",
+          "Data Structures",
+          "Problem Solving",
+          "Distributed Systems",
+        ],
+        evaluationCriteria: [
+          "Problem Solving",
+          "Code Quality",
+          "Learning Agility",
+        ],
+        mustProbe: ["Algorithm choices", "Edge case handling", "Past projects"],
+        duration: 10,
+      },
+      {
+        title: "SDE II",
+        description: "Independent delivery, designs and implements features",
+        category: "engineering",
+        topics: [
+          "Distributed Systems",
+          "System Design",
+          "Microservices",
+          "Reliability",
+        ],
+        evaluationCriteria: ["Technical Depth", "Scalability", "Execution"],
+        mustProbe: [
+          "System design decisions",
+          "Past projects",
+          "Technical leadership",
+        ],
+        duration: 10,
+      },
       {
         title: "Software Engineer III (L4)",
         description: "Core SWE — algorithms, data structures, system design",
@@ -1051,7 +1088,7 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Coding & Algorithms",
+      "Coding Round (DSA)",
       "System Design",
       "Googleyness & Leadership",
     ],
@@ -1443,7 +1480,7 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Coding & Problem Solving",
+      "Coding Round (DSA)",
       "Product Design & Architecture",
       "Behavioral & PMA",
     ],
@@ -2206,8 +2243,8 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Technical & Coding",
-      "System Design & Architecture",
+      "Coding Round (DSA)",
+      "System Design",
       "Behavioral & Growth",
     ],
   },
@@ -2494,7 +2531,7 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Technical & Coding",
+      "Coding Round (DSA)",
       "System Design & Integration",
       "Craftsmanship & Behavior",
     ],
@@ -2771,7 +2808,7 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Technical & Coding",
+      "Coding Round (DSA)",
       "Real-time Systems Design",
       "Operational & Behavior",
     ],
@@ -3039,7 +3076,7 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Technical & Coding",
+      "Coding Round (DSA)",
       "Product Design & Architecture",
       "Host-centric & Behavior",
     ],
@@ -3279,7 +3316,7 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Technical & Coding",
+      "Coding Round (DSA)",
       "Observability & System Design",
       "SRE & Reliability",
     ],
@@ -3744,7 +3781,7 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Technical & Coding",
+      "Coding Round (DSA)",
       "System Design & Risk",
       "Compliance & Behavior",
     ],
@@ -3988,7 +4025,7 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Technical & Coding",
+      "Coding Round (DSA)",
       "Data Integration & Ontology",
       "Mission & Behavior",
     ],
@@ -4239,7 +4276,7 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Technical & Coding",
+      "Coding Round (DSA)",
       "Rendering & Collaboration",
       "Design & Culture",
     ],
@@ -4483,7 +4520,7 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Technical & Coding",
+      "Coding Round (DSA)",
       "Blocks & Architecture",
       "Product & Behavior",
     ],
@@ -4689,7 +4726,7 @@ export const companies: CompanyConfig[] = [
     ],
     interviewRounds: [
       "Phone Screen",
-      "Technical & Coding",
+      "Coding Round (DSA)",
       "Architecture & Strategy",
       "Founder & Culture Fit",
     ],

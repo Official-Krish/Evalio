@@ -157,15 +157,16 @@ export function SessionSummary({
                     </motion.span>
                   </AnimatePresence>
 
-                  {s.label === "Interview Round" && interviewMode === "DSA" && (
-                    <span className="inline-flex items-center gap-1 ml-2 text-[9px] font-mono font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 rounded px-1.5 py-0.5 align-middle shrink-0">
-                      <IconRadio
-                        size={10}
-                        className="text-emerald-400 animate-pulse fill-emerald-400/20"
-                      />
-                      Live Code
-                    </span>
-                  )}
+                  {s.label === "Interview Round" &&
+                    interviewMode === "LIVE_CODE" && (
+                      <span className="inline-flex items-center gap-1 ml-2 text-[9px] font-mono font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 rounded px-1.5 py-0.5 align-middle shrink-0">
+                        <IconRadio
+                          size={10}
+                          className="text-emerald-400 animate-pulse fill-emerald-400/20"
+                        />
+                        Live Code
+                      </span>
+                    )}
                 </div>
               </div>
             </div>

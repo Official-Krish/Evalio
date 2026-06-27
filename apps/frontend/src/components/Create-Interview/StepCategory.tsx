@@ -137,6 +137,15 @@ export function StepCategory({
                   >
                     {cat.label}
                   </p>
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--color-text-muted)",
+                      margin: "4px 0 0",
+                    }}
+                  >
+                    {cat.description}
+                  </p>
                 </div>
               </div>
             </motion.button>

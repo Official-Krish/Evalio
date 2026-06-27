@@ -81,7 +81,11 @@ export const interviewDepthSchema = z.enum([
 ]);
 
 // ── Interview ──
-export const interviewModeSchema = z.enum(["VOICE", "DSA", "SYSTEM_DESIGN"]);
+export const interviewModeSchema = z.enum([
+  "VOICE",
+  "LIVE_CODE",
+  "LIVE_CANVAS",
+]);
 
 export const createInterviewSchema = z.object({
   position: z.string().min(1),

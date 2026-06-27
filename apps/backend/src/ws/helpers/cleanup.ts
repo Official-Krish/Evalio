@@ -2,6 +2,8 @@ import { removeFromQueue, releaseSlot } from "../../lib/queue";
 import { finalizeInterview } from "../finalize";
 import type { InterviewConnection } from "../session";
 import { stopHeartbeat } from "./heartbeat";
+import { clearCanvasQuestion } from "../../routes/canvas";
+import { clearSdQuestion } from "../../routes/sd";
 import {
   flushChallengeTurn,
   flushTurn,
@@ -44,6 +46,11 @@ export async function cleanup(conn: InterviewConnection, reason?: string) {
       conn.startCallbacks.delete(conn.interviewId);
       await conn.onDequeue();
     }
+  }
+
+  if (conn.interviewId) {
+    clearCanvasQuestion(conn.interviewId);
+    clearSdQuestion(conn.interviewId);
   }
   conn.gemini?.close();
 }

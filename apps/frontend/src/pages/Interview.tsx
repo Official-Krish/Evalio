@@ -97,9 +97,23 @@ export function InterviewPage() {
     language: string;
   } | null>(null);
   const [dsaLoading, setDsaLoading] = useState(false);
-  const isDsa = interviewMeta?.mode === "DSA";
+  const isDsa = interviewMeta?.mode === "LIVE_CODE";
   const isSql = interviewMeta?.interviewRound === "SQL & Analytics";
-  const isSystemDesign = interviewMeta?.mode === "SYSTEM_DESIGN";
+  const isQuant = interviewMeta?.interviewRound === "Quantitative Analysis";
+  const isSystemDesign = interviewMeta?.mode === "LIVE_CANVAS";
+  const roundLabel = interviewMeta?.interviewRound;
+  const isSdRound =
+    isSystemDesign &&
+    roundLabel &&
+    !["Product Sense", "Design Critique", "Strategy & Vision"].includes(
+      roundLabel,
+    );
+  const isCanvasRound =
+    isSystemDesign &&
+    roundLabel &&
+    ["Product Sense", "Design Critique", "Strategy & Vision"].includes(
+      roundLabel,
+    );
   const sdConnectedRef = useRef(false);
 
   const dsaPanelVisible = useMemo(() => {
@@ -113,6 +127,15 @@ export function InterviewPage() {
   });
   const [canvasDiff, setCanvasDiff] = useState<CanvasDiffAction[] | null>(null);
   const [sdFullProblemText, setSdFullProblemText] = useState("");
+  const [canvasQuestions, setCanvasQuestions] = useState<Array<{
+    title: string;
+    description: string;
+    fullBreakdown: string;
+  }> | null>(null);
+  const canvasQuestionsRef = useRef(canvasQuestions);
+  canvasQuestionsRef.current = canvasQuestions;
+  const [canvasCurrentQuestionIndex, setCanvasCurrentQuestionIndex] =
+    useState(0);
   const sdPanelVisible = isSystemDesign;
 
   // Load DSA / SD session on mount
@@ -243,15 +266,96 @@ export function InterviewPage() {
     },
   });
 
-  useEffect(() => {
-    if (!id) return;
-    if (isSql) loadSqlSession();
-    else if (isDsa) loadDsaSession();
-  }, [isSql, isDsa, id, loadSqlSession, loadDsaSession]);
+  const { mutate: loadCanvasSession } = useMutation({
+    mutationFn: () => {
+      setSdStarting(true);
+      return api.startCanvasSession(id!);
+    },
+    onSuccess: (data) => {
+      setSdStarting(false);
+      const d = data as Record<string, unknown>;
+      const questions = d.questions as
+        | Array<{ title: string; description: string; fullBreakdown: string }>
+        | undefined;
+      if (questions && questions.length > 0) {
+        setCanvasQuestions(questions);
+        setCanvasCurrentQuestionIndex(0);
+        const first = questions[0]!;
+        setSdTopic({ title: first.title, description: first.description });
+        sdFullProblemTextRef.current = first.fullBreakdown;
+        setSdFullProblemText(first.fullBreakdown);
+      } else if (data.title && data.description) {
+        setSdTopic({ title: data.title, description: data.description });
+        sdFullProblemTextRef.current = data.fullBreakdown;
+        setSdFullProblemText(data.fullBreakdown);
+      }
+      if (!sdConnectedRef.current) {
+        sdConnectedRef.current = true;
+        connectSocket().catch((err: Error) => {
+          if (mountedRef.current && !endedRef.current) {
+            setError(err.message);
+            toast.error(err.message);
+          }
+        });
+      }
+    },
+    onError: () => {
+      setSdStarting(false);
+    },
+  });
+
+  const { mutate: loadQuantSession } = useMutation({
+    mutationFn: () => {
+      setDsaLoading(true);
+      return api.startQuantSession(id!);
+    },
+    onSuccess: (data) => {
+      setDsaLoading(false);
+      const session = data.session as Record<string, unknown>;
+      if (!session) return;
+      const currentIndex = (session.currentIndex as number) ?? 0;
+      const problems =
+        (session.problems as Array<{
+          id: string;
+          index: number;
+          title: string;
+          slug: string;
+          difficulty: string;
+          description: string;
+          code: string | null;
+          codeSnapshots: Record<string, string> | null;
+          currentPhase: string;
+          phasesCompleted: string[];
+        }>) ?? [];
+      setDsaSessionData({
+        problems,
+        currentIndex,
+        language: (session.language as string) ?? "text",
+      });
+    },
+    onError: () => setDsaLoading(false),
+  });
 
   useEffect(() => {
-    if (isSystemDesign && id) loadSdSession();
-  }, [isSystemDesign, id, loadSdSession]);
+    if (!id) return;
+    if (isQuant) loadQuantSession();
+    else if (isSql) loadSqlSession();
+    else if (isDsa) loadDsaSession();
+  }, [
+    isQuant,
+    isSql,
+    isDsa,
+    id,
+    loadQuantSession,
+    loadSqlSession,
+    loadDsaSession,
+  ]);
+
+  useEffect(() => {
+    if (!id) return;
+    if (isCanvasRound) loadCanvasSession();
+    else if (isSdRound) loadSdSession();
+  }, [isCanvasRound, isSdRound, id, loadCanvasSession, loadSdSession]);
 
   const [sdStarting, setSdStarting] = useState(false);
   const latestCodeRef = useRef(dsaCode);
@@ -536,12 +640,6 @@ export function InterviewPage() {
       navigate(`/results/${id}`, { replace: true });
     });
 
-    socket.on("question:next", () => {
-      if (!closingRef.current && !endedRef.current) {
-        console.log("[sql] question:next received");
-      }
-    });
-
     socket.on("dsa_ready_next", (data) => {
       const msg = data as { index?: number | null };
       if (!sessionDataRef.current) {
@@ -592,10 +690,26 @@ export function InterviewPage() {
     });
 
     // System Design WS events
+    socket.on("canvas:next", (data: unknown) => {
+      const msg = data as { questionIndex: number };
+      setCanvasCurrentQuestionIndex(msg.questionIndex);
+      const questions = canvasQuestionsRef.current;
+      if (questions && msg.questionIndex < questions.length) {
+        const q = questions[msg.questionIndex]!;
+        setSdTopic({ title: q.title, description: q.description });
+        sdFullProblemTextRef.current = q.fullBreakdown;
+        setSdFullProblemText(q.fullBreakdown);
+        setCanvasDiff(null);
+        toast(`Moving to question ${msg.questionIndex + 1}`, {
+          duration: 3000,
+        });
+      }
+    });
+
     socket.on("canvas_diff", (data: unknown) => {
-      const msg = data as { actions?: CanvasDiffAction[] };
-      if (msg.actions && msg.actions.length > 0) {
-        setCanvasDiff(msg.actions);
+      const msg = data as { diff: CanvasDiffAction[]; thumbnail?: string };
+      if (msg.diff) {
+        setCanvasDiff(msg.diff);
       }
     });
 

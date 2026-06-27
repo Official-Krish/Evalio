@@ -28,6 +28,9 @@ import {
 export { buildSdInfraPrompt } from "./infra";
 export { buildSdDataArchPrompt } from "./data-arch";
 export { buildSdMlPrompt } from "./ml";
+export { buildProductCanvasPrompt } from "./product";
+export { buildDesignCritiquePrompt } from "./design-critique";
+export { buildStrategyVisionPrompt } from "./strategy";
 export { buildWhiteboardDirective } from "../shared";
 
 export function buildSystemDesignPrompt(

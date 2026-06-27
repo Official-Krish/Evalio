@@ -213,8 +213,8 @@ export function ResultsPage() {
 
   const interviewMode = (interview as unknown as Record<string, unknown>)
     .mode as string | undefined;
-  const isSd = interviewMode === "SYSTEM_DESIGN";
-  const isDsa = interviewMode === "DSA";
+  const isLiveCanvas = interviewMode === "LIVE_CANVAS";
+  const isLiveCode = interviewMode === "LIVE_CODE";
   const finalDiagram = (interview as unknown as Record<string, unknown>)
     .finalDiagram as CanvasSnapshot | null | undefined;
 
@@ -305,7 +305,7 @@ export function ResultsPage() {
 
       <StudyRecommendations topics={recommendedTopics} />
 
-      {isDsa &&
+      {isLiveCode &&
         !!(interview as unknown as Record<string, unknown>).dsaSession && (
           <DsaResultsSection
             session={
@@ -315,7 +315,7 @@ export function ResultsPage() {
           />
         )}
 
-      {isSd && <SdDesignSection finalDiagram={finalDiagram ?? null} />}
+      {isLiveCanvas && <SdDesignSection finalDiagram={finalDiagram ?? null} />}
 
       {turns.length > 0 && (
         <div className="pb-12">
@@ -324,7 +324,9 @@ export function ResultsPage() {
               className="text-[11px] tracking-[0.1em] uppercase m-0 font-semibold"
               style={{ color: "var(--landing-fg-muted)" }}
             >
-              {isSd || isDsa ? "AI QUESTIONS" : "QUESTIONS & ANSWERS"}
+              {isLiveCanvas || isLiveCode
+                ? "AI QUESTIONS"
+                : "QUESTIONS & ANSWERS"}
             </p>
             <span
               className="text-[11px] px-[10px] py-[2px] rounded-full border"
@@ -343,7 +345,7 @@ export function ResultsPage() {
                 key={turn.id}
                 turn={turn}
                 index={i}
-                showQuestionOnly={isSd || isDsa}
+                showQuestionOnly={isLiveCanvas || isLiveCode}
               />
             ))}
           </div>

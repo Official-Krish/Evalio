@@ -15,6 +15,8 @@ import { feedbackRoutes } from "./routes/feedback";
 import { dsaRoutes } from "./routes/dsa";
 import { sqlRoutes } from "./routes/sql";
 import { sdRoutes } from "./routes/sd";
+import { canvasRoutes } from "./routes/canvas";
+import { quantRoutes } from "./routes/quant";
 import { analysisRoutes } from "./routes/analysis";
 import { globalRateLimit } from "./middleware/rateLimit";
 
@@ -144,5 +146,7 @@ export const app = new Elysia()
       .use(dsaRoutes)
       .use(sqlRoutes)
       .use(sdRoutes)
+      .use(canvasRoutes)
+      .use(quantRoutes)
       .use(analysisRoutes),
   );

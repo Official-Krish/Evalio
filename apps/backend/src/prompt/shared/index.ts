@@ -29,5 +29,6 @@ export {
   buildSdPressureGroundRules,
   buildSdScopeSection,
   buildWhiteboardDirective,
+  buildCanvasMultiQuestionSection,
 } from "./sd-stages";
 export type { SdStage, DepthQuestions, SdQuestion } from "./sd-stages";

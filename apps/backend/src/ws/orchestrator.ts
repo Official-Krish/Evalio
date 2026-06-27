@@ -185,9 +185,14 @@ export async function startInterview(
 
       const turnComplete = parsed.serverContent?.turnComplete === true;
 
-      // DSA mode: detect READY_FOR_NEXT / ALL_DONE / CODE_UPDATE signals
+      // DSA/SQL mode: detect READY_FOR_NEXT / ALL_DONE / CODE_UPDATE signals
       // (runs before isNewQuestion to avoid questionBuf overwrite)
-      if (turnComplete && conn.isDsaMode && !conn.dsaTransitioned) {
+      if (
+        turnComplete &&
+        conn.isDsaMode &&
+        !conn.isQuantMode &&
+        !conn.dsaTransitioned
+      ) {
         console.log(
           "[dsa] turnComplete, buf:",
           JSON.stringify(conn.questionBuf).slice(0, 200),
@@ -211,11 +216,13 @@ export async function startInterview(
         }
 
         const questionMatch = markers.match(/\[QUESTION:next\]/i);
-        if (questionMatch) {
-          console.log("[orchestrator] [QUESTION:next] detected");
-          if (conn.isSqlMode) {
-            conn.safeSend({ type: "question:next" });
-          }
+        if (questionMatch && conn.isCanvasMode) {
+          console.log("[orchestrator] [QUESTION:next] detected for canvas");
+          conn.canvasQuestionIndex = safeIndex(conn.canvasQuestionIndex + 1);
+          conn.safeSend({
+            type: "canvas:next",
+            questionIndex: conn.canvasQuestionIndex,
+          });
         }
       }
 

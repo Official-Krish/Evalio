@@ -162,7 +162,7 @@ export function StepResume({
         onUseConnectedGithub={onUseConnectedGithub}
       />
 
-      {interviewMode !== "DSA" && (
+      {interviewMode !== "LIVE_CODE" && (
         <div style={{ marginTop: "24px", marginBottom: "24px" }}>
           <p
             style={{

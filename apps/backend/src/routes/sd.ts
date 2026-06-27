@@ -213,7 +213,7 @@ export const sdRoutes = new Elysia({ prefix: "/sd" })
           set.status = 404;
           return { error: "Interview not found" };
         }
-        if (interview.mode !== "SYSTEM_DESIGN") {
+        if (interview.mode !== "LIVE_CANVAS") {
           set.status = 400;
           return { error: "Interview is not in SYSTEM_DESIGN mode" };
         }

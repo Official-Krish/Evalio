@@ -280,8 +280,8 @@ enum InterviewDepth {
 
 enum InterviewMode {
   VOICE
-  DSA
-  SYSTEM_DESIGN
+  LIVE_CODE
+  LIVE_CANVAS
 }
 
 enum LeetCodeDifficulty {

@@ -32,12 +32,18 @@ export {
   buildScenarioPrompt,
 } from "./generic";
 
+// Quantitative Analysis
+export { buildQuantPrompt } from "./quant";
+
 // System Design
 export {
   buildSystemDesignPrompt,
   buildSdInfraPrompt,
   buildSdDataArchPrompt,
   buildSdMlPrompt,
+  buildProductCanvasPrompt,
+  buildDesignCritiquePrompt,
+  buildStrategyVisionPrompt,
   buildWhiteboardDirective,
 } from "./sd";
 
