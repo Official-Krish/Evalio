@@ -40,6 +40,44 @@ export const ROLE_CATEGORIES = [
       "Leadership, people management, technical strategy, and org design",
   },
   {
+    id: "security",
+    label: "Security",
+    icon: "shield",
+    description:
+      "Application security, threat modeling, and infrastructure security",
+  },
+  {
+    id: "mobile",
+    label: "Mobile",
+    icon: "smartphone",
+    description: "iOS, Android, and cross-platform mobile engineering",
+  },
+  {
+    id: "research",
+    label: "Research",
+    icon: "flask",
+    description: "ML research, applied science, and paper discussion",
+  },
+  {
+    id: "finance",
+    label: "Finance",
+    icon: "dollar-sign",
+    description: "Quantitative finance, trading, and risk analysis",
+  },
+  {
+    id: "hardware",
+    label: "Hardware",
+    icon: "cpu",
+    description: "Embedded systems, hardware engineering, and manufacturing",
+  },
+  {
+    id: "sales_gtm",
+    label: "Sales / GTM",
+    icon: "trending-up",
+    description:
+      "Sales engineering, go-to-market strategy, and customer success",
+  },
+  {
     id: "other",
     label: "Other",
     icon: "more-horizontal",
@@ -73,7 +111,7 @@ export const CATEGORY_ROUNDS: Record<
   ],
   consulting: [
     { label: "Behavioral / Experience", mode: "VOICE" },
-    { label: "Case Study", mode: "VOICE" },
+    { label: "Case Study", mode: "DISCUSSION" },
     { label: "Client Presentation", mode: "VOICE" },
     { label: "Quantitative Analysis", mode: "LIVE_CODE" },
   ],
@@ -90,6 +128,39 @@ export const CATEGORY_ROUNDS: Record<
   other: [
     { label: "Behavioral / Experience", mode: "VOICE" },
     { label: "Technical Deep Dive", mode: "VOICE" },
+  ],
+  security: [
+    { label: "Behavioral / Experience", mode: "VOICE" },
+    { label: "Threat Modeling", mode: "DISCUSSION" },
+    { label: "Vulnerability Analysis", mode: "VOICE" },
+    { label: "Incident Response", mode: "VOICE" },
+  ],
+  mobile: [
+    { label: "Behavioral / Experience", mode: "VOICE" },
+    { label: "Mobile Architecture", mode: "LIVE_CANVAS" },
+    { label: "Coding Round (DSA)", mode: "LIVE_CODE" },
+    { label: "Technical Deep Dive", mode: "VOICE" },
+  ],
+  research: [
+    { label: "Behavioral / Experience", mode: "VOICE" },
+    { label: "Paper Critique", mode: "DISCUSSION" },
+    { label: "Research Deep Dive", mode: "VOICE" },
+    { label: "ML System Design", mode: "LIVE_CANVAS" },
+  ],
+  finance: [
+    { label: "Behavioral / Experience", mode: "VOICE" },
+    { label: "Quantitative Case", mode: "DISCUSSION" },
+    { label: "Market & Risk Scenario", mode: "VOICE" },
+  ],
+  hardware: [
+    { label: "Behavioral / Experience", mode: "VOICE" },
+    { label: "Hardware Design", mode: "LIVE_CANVAS" },
+    { label: "Debugging Scenario", mode: "VOICE" },
+  ],
+  sales_gtm: [
+    { label: "Behavioral / Experience", mode: "VOICE" },
+    { label: "Mock Pitch", mode: "DISCUSSION" },
+    { label: "Discovery Call Simulation", mode: "VOICE" },
   ],
 };
 
@@ -112,6 +183,7 @@ export function getRoundPill(roundName: string): string | null {
     "Product Sense",
     "Design Critique",
     "Strategy & Vision",
+    "Case Study",
     "System Design & Architecture",
     "System Design & Integration",
     "System Design & Risk",
@@ -122,6 +194,8 @@ export function getRoundPill(roundName: string): string | null {
     "Rendering & Collaboration",
     "Blocks & Architecture",
     "Data Integration & Ontology",
+    "Mobile Architecture",
+    "Hardware Design",
   ]);
   if (liveCode.has(roundName)) return "Live Code";
   if (liveCanvas.has(roundName)) return "Live Design";

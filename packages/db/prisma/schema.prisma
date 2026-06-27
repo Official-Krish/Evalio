@@ -282,6 +282,7 @@ enum InterviewMode {
   VOICE
   LIVE_CODE
   LIVE_CANVAS
+  DISCUSSION
 }
 
 enum LeetCodeDifficulty {

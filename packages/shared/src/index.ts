@@ -85,6 +85,7 @@ export const interviewModeSchema = z.enum([
   "VOICE",
   "LIVE_CODE",
   "LIVE_CANVAS",
+  "DISCUSSION",
 ]);
 
 export const createInterviewSchema = z.object({

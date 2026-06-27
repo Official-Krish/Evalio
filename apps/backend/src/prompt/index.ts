@@ -25,12 +25,7 @@ export {
 } from "./shared";
 
 // Generic (VOICE)
-export {
-  buildInterviewPrompt,
-  buildCaseStudyPrompt,
-  buildProductSensePrompt,
-  buildScenarioPrompt,
-} from "./generic";
+export { buildInterviewPrompt, buildScenarioPrompt } from "./generic";
 
 // Quantitative Analysis
 export { buildQuantPrompt } from "./quant";
@@ -51,7 +46,6 @@ export {
 export {
   buildDsaSystemPrompt,
   buildDsaSqlPrompt,
-  buildDsaEvaluationPrompt,
   DSA_PHASES,
   DSA_EVALUATION_SCHEMA,
 } from "./dsa";

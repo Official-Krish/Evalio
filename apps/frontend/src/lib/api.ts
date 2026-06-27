@@ -334,6 +334,44 @@ export const api = {
     };
   },
 
+  startCaseStudySession: async (interviewId: string) => {
+    const { data, error } = await client.api["case-study"].start.post({
+      interviewId,
+    });
+    if (error) throw new Error(errorMessage(error.value));
+    return data as unknown as {
+      title: string;
+      description: string;
+      fullBreakdown: string;
+      difficulty: string;
+      questionCount?: number;
+      questions?: Array<{
+        title: string;
+        description: string;
+        fullBreakdown: string;
+      }>;
+    };
+  },
+
+  startDiscussionSession: async (interviewId: string) => {
+    const { data, error } = await client.api.discussion.start.post({
+      interviewId,
+    });
+    if (error) throw new Error(errorMessage(error.value));
+    return data as unknown as {
+      title: string;
+      description: string;
+      fullBreakdown: string;
+      difficulty: string;
+      questionCount?: number;
+      questions?: Array<{
+        title: string;
+        description: string;
+        fullBreakdown: string;
+      }>;
+    };
+  },
+
   startQuantSession: async (interviewId: string) => {
     const { data, error } = await client.api.quant.start.post({
       interviewId,

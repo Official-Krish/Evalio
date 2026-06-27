@@ -32,6 +32,8 @@ export { buildProductCanvasPrompt } from "./product";
 export { buildDesignCritiquePrompt } from "./design-critique";
 export { buildStrategyVisionPrompt } from "./strategy";
 export { buildWhiteboardDirective } from "../shared";
+export { buildMobileArchitecturePrompt } from "./mobile-arch";
+export { buildHardwareDesignPrompt } from "./hardware";
 
 export function buildSystemDesignPrompt(
   input: SystemDesignPromptInput & {

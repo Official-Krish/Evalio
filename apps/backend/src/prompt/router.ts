@@ -1,10 +1,5 @@
 import type { InterviewMode } from "@evalio/shared";
-import {
-  buildInterviewPrompt,
-  buildCaseStudyPrompt,
-  buildProductSensePrompt,
-  buildScenarioPrompt,
-} from "./generic";
+import { buildInterviewPrompt, buildScenarioPrompt } from "./generic";
 import type { PromptInput } from "./types";
 import { buildDsaSystemPrompt, buildDsaSqlPrompt } from "./dsa";
 import {
@@ -15,7 +10,16 @@ import {
   buildProductCanvasPrompt,
   buildDesignCritiquePrompt,
   buildStrategyVisionPrompt,
+  buildMobileArchitecturePrompt,
+  buildHardwareDesignPrompt,
 } from "./sd";
+import {
+  buildCaseStudyDiscussionPrompt,
+  buildThreatModelingDiscussionPrompt,
+  buildPaperCritiqueDiscussionPrompt,
+  buildQuantCaseDiscussionPrompt,
+  buildMockPitchDiscussionPrompt,
+} from "./discussion";
 import { buildQuantPrompt } from "./quant";
 import type { SystemDesignPromptInput } from "./types";
 
@@ -31,10 +35,15 @@ interface RoundRoute {
     | "sd_product"
     | "sd_design_critique"
     | "sd_strategy"
+    | "sd_mobile_arch"
+    | "sd_hardware"
+    | "discussion_case_study"
+    | "discussion_threat_modeling"
+    | "discussion_paper_critique"
+    | "discussion_quant_case"
+    | "discussion_mock_pitch"
     | "quant_standard"
     | "voice_standard"
-    | "voice_case_study"
-    | "voice_product_sense"
     | "voice_scenario";
 }
 
@@ -45,7 +54,7 @@ const ROUTER: Record<string, RoundRoute> = {
   "Infrastructure Design": { mode: "LIVE_CANVAS", builder: "sd_infra" },
   "Data Architecture": { mode: "LIVE_CANVAS", builder: "sd_data_arch" },
   "ML System Design": { mode: "LIVE_CANVAS", builder: "sd_ml" },
-  "Case Study": { mode: "VOICE", builder: "voice_case_study" },
+  "Case Study": { mode: "DISCUSSION", builder: "discussion_case_study" },
   "Product Sense": { mode: "LIVE_CANVAS", builder: "sd_product" },
   "Design Critique": { mode: "LIVE_CANVAS", builder: "sd_design_critique" },
   "Client Presentation": { mode: "VOICE", builder: "voice_scenario" },
@@ -56,11 +65,24 @@ const ROUTER: Record<string, RoundRoute> = {
   "Behavioral / Experience": { mode: "VOICE", builder: "voice_standard" },
   "Technical Deep Dive": { mode: "VOICE", builder: "voice_standard" },
   "Strategy & Vision": { mode: "LIVE_CANVAS", builder: "sd_strategy" },
+  "Threat Modeling": {
+    mode: "DISCUSSION",
+    builder: "discussion_threat_modeling",
+  },
+  "Paper Critique": {
+    mode: "DISCUSSION",
+    builder: "discussion_paper_critique",
+  },
+  "Quantitative Case": { mode: "DISCUSSION", builder: "discussion_quant_case" },
+  "Mock Pitch": { mode: "DISCUSSION", builder: "discussion_mock_pitch" },
+  "Mobile Architecture": { mode: "LIVE_CANVAS", builder: "sd_mobile_arch" },
+  "Hardware Design": { mode: "LIVE_CANVAS", builder: "sd_hardware" },
 };
 
 const MODE_DEFAULTS: Record<string, RoundRoute> = {
   LIVE_CODE: { mode: "LIVE_CODE", builder: "dsa_standard" },
   LIVE_CANVAS: { mode: "LIVE_CANVAS", builder: "sd_standard" },
+  DISCUSSION: { mode: "DISCUSSION", builder: "discussion_case_study" },
   VOICE: { mode: "VOICE", builder: "voice_standard" },
 };
 
@@ -122,6 +144,16 @@ export function buildPromptFromRoute(
       return buildDesignCritiquePrompt(params.sdInput!);
     case "sd_strategy":
       return buildStrategyVisionPrompt(params.sdInput!);
+    case "discussion_case_study":
+      return buildCaseStudyDiscussionPrompt(params.sdInput!);
+    case "discussion_threat_modeling":
+      return buildThreatModelingDiscussionPrompt(params.sdInput!);
+    case "discussion_paper_critique":
+      return buildPaperCritiqueDiscussionPrompt(params.sdInput!);
+    case "discussion_quant_case":
+      return buildQuantCaseDiscussionPrompt(params.sdInput!);
+    case "discussion_mock_pitch":
+      return buildMockPitchDiscussionPrompt(params.sdInput!);
     case "quant_standard":
       return buildQuantPrompt({
         companyName:
@@ -157,12 +189,12 @@ export function buildPromptFromRoute(
           difficulty: q.difficulty,
         })),
       });
-    case "voice_case_study":
-      return buildCaseStudyPrompt(params.voiceInput!);
-    case "voice_product_sense":
-      return buildProductSensePrompt(params.voiceInput!);
     case "voice_scenario":
       return buildScenarioPrompt(params.voiceInput!);
+    case "sd_mobile_arch":
+      return buildMobileArchitecturePrompt(params.sdInput!);
+    case "sd_hardware":
+      return buildHardwareDesignPrompt(params.sdInput!);
     case "sd_standard":
       return buildSystemDesignPrompt(params.sdInput!);
     case "voice_standard":

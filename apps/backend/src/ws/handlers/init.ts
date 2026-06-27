@@ -2,6 +2,7 @@ import { prisma } from "../../lib/prisma";
 import { COMPANIES } from "@evalio/shared";
 import { getSdQuestion } from "../../routes/sd";
 import { getCanvasQuestion } from "../../routes/canvas";
+import { getDiscussionQuestion } from "../../routes/discussion";
 import { verifyWsToken, startInterview } from "../orchestrator";
 import { tryActivate, enqueue as queueEnqueue } from "../../lib/queue";
 import type { InterviewConnection } from "../session";
@@ -127,6 +128,7 @@ export async function handleInit(
   const mode = (interview as { mode?: string }).mode;
   const isDsaMode = mode === "LIVE_CODE";
   const isSystemDesign = mode === "LIVE_CANVAS";
+  const isDiscussionMode = mode === "DISCUSSION";
   conn.isDsaMode = isDsaMode;
   conn.isSystemDesign = isSystemDesign;
 
@@ -186,7 +188,7 @@ export async function handleInit(
 
   let pacingBudgets = VOICE_BUDGETS;
   if (isDsaMode) pacingBudgets = DSA_BUDGETS;
-  else if (isSystemDesign) pacingBudgets = SD_BUDGETS;
+  else if (isSystemDesign || isDiscussionMode) pacingBudgets = SD_BUDGETS;
   conn.pacing = new PacingTracker(effectiveTimeLimitMs, pacingBudgets);
 
   let systemPrompt: string;
@@ -381,6 +383,91 @@ export async function handleInit(
     };
     systemPrompt = buildPromptFromRoute(route, { sdInput });
     console.log("[init] built SD prompt:", systemPrompt.slice(0, 200));
+  } else if (route.mode === "DISCUSSION") {
+    console.log("[init] building Discussion prompt, round:", roundLabel);
+    conn.isCanvasMode = true;
+
+    const sdQuestion = getDiscussionQuestion(
+      interview.id,
+      roundLabel ?? "Case Study",
+      conn.interviewDepth,
+      interview.interviewStyle ?? "PROFESSIONAL",
+      roleCategory,
+      interview.companyName ?? null,
+      interview.position ?? null,
+    );
+    console.log("[init] discussion question found:", !!sdQuestion);
+    const sdQuestions =
+      sdQuestion && (sdQuestion as any).questionCount > 1
+        ? [
+            {
+              title: sdQuestion.title,
+              description: sdQuestion.description,
+              fullBreakdown: sdQuestion.fullBreakdown,
+            },
+            {
+              title: (sdQuestion as any).backupTitle,
+              description: (sdQuestion as any).backupDescription,
+              fullBreakdown: (sdQuestion as any).backupFullBreakdown,
+            },
+          ].filter((q) => q.title)
+        : undefined;
+    const sdInput: SystemDesignPromptInput & {
+      sdQuestion?: any;
+      sdQuestions?: any[];
+      questionCount?: number;
+    } = {
+      position: interview.position,
+      sdQuestion: sdQuestion ?? undefined,
+      sdQuestions,
+      questionCount: (sdQuestion as any)?.questionCount ?? 1,
+      candidateName: interview.user.name,
+      companyName: interview.companyName ?? null,
+      companyCulture: companyConfig?.culture ?? null,
+      companyInterviewerBehavior: companyConfig?.interviewerBehavior ?? null,
+      companyEvaluationBiases: companyConfig?.evaluationBiases ?? null,
+      roleTopics: selectedRole?.topics ?? null,
+      roleEvaluationCriteria: selectedRole?.evaluationCriteria ?? null,
+      roleMustProbe: selectedRole?.mustProbe ?? null,
+      interviewRound:
+        (interview as { interviewRound?: string | null }).interviewRound ??
+        null,
+      resumeText: interview.resume?.extractedText ?? null,
+      jobDescription:
+        (interview as { jobDescription?: string | null }).jobDescription ??
+        null,
+      githubUsername: github?.username ?? null,
+      githubSummary: github?.summary ?? null,
+      githubLanguages: (github?.languages as string[]) ?? [],
+      githubProjects:
+        (github?.projects as {
+          name: string;
+          description: string | null;
+          stars: number;
+          language: string | null;
+        }[]) ?? [],
+      interviewStyle: (interview.interviewStyle ??
+        "PROFESSIONAL") as PromptInput["interviewStyle"],
+      interviewDepth: conn.interviewDepth as PromptInput["interviewDepth"],
+      durationMinutes,
+      candidateHistory: pastInterviews.map((iv) => ({
+        date: iv.createdAt.toISOString(),
+        role: iv.roleTitle ?? iv.position,
+        mode: (iv as { mode?: string }).mode,
+        overallScore: iv.overallScore,
+        strengths: (iv.summary?.strengths as string[]) ?? [],
+        weaknesses: (iv.summary?.weaknesses as string[]) ?? [],
+        summary: iv.summary?.summary ?? null,
+      })),
+      overallMostImproved: skillProfile?.mostImprovedSkill ?? null,
+      overallWeakest: skillProfile?.weakestSkill ?? null,
+      overallPatterns: (skillProfile?.commonPatterns as string[]) ?? [],
+      scoreTrendLast5,
+      roleCategory,
+      seniorityLabel,
+    };
+    systemPrompt = buildPromptFromRoute(route, { sdInput });
+    console.log("[init] built Discussion prompt:", systemPrompt.slice(0, 200));
   } else {
     const promptInput: PromptInput = {
       position: interview.position,

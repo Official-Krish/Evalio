@@ -17,6 +17,8 @@ import { sqlRoutes } from "./routes/sql";
 import { sdRoutes } from "./routes/sd";
 import { canvasRoutes } from "./routes/canvas";
 import { quantRoutes } from "./routes/quant";
+import { caseStudyRoutes } from "./routes/case-study";
+import { discussionRoutes } from "./routes/discussion";
 import { analysisRoutes } from "./routes/analysis";
 import { globalRateLimit } from "./middleware/rateLimit";
 
@@ -148,5 +150,7 @@ export const app = new Elysia()
       .use(sdRoutes)
       .use(canvasRoutes)
       .use(quantRoutes)
+      .use(caseStudyRoutes)
+      .use(discussionRoutes)
       .use(analysisRoutes),
   );

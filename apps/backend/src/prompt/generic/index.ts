@@ -11,8 +11,6 @@ import { buildGeneralPrinciples } from "../shared/principles";
 import { buildDirectingDirective } from "../shared/directing";
 import { buildPacingDirective, VOICE_BUDGETS } from "../shared/pacing";
 
-export { buildCaseStudyPrompt } from "./case-study";
-export { buildProductSensePrompt } from "./product-sense";
 export { buildScenarioPrompt } from "./scenario";
 
 export function buildInterviewPrompt(input: PromptInput): string {

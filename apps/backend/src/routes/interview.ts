@@ -91,8 +91,11 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
                 userId: user.id,
                 status: "CREATED",
                 mode:
-                  (body.mode as "VOICE" | "LIVE_CODE" | "LIVE_CANVAS") ??
-                  "VOICE",
+                  (body.mode as
+                    | "VOICE"
+                    | "LIVE_CODE"
+                    | "LIVE_CANVAS"
+                    | "DISCUSSION") ?? "VOICE",
                 position: body.position,
                 jobDescription: body.jobDescription,
                 resumeId: resume.id,
@@ -146,6 +149,7 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" }).guard(
                   VOICE: "VOICE",
                   DSA: "LIVE_CODE",
                   SYSTEM_DESIGN: "LIVE_CANVAS",
+                  DISCUSSION: "DISCUSSION",
                 }),
               ),
               language: t.Optional(t.String()),

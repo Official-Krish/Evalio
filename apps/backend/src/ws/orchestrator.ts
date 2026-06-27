@@ -87,11 +87,17 @@ export async function startInterview(
       "Start the DSA coding interview. Say you're their interviewer for the day. Mention the role and company they're interviewing for. Tell the candidate their first coding problem is displayed on the right side of their screen. Ask them to take a moment to read it and let you know when they're ready. Then STOP — wait for their response. Do NOT discuss the problem or ask any technical questions until they confirm they're ready. Do not use a name or introduce yourself personally — just say you're their interviewer.",
       "Begin the DSA coding interview. Briefly mention the role they're interviewing for and the company. Do not say your name or introduce yourself personally — just say you're their interviewer. Point out that the first question is visible on their screen. Ask if they can see it and if they have any immediate questions. Then wait for their reply before proceeding.",
     ];
+  } else if (conn.isDiscussionMode) {
+    greetings = [
+      "Start the case study discussion. Greet the candidate naturally. Say you are their interviewer for the day and mention the role and company. No name. Tell them the case study is displayed on the right side of their screen. Ask them to read it and let you know when they are ready. Then STOP and wait. Do NOT discuss the case until they confirm they are ready.",
+      "Begin the case study discussion. Briefly mention the role and company. No name. Point out the case study is visible on their screen. Ask if they can see it and if they have any questions. Then wait for their reply before proceeding.",
+      "Start the session. Greet the candidate conversationally — say you are their interviewer for the day and state the role and company. No name. Tell them the case is on their right screen. Ask them to read it and let you know when they are ready. Then wait.",
+    ];
   } else {
     greetings = [
-      "Start the interview. Greet the candidate naturally. Say you're their interviewer for the day and mention the role and company they're interviewing for. Do not introduce yourself with a name. Then ask your first question.",
-      "Begin the interview. Welcome the candidate — just say you're their interviewer, mention what they're here for (role at company), and keep it brief. Do not use a name. Then move to questions.",
-      "Start the session. Greet the candidate conversationally — say you're their interviewer for the day and state the role and company. No name or personal introduction. Then lead into the first question.",
+      "Start the interview. Greet the candidate naturally. Say you are their interviewer for the day and mention the role and company they are interviewing for. No name. Then ask your first question.",
+      "Begin the interview. Welcome the candidate — just say you are their interviewer, mention what they are here for (role at company), and keep it brief. No name. Then move to questions.",
+      "Start the session. Greet the candidate conversationally — say you are their interviewer for the day and state the role and company. No name. Then lead into the first question.",
     ];
   }
   conn.gemini.send(

@@ -9,6 +9,7 @@ import { InterviewSocket } from "../lib/ws";
 import { api } from "../lib/api";
 import { DsaPanel } from "../components/interview/DsaPanel";
 import { WhiteboardPanel } from "@/components/system-design/WhiteboardPanel";
+import { CaseStudyPanel } from "@/components/interview/CaseStudyPanel";
 import type { CanvasDiffAction } from "@evalio/shared";
 import { SEO } from "@/components/SEO";
 import { Ambient } from "@/components/landing/Ambient";
@@ -101,6 +102,7 @@ export function InterviewPage() {
   const isSql = interviewMeta?.interviewRound === "SQL & Analytics";
   const isQuant = interviewMeta?.interviewRound === "Quantitative Analysis";
   const isSystemDesign = interviewMeta?.mode === "LIVE_CANVAS";
+  const isDiscussion = interviewMeta?.mode === "DISCUSSION";
   const roundLabel = interviewMeta?.interviewRound;
   const isSdRound =
     isSystemDesign &&
@@ -133,10 +135,12 @@ export function InterviewPage() {
     fullBreakdown: string;
   }> | null>(null);
   const canvasQuestionsRef = useRef(canvasQuestions);
-  canvasQuestionsRef.current = canvasQuestions;
+  useEffect(() => {
+    canvasQuestionsRef.current = canvasQuestions;
+  }, [canvasQuestions]);
   const [canvasCurrentQuestionIndex, setCanvasCurrentQuestionIndex] =
     useState(0);
-  const sdPanelVisible = isSystemDesign;
+  const sdPanelVisible = isSystemDesign || isDiscussion;
 
   // Load DSA / SD session on mount
   const { mutate: loadSqlSession } = useMutation({
@@ -284,10 +288,40 @@ export function InterviewPage() {
         setSdTopic({ title: first.title, description: first.description });
         sdFullProblemTextRef.current = first.fullBreakdown;
         setSdFullProblemText(first.fullBreakdown);
-      } else if (data.title && data.description) {
-        setSdTopic({ title: data.title, description: data.description });
-        sdFullProblemTextRef.current = data.fullBreakdown;
-        setSdFullProblemText(data.fullBreakdown);
+      }
+      if (!sdConnectedRef.current) {
+        sdConnectedRef.current = true;
+        connectSocket().catch((err: Error) => {
+          if (mountedRef.current && !endedRef.current) {
+            setError(err.message);
+            toast.error(err.message);
+          }
+        });
+      }
+    },
+    onError: () => {
+      setSdStarting(false);
+    },
+  });
+
+  const { mutate: loadDiscussionSession } = useMutation({
+    mutationFn: () => {
+      setSdStarting(true);
+      return api.startDiscussionSession(id!);
+    },
+    onSuccess: (data) => {
+      setSdStarting(false);
+      const d = data as Record<string, unknown>;
+      const questions = d.questions as
+        | Array<{ title: string; description: string; fullBreakdown: string }>
+        | undefined;
+      if (questions && questions.length > 0) {
+        setCanvasQuestions(questions);
+        setCanvasCurrentQuestionIndex(0);
+        const first = questions[0]!;
+        setSdTopic({ title: first.title, description: first.description });
+        sdFullProblemTextRef.current = first.fullBreakdown;
+        setSdFullProblemText(first.fullBreakdown);
       }
       if (!sdConnectedRef.current) {
         sdConnectedRef.current = true;
@@ -354,8 +388,17 @@ export function InterviewPage() {
   useEffect(() => {
     if (!id) return;
     if (isCanvasRound) loadCanvasSession();
+    else if (isDiscussion) loadDiscussionSession();
     else if (isSdRound) loadSdSession();
-  }, [isCanvasRound, isSdRound, id, loadCanvasSession, loadSdSession]);
+  }, [
+    isCanvasRound,
+    isDiscussion,
+    isSdRound,
+    id,
+    loadCanvasSession,
+    loadDiscussionSession,
+    loadSdSession,
+  ]);
 
   const [sdStarting, setSdStarting] = useState(false);
   const latestCodeRef = useRef(dsaCode);
@@ -465,8 +508,8 @@ export function InterviewPage() {
   }, [feedbackReady]);
 
   useEffect(() => {
-    isDsaRef.current = isDsa || isSystemDesign;
-  }, [isDsa, isSystemDesign]);
+    isDsaRef.current = isDsa || isSystemDesign || isDiscussion;
+  }, [isDsa, isSystemDesign, isDiscussion]);
 
   useEffect(() => {
     document.documentElement.classList.add("landing-active");
@@ -752,14 +795,14 @@ export function InterviewPage() {
 
   useEffect(() => {
     if (!interviewMeta) return;
-    if (isSystemDesign) return;
+    if (isSystemDesign || isDiscussion) return;
     connectSocket().catch((err: Error) => {
       if (mountedRef.current && !endedRef.current) {
         setError(err.message);
         toast.error(err.message);
       }
     });
-  }, [connectSocket, interviewMeta, isSystemDesign]);
+  }, [connectSocket, interviewMeta, isSystemDesign, isDiscussion]);
 
   useEffect(() => {
     if (phase === "ended" || phase === "connecting" || phase === "queued")
@@ -890,6 +933,7 @@ export function InterviewPage() {
         style={(() => {
           if (isDsa && dsaPanelVisible)
             return { marginRight: "min(520px, 45vw)" };
+          if (isDiscussion) return { marginRight: "55vw" };
           if (isSystemDesign && sdPanelVisible) return { marginRight: "60vw" };
           return undefined;
         })()}
@@ -1016,6 +1060,15 @@ export function InterviewPage() {
           }}
           canvasDiff={canvasDiff}
           onClearCanvasDiff={() => setCanvasDiff(null)}
+        />
+      )}
+
+      {isDiscussion && (
+        <CaseStudyPanel
+          visible={true}
+          topicTitle={sdTopic.title}
+          topicDescription={sdTopic.description}
+          fullProblemText={sdFullProblemText}
         />
       )}
 
