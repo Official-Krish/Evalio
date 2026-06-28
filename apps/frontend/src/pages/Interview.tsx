@@ -864,6 +864,15 @@ export function InterviewPage() {
     return () => clearTimeout(timer);
   }, [closing, feedbackReady, id, navigate, teardown]);
 
+  useEffect(() => {
+    if (endedRef.current || closing || feedbackReady) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [closing, feedbackReady]);
+
   const [showEndConfirm, setShowEndConfirm] = useState(false);
 
   const handleEnd = useCallback(() => {
@@ -889,8 +898,11 @@ export function InterviewPage() {
     }
 
     if (aiPlaying || aiTurnActive) {
-      toast.error("Wait for the interviewer to finish");
-      return;
+      isUserSpeakingRef.current = true;
+      stopAudio();
+      setAiTurnActive(false);
+      socketRef.current?.sendInterruptedStreamEnd();
+      // Fall through to start mic below
     }
 
     try {
@@ -1005,7 +1017,11 @@ export function InterviewPage() {
         </div>
 
         <div className="landing-container pb-4">
-          <LiveCaption messages={messages} phase={phase} />
+          <LiveCaption
+            messages={messages}
+            phase={phase}
+            thinking={aiTurnActive && !aiPlaying}
+          />
         </div>
 
         <div className="landing-container pb-10 pt-2">

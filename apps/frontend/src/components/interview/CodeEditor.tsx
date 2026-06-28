@@ -10,6 +10,7 @@ import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
 import { rust } from "@codemirror/lang-rust";
 import { sql, MySQL } from "@codemirror/lang-sql";
+import toast from "react-hot-toast";
 
 const CODE_SAMPLES: Record<string, string> = {
   python: `def solution(nums, target):
@@ -155,9 +156,17 @@ export function CodeEditor({
 
     const preventPaste = ViewPlugin.fromClass(
       class {
+        private lastToast = 0;
         constructor(view: EditorView) {
           view.dom.addEventListener("paste", (e: Event) => {
             e.preventDefault();
+            const now = Date.now();
+            if (now - this.lastToast > 3000) {
+              this.lastToast = now;
+              toast.error("Pasting is disabled during the interview", {
+                duration: 2000,
+              });
+            }
           });
         }
       },

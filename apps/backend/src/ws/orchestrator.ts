@@ -114,13 +114,6 @@ interface FunctionHandler {
   ) => Promise<FunctionResult>;
 }
 
-// ── Canvas rate-limit state (module-level, same as sd-markers) ──
-
-let canvasDiffCount = 0;
-let canvasExampleCount = 0;
-let lastCanvasDiffTime = 0;
-let lastCanvasExampleTime = 0;
-
 function sendFunctionResponse(
   conn: InterviewConnection,
   callId: string | undefined,
@@ -276,15 +269,16 @@ async function handleCanvasDiff(
 ): Promise<FunctionResult> {
   const { actions } = args as z.infer<typeof CanvasDiffSchema>;
   const now = Date.now();
-  const canSend = now - lastCanvasDiffTime >= 15_000 && canvasDiffCount < 50;
+  const canSend =
+    now - conn.lastCanvasDiffTime >= 15_000 && conn.canvasDiffCount < 50;
 
   if (!canSend) {
     return { success: false, error: "Rate limited", skipped: true };
   }
 
   await conn.safeSend({ type: "canvas_diff", actions });
-  canvasDiffCount++;
-  lastCanvasDiffTime = now;
+  conn.canvasDiffCount++;
+  conn.lastCanvasDiffTime = now;
   return { success: true };
 }
 
@@ -295,15 +289,15 @@ async function handleCanvasExample(
   const { example } = args as z.infer<typeof CanvasExampleSchema>;
   const now = Date.now();
   const canSend =
-    now - lastCanvasExampleTime >= 60_000 && canvasExampleCount < 5;
+    now - conn.lastCanvasExampleTime >= 60_000 && conn.canvasExampleCount < 5;
 
   if (!canSend) {
     return { success: false, error: "Rate limited", skipped: true };
   }
 
   await conn.safeSend({ type: "canvas_example", ...example });
-  canvasExampleCount++;
-  lastCanvasExampleTime = now;
+  conn.canvasExampleCount++;
+  conn.lastCanvasExampleTime = now;
   return { success: true };
 }
 
@@ -372,9 +366,12 @@ const functionHandlers: Record<string, FunctionHandler> = {
 
 // ── Orchestrator ──
 
-// Strip control characters like <ctrl46> from model output
+// Strip control characters and ASR artifacts from model output
 function stripCtrl(s: string): string {
-  return s.replace(/<\/?ctrl\d+>/gi, "").trim();
+  return s
+    .replace(/<\/?ctrl\d+>/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 export async function startInterview(
@@ -396,7 +393,7 @@ export async function startInterview(
     conn.gemini = await createGeminiSession(systemPrompt);
     if (conn.isSystemDesign) {
       console.log("[orchestrator] resetting SD counters");
-      resetSdCounters();
+      resetSdCounters(conn);
     }
   } catch (err) {
     console.error("[ws] Gemini session failed:", err);
@@ -646,7 +643,7 @@ export async function startInterview(
           conn.silencePromptActive = false;
         }
 
-        if (isChallengeMode(conn) && isNewQuestion(conn.questionBuf)) {
+        if (isChallengeMode(conn) && isNewQuestion(conn, conn.questionBuf)) {
           await flushChallengeTurn(conn);
           conn.currentTurnId = null;
         }
@@ -687,7 +684,10 @@ export async function startInterview(
   if (conn.pacing) {
     conn.pacingTimer = setInterval(() => {
       if (conn.gemini && conn.pacing) {
-        const pacingMsg = conn.pacing.buildMessage();
+        const cs = conn.candidateState;
+        const pacingMsg = conn.pacing.buildMessage(
+          `n=${cs.nervousness},e=${cs.engagement},c=${cs.confidence},sig=${cs.currentSignal}`,
+        );
         try {
           conn.gemini.send(
             JSON.stringify({

@@ -25,6 +25,14 @@ interface VadOptions {
   onSilenceEnd?: () => void;
 }
 
+interface VadState {
+  noiseFloor: number;
+  speaking: boolean;
+  silenceStart: number;
+  lastSpeechEnd: number;
+  samplesSinceSpeech: number;
+}
+
 export function useMicrophone() {
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -36,15 +44,31 @@ export function useMicrophone() {
   const [error, setError] = useState<string | null>(null);
   const onChunkRef = useRef<((base64: string) => void) | null>(null);
   const vadTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const vadSilenceStartRef = useRef(0);
   const onSilenceEndRef = useRef<(() => void) | null>(null);
+  const vadStateRef = useRef<VadState>({
+    noiseFloor: 0.02,
+    speaking: false,
+    silenceStart: 0,
+    lastSpeechEnd: 0,
+    samplesSinceSpeech: 0,
+  });
+
+  const ADAPT_RATE_UP = 0.01;
+  const ADAPT_RATE_DOWN = 0.05;
+  const THRESHOLD_MULTIPLIER = 1.8;
+  const ABSOLUTE_MIN = 0.015;
+  const HANGOVER_MS = 1500;
 
   const stopVad = useCallback(() => {
     if (vadTimerRef.current) {
       clearInterval(vadTimerRef.current);
       vadTimerRef.current = null;
     }
-    vadSilenceStartRef.current = 0;
+    const vs = vadStateRef.current;
+    vs.silenceStart = 0;
+    vs.speaking = false;
+    vs.lastSpeechEnd = 0;
+    vs.samplesSinceSpeech = 0;
   }, []);
 
   const start = useCallback(
@@ -99,10 +123,11 @@ export function useMicrophone() {
         };
 
         if (vadOptions?.onSilenceEnd) {
-          const threshold = vadOptions.threshold ?? 0.02;
           const timeoutMs = vadOptions.timeoutMs ?? 30000;
           stopVad();
           const dataArray = new Uint8Array(analyser.frequencyBinCount);
+          const vs = vadStateRef.current;
+
           vadTimerRef.current = setInterval(() => {
             analyser.getByteTimeDomainData(dataArray);
             let sum = 0;
@@ -112,15 +137,48 @@ export function useMicrophone() {
             }
             const rms = Math.sqrt(sum / dataArray.length);
 
-            if (rms < threshold) {
-              if (vadSilenceStartRef.current === 0) {
-                vadSilenceStartRef.current = Date.now();
-              } else if (Date.now() - vadSilenceStartRef.current >= timeoutMs) {
-                stopVad();
-                onSilenceEndRef.current?.();
-              }
+            const dynamicThreshold = Math.max(
+              vs.noiseFloor * THRESHOLD_MULTIPLIER,
+              ABSOLUTE_MIN,
+            );
+
+            if (rms >= dynamicThreshold) {
+              // Speech detected
+              vs.speaking = true;
+              vs.silenceStart = 0;
+              vs.samplesSinceSpeech = 0;
+              // Adapt noise floor down during speech (ambient noise masking)
+              vs.noiseFloor = Math.max(
+                ABSOLUTE_MIN * 0.5,
+                vs.noiseFloor * (1 - ADAPT_RATE_DOWN),
+              );
             } else {
-              vadSilenceStartRef.current = 0;
+              // Below threshold — possible silence
+              vs.samplesSinceSpeech++;
+              if (vs.speaking) {
+                // Just ended speech — start hangover
+                vs.speaking = false;
+                vs.lastSpeechEnd = Date.now();
+              }
+
+              const hangoverElapsed = Date.now() - vs.lastSpeechEnd;
+              if (hangoverElapsed >= HANGOVER_MS) {
+                // Hangover expired — count as silence
+                if (vs.silenceStart === 0) {
+                  vs.silenceStart = Date.now();
+                }
+
+                // Adapt noise floor up during sustained silence
+                if (vs.samplesSinceSpeech > 20) {
+                  vs.noiseFloor += (rms - vs.noiseFloor) * ADAPT_RATE_UP;
+                  vs.noiseFloor = Math.max(ABSOLUTE_MIN, vs.noiseFloor);
+                }
+
+                if (Date.now() - vs.silenceStart >= timeoutMs) {
+                  stopVad();
+                  onSilenceEndRef.current?.();
+                }
+              }
             }
           }, 300);
         }

@@ -7,6 +7,13 @@ import { handleAudioChunk, handleAudioStreamEnd } from "./handlers/audio";
 import { prisma } from "../lib/prisma";
 import type { PacingTracker } from "./helpers/pacing";
 
+export interface CandidateState {
+  nervousness: "low" | "medium" | "high";
+  engagement: "low" | "medium" | "high";
+  confidence: "low" | "medium" | "high";
+  currentSignal: "none" | "struggling" | "going_deep" | "off_track" | "strong";
+}
+
 export class InterviewConnection {
   interviewId: string | null = null;
   gemini: GeminiSession | null = null;
@@ -26,6 +33,12 @@ export class InterviewConnection {
   isSqlMode = false;
   isQuantMode = false;
   dsaTransitioned = false;
+  candidateState: CandidateState = {
+    nervousness: "low",
+    engagement: "medium",
+    confidence: "medium",
+    currentSignal: "none",
+  };
   isSystemDesign = false;
   isCanvasMode = false;
   canvasQuestionIndex = 0;
@@ -33,7 +46,14 @@ export class InterviewConnection {
   heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   pongTimeoutId: ReturnType<typeof setTimeout> | null = null;
   lastAudioTime = 0;
+  audioChunksSinceLastTurn = 0;
   canvasInactivityTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Canvas rate-limiting (per-connection to avoid cross-interview interference)
+  canvasDiffCount = 0;
+  canvasExampleCount = 0;
+  lastCanvasDiffTime = 0;
+  lastCanvasExampleTime = 0;
 
   // Silence detection
   silenceTimer: ReturnType<typeof setInterval> | null = null;
@@ -373,8 +393,11 @@ export class InterviewConnection {
         if (!this.waitingForAiResponse) {
           const silenceMs = Date.now() - this.lastAudioTime;
           if (silenceMs > 8_000 && !this.canvasInactivityTimer) {
+            const startedAt = Date.now();
             this.canvasInactivityTimer = setTimeout(() => {
               this.canvasInactivityTimer = null;
+              // If audio arrived while timer was pending, skip to avoid race
+              if (Date.now() - this.lastAudioTime < 5_000) return;
               if (this.gemini && !this.closingMode && !this.finalized) {
                 this.gemini.send(
                   JSON.stringify({

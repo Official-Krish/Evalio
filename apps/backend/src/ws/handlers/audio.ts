@@ -18,6 +18,7 @@ export async function handleAudioChunk(
     return;
   }
   conn.lastAudioTime = Date.now();
+  conn.audioChunksSinceLastTurn++;
   if (conn.canvasInactivityTimer) {
     clearTimeout(conn.canvasInactivityTimer);
     conn.canvasInactivityTimer = null;
@@ -58,6 +59,24 @@ export async function handleAudioStreamEnd(
   }
 
   const isInterrupted = (msg as { interrupted?: boolean }).interrupted === true;
+  const MIN_MEANINGFUL_CHUNKS = 3;
+
+  // Hallucination guardrail: if the user barely spoke, silently keep listening
+  if (!isInterrupted && conn.audioChunksSinceLastTurn < MIN_MEANINGFUL_CHUNKS) {
+    conn.waitingForAiResponse = false;
+    conn.audioChunksSinceLastTurn = 0;
+    conn.gemini.send(
+      JSON.stringify({
+        clientContent: {
+          turns: [],
+          turnComplete: false,
+        },
+      }),
+    );
+    return;
+  }
+
+  conn.audioChunksSinceLastTurn = 0;
 
   if (isInterrupted) {
     if (conn.questionBuf) {
@@ -112,7 +131,13 @@ export async function handleAudioStreamEnd(
             turns: [
               {
                 role: "user",
-                parts: [{ text: conn.pacing.buildMessage() }],
+                parts: [
+                  {
+                    text: conn.pacing.buildMessage(
+                      `n=${conn.candidateState.nervousness},e=${conn.candidateState.engagement},c=${conn.candidateState.confidence},sig=${conn.candidateState.currentSignal}`,
+                    ),
+                  },
+                ],
               },
             ],
             turnComplete: false,

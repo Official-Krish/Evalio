@@ -122,6 +122,8 @@ function buildEvaluationPrompt(input: {
     )
     .join("\n\n");
 
+  const numQuestions = input.turns.length;
+
   return `You are an expert technical interviewer. Evaluate the following interview.
 
 Position: ${input.position || "Unknown"}
@@ -135,7 +137,16 @@ ${questions || "No structured Q&A recorded"}
 Score each turn individually (0-100) with specific feedback.
 Provide overall scores for communication, technical knowledge, and problem solving.
 List key strengths, areas for improvement, and recommended topics for further study.
-Also analyze the candidate's resume briefly — what are its strongest points (resumeStrengths) and what could be improved (resumeWeaknesses)? Keep each to 2-3 items.`;
+Also analyze the candidate's resume briefly — what are its strongest points (resumeStrengths) and what could be improved (resumeWeaknesses)? Keep each to 2-3 items.
+
+## Inter-Question Consistency
+${numQuestions > 1 ? "Check for contradictions across questions. If a candidate's answers conflict or they claim expertise on one topic but lack basic knowledge on a related one, note it in the relevant turn feedback and factor it into overall scores. Consistency strengthens credibility; contradictions should reduce the relevant scores." : "Only one question was asked — consistency check is N/A."}
+
+## Accuracy Calibration
+Calibrate your scores against what is expected for this specific position (${input.position || "general software engineering"}). A correct but shallow answer should score lower than one that demonstrates depth and seniority-appropriate insight. Consider the resume context when judging whether the candidate met the bar for the role they are applying for.
+
+## Behavioral Signals
+Infer candidate state from the transcript: nervousness (hesitation, hedging), engagement (detailed vs curt answers), and confidence (assertive language vs qualifiers). Factor these into the communication score and relevant turn feedback — a confident well-structured answer should score higher than a hesitant one with the same factual content.`;
 }
 
 async function generateEvaluation(
@@ -478,6 +489,8 @@ export async function evaluateDsaSession(interviewId: string) {
       )
       .join("\n\n");
 
+    const problemCount = problems.length;
+
     const prompt = `Evaluate the candidate's DSA coding interview performance.
 
 ## Questions
@@ -493,6 +506,15 @@ Score each question 0-100 based on:
 - **Implementation** (30%): Did they write correct, clean code?
 - **Testing** (10%): Did they verify with test cases?
 - **Communication** (15%): Did they explain their thinking clearly?
+
+## Inter-Question Consistency
+${problemCount > 1 ? "Compare approach quality across questions. Does the candidate show consistent problem-solving skill, or do they excel on easy problems but struggle on harder ones? Note any patterns in the overall summary." : "Only one question attempted — consistency cross-check is N/A."}
+
+## Accuracy Calibration
+Calibrate scores by difficulty: a correct easy solution should score lower than a correct hard solution. Consider time taken relative to expected benchmark. Reward optimal (not just correct) solutions with higher scores.
+
+## Behavioral Signals
+Infer candidate state from their responses: do they dive into edge cases confidently or wait to be prompted? Do they backtrack or correct themselves? Factor observed confidence and clarity into the Communication (15%) score.
 
 Provide specific, actionable feedback for each question. Return ONLY valid JSON matching the schema.`;
 
@@ -728,6 +750,8 @@ export async function evaluateSystemDesignSession(interviewId: string) {
       )
       .join("\n\n");
 
+    const turnCount = interview.turns.length;
+
     const prompt = `Evaluate the candidate's system design interview performance.
 
 ## Transcript
@@ -748,6 +772,15 @@ Score each dimension 0-100 based on observed evidence:
 - **Scalability**: Handling growth, sharding, replication, CDN, caching layers
 - **Fault Tolerance**: Redundancy, failover, disaster recovery, graceful degradation
 - **Tradeoffs & Depth**: Awareness of alternatives, informed decision-making, depth of reasoning
+
+## Inter-Question Consistency
+${turnCount > 1 ? "Check for contradictions in the candidate's design reasoning across questions. Do they mention a pattern early but contradict it later? Consistency in design philosophy across different problems is a positive signal." : "Only one topic discussed — consistency check is N/A."}
+
+## Accuracy Calibration
+Calibrate scores against seniority level: juniors are not expected to dive deep into multi-region replication, while seniors should. Reward candidates who proactively identify tradeoffs rather than waiting to be prompted.
+
+## Behavioral Signals
+Infer candidate state from the transcript: confidence in design choices, comfort with ambiguity, ability to accept redirections. Factor these into the overall score — a candidate who owns their design decisions and clearly articulates tradeoffs demonstrates senior-level communication.
 
 ## Canvas Feedback
 Analyze the final diagram. What's missing? What strong decisions were made? What weak decisions?
