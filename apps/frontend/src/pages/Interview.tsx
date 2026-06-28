@@ -138,8 +138,7 @@ export function InterviewPage() {
   useEffect(() => {
     canvasQuestionsRef.current = canvasQuestions;
   }, [canvasQuestions]);
-  const [canvasCurrentQuestionIndex, setCanvasCurrentQuestionIndex] =
-    useState(0);
+  const [, setCanvasCurrentQuestionIndex] = useState(0);
   const sdPanelVisible = isSystemDesign || isDiscussion;
 
   // Load DSA / SD session on mount

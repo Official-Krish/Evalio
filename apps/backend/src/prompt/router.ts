@@ -21,6 +21,11 @@ import {
   buildMockPitchDiscussionPrompt,
 } from "./discussion";
 import { buildQuantPrompt } from "./quant";
+import {
+  buildHftQuantPrompt,
+  buildHftSdPrompt,
+  buildHftCodingPrompt,
+} from "./hft";
 import type { SystemDesignPromptInput } from "./types";
 
 interface RoundRoute {
@@ -44,7 +49,10 @@ interface RoundRoute {
     | "discussion_mock_pitch"
     | "quant_standard"
     | "voice_standard"
-    | "voice_scenario";
+    | "voice_scenario"
+    | "hft_quant"
+    | "hft_coding"
+    | "hft_system_design";
 }
 
 const ROUTER: Record<string, RoundRoute> = {
@@ -77,6 +85,13 @@ const ROUTER: Record<string, RoundRoute> = {
   "Mock Pitch": { mode: "DISCUSSION", builder: "discussion_mock_pitch" },
   "Mobile Architecture": { mode: "LIVE_CANVAS", builder: "sd_mobile_arch" },
   "Hardware Design": { mode: "LIVE_CANVAS", builder: "sd_hardware" },
+  "Quantitative & Probability": { mode: "VOICE", builder: "hft_quant" },
+  "Low-Latency C++ Coding": { mode: "LIVE_CODE", builder: "hft_coding" },
+  "Low-Latency System Design": {
+    mode: "LIVE_CANVAS",
+    builder: "hft_system_design",
+  },
+  "Behavioral / HFT Fit": { mode: "VOICE", builder: "voice_standard" },
 };
 
 const MODE_DEFAULTS: Record<string, RoundRoute> = {
@@ -195,6 +210,44 @@ export function buildPromptFromRoute(
       return buildMobileArchitecturePrompt(params.sdInput!);
     case "sd_hardware":
       return buildHardwareDesignPrompt(params.sdInput!);
+    case "hft_quant":
+      return buildHftQuantPrompt({
+        companyName:
+          params.sdInput?.companyName ?? params.dsaContext?.companyName,
+        position: params.sdInput?.position ?? params.dsaContext?.position,
+        interviewRound:
+          params.sdInput?.interviewRound ?? params.dsaContext?.interviewRound,
+        interviewDepth:
+          params.sdInput?.interviewDepth ?? params.dsaContext?.interviewDepth,
+        interviewStyle:
+          params.sdInput?.interviewStyle ?? params.dsaContext?.interviewStyle,
+        seniorityLabel:
+          params.sdInput?.seniorityLabel ?? params.dsaContext?.seniorityLabel,
+        roleTopics: params.sdInput?.roleTopics ?? params.dsaContext?.roleTopics,
+        roleEvaluationCriteria:
+          params.sdInput?.roleEvaluationCriteria ??
+          params.dsaContext?.roleEvaluationCriteria,
+        roleMustProbe:
+          params.sdInput?.roleMustProbe ?? params.dsaContext?.roleMustProbe,
+        durationMinutes:
+          params.sdInput?.durationMinutes ?? params.dsaDurationMinutes,
+        companyCulture: params.sdInput?.companyCulture,
+        companyInterviewerBehavior: params.sdInput?.companyInterviewerBehavior,
+        candidateHistory: params.sdInput?.candidateHistory,
+        overallMostImproved: params.sdInput?.overallMostImproved,
+        overallWeakest: params.sdInput?.overallWeakest,
+        overallPatterns: params.sdInput?.overallPatterns,
+        scoreTrendLast5: params.sdInput?.scoreTrendLast5,
+      });
+    case "hft_coding":
+      return buildHftCodingPrompt(
+        params.dsaQuestions ?? [],
+        params.dsaContext,
+        params.dsaHistory,
+        params.dsaDurationMinutes,
+      );
+    case "hft_system_design":
+      return buildHftSdPrompt(params.sdInput!);
     case "sd_standard":
       return buildSystemDesignPrompt(params.sdInput!);
     case "voice_standard":

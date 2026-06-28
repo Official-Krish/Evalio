@@ -1,63 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 import {
-  COMPANIES,
   CATEGORY_ROUNDS,
   FALLBACK_ROUNDS,
   getCompany,
   getRoundPill,
 } from "@evalio/shared";
-
-const COMMON_ROUNDS = [
-  "Coding Round (DSA)",
-  "System Design",
-  "Phone Screen",
-  "Technical Coding",
-  "Behavioral",
-];
-
-const TECHNICAL_KEYWORDS = [
-  "engineer",
-  "developer",
-  "sde",
-  "swe",
-  "software",
-  "frontend",
-  "front-end",
-  "backend",
-  "back-end",
-  "full stack",
-  "fullstack",
-  "data scientist",
-  "data engineer",
-  "ml engineer",
-  "ai",
-  "machine learning",
-  "devops",
-  "sre",
-  "infrastructure",
-  "cloud",
-  "systems engineer",
-  "network engineer",
-  "security",
-  "architect",
-  "technical",
-  "ios",
-  "android",
-  "mobile",
-  "research scientist",
-  "applied scientist",
-  "qa engineer",
-  "test engineer",
-  "platform engineer",
-  "site reliability",
-];
-
-function isTechnicalRole(roleTitle: string | null | undefined): boolean {
-  if (!roleTitle) return true;
-  const lower = roleTitle.toLowerCase();
-  return TECHNICAL_KEYWORDS.some((kw) => lower.includes(kw));
-}
 
 interface RoundPickerProps {
   companyId: string | null;
@@ -182,7 +130,7 @@ const hoverProps = {
 
 export function RoundPicker({
   companyId,
-  roleTitle,
+  roleTitle: _roleTitle,
   category,
   selectedRound,
   customRound,

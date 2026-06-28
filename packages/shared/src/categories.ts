@@ -78,6 +78,13 @@ export const ROLE_CATEGORIES = [
       "Sales engineering, go-to-market strategy, and customer success",
   },
   {
+    id: "hft",
+    label: "HFT / Quantitative Finance",
+    icon: "activity",
+    description:
+      "Quantitative trading, low-latency systems, probability and risk",
+  },
+  {
     id: "other",
     label: "Other",
     icon: "more-horizontal",
@@ -162,6 +169,12 @@ export const CATEGORY_ROUNDS: Record<
     { label: "Mock Pitch", mode: "DISCUSSION" },
     { label: "Discovery Call Simulation", mode: "VOICE" },
   ],
+  hft: [
+    { label: "Quantitative & Probability", mode: "VOICE" },
+    { label: "Low-Latency C++ Coding", mode: "LIVE_CODE" },
+    { label: "Low-Latency System Design", mode: "LIVE_CANVAS" },
+    { label: "Behavioral / HFT Fit", mode: "VOICE" },
+  ],
 };
 
 export const FALLBACK_ROUNDS: { label: string; mode: InterviewMode }[] = [
@@ -174,6 +187,7 @@ export function getRoundPill(roundName: string): string | null {
     "Coding Round (DSA)",
     "SQL & Analytics",
     "Quantitative Analysis",
+    "Low-Latency C++ Coding",
   ]);
   const liveCanvas = new Set([
     "System Design",
@@ -196,6 +210,7 @@ export function getRoundPill(roundName: string): string | null {
     "Data Integration & Ontology",
     "Mobile Architecture",
     "Hardware Design",
+    "Low-Latency System Design",
   ]);
   if (liveCode.has(roundName)) return "Live Code";
   if (liveCanvas.has(roundName)) return "Live Design";
