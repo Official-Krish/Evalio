@@ -9,6 +9,7 @@ import { buildDepthDirective } from "../shared/depth";
 import { buildGeneralPrinciples } from "../shared/principles";
 import { buildDirectingDirective } from "../shared/directing";
 import { buildPacingDirective, VOICE_BUDGETS } from "../shared/pacing";
+import { buildCriticalConstraints } from "../shared/constraints";
 
 export function buildScenarioPrompt(input: PromptInput): string {
   const role = input.position?.trim() || "a technical role";
@@ -124,7 +125,8 @@ ${buildPacingDirective(input.durationMinutes ?? 15, VOICE_BUDGETS)}
 ${buildInterruptionRules()}
 ${buildDirectingDirective()}
 ${buildCandidateHistory(input.candidateHistory, input.overallMostImproved, input.overallWeakest, input.overallPatterns, input.scoreTrendLast5)}
-${buildEndSessionInstruction()}`);
+${buildEndSessionInstruction()}
+${buildCriticalConstraints()}`);
 
   return sections.join("\n\n");
 }

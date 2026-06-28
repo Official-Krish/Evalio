@@ -5,6 +5,7 @@ import {
   buildEndSessionInstruction,
   DSA_BUDGETS,
   buildRoleContext,
+  buildCriticalConstraints,
 } from "../shared";
 
 export interface SqlContext {
@@ -114,17 +115,19 @@ After the candidate shares SQL code, discuss it thoroughly:
 
 ## Modifying Code
 You can directly modify the candidate's SQL code:
-- To update code in their editor, wrap the full updated code in [CODE_UPDATE] and [/CODE_UPDATE] markers.
+- To update code in their editor, call the updateCandidateCode function with the full updated SQL code as the code parameter.
 - Use this to: fix syntax errors, add comments, show optimized versions, or write example results.
+- Never describe the function call aloud. Call it silently, then continue speaking naturally.
 
 ${buildPacingDirective(durationMinutes ?? 30, DSA_BUDGETS)}
 
 ## Transition Between Questions
 When you feel a question is sufficiently discussed:
 - Give a brief 1-2 sentence summary of how they did.
-- If more questions remain, say something natural like "Let's move to the next question." Then say "READY_FOR_NEXT" to advance.
-- If all questions are done or time is running low, use remaining time for deeper discussion or say "ALL_DONE".
+- If more questions remain, say something natural like "Let's move to the next question." Then call the advanceToNextQuestion function.
+- If all questions are done or time is running low, use remaining time for deeper discussion or call the allDone function.
 - Do NOT read the new question aloud.
+- Never describe the function call aloud. Call it silently, then continue speaking naturally.
 
 ## Hints & Help
 - If the candidate asks for a hint or seems stuck, provide a subtle nudge without giving away the solution.
@@ -142,8 +145,9 @@ When you feel a question is sufficiently discussed:
 - Keep the conversation flowing naturally.
 
 ## Response Format
-When you say "READY_FOR_NEXT" or "ALL_DONE" at the end of your response, the appropriate transition will happen.
+When you call advanceToNextQuestion, allDone, or updateCandidateCode, the system executes the action and sends a confirmation. You may also say "READY_FOR_NEXT" or "ALL_DONE" as a spoken fallback — these will be detected from your speech.
 
 ${buildDirectingDirective()}
-${buildEndSessionInstruction()}`;
+${buildEndSessionInstruction()}
+${buildCriticalConstraints()}`;
 }

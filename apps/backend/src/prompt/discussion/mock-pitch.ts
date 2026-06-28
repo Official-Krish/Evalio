@@ -5,6 +5,7 @@ import { buildCandidateHistory } from "../shared/history";
 import { buildCompanyContext } from "../shared/company";
 import { buildRoleContext } from "../shared/role";
 import { buildStyleDirective } from "../shared/style";
+import { buildDepthDirective } from "../shared/depth";
 import { buildGeneralPrinciples } from "../shared/principles";
 import { buildDirectingDirective } from "../shared/directing";
 import { buildPacingDirective, SD_BUDGETS } from "../shared/pacing";
@@ -17,6 +18,7 @@ import {
   buildSdStageDeepDive,
   buildSdStageTradeoffs,
   buildSdStageWrapUp,
+  buildCriticalConstraints,
 } from "../shared";
 
 export function buildMockPitchDiscussionPrompt(
@@ -117,12 +119,14 @@ ${buildSdStageDeepDive([
 ${buildRoleContext(input.position, input.roleTopics, input.roleEvaluationCriteria, input.roleMustProbe, input.seniorityLabel)}
 ${buildCompanyContext(input.companyName, input.companyCulture, input.companyInterviewerBehavior, input.interviewDepth)}
 ${buildStyleDirective(input.interviewStyle)}
+${buildDepthDirective(input.interviewDepth)}
 ${buildGeneralPrinciples()}
 ${buildPacingDirective(input.durationMinutes ?? 30, SD_BUDGETS)}
 ${buildInterruptionRules()}
 ${buildDirectingDirective()}
 ${buildCandidateHistory(input.candidateHistory, input.overallMostImproved, input.overallWeakest, input.overallPatterns, input.scoreTrendLast5)}
-${buildEndSessionInstruction()}`);
+${buildEndSessionInstruction()}
+${buildCriticalConstraints()}`);
 
   return sections.join("\n\n");
 }

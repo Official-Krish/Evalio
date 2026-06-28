@@ -11,6 +11,7 @@ export {
   buildDirectingDirective,
   buildEndSessionInstruction,
   buildInterruptionRules,
+  buildCriticalConstraints,
   buildCompanyContext,
   buildRoleContext,
   buildRoundDirective,

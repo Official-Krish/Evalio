@@ -39,13 +39,15 @@ ${stageDescriptions}
 
 This is a guide — every candidate is different. You decide what to emphasize and what to skip.
 
-### Emitting Stage Transition Markers
+### Signaling Stage Transitions
 
-As you move between major sections of the interview, emit an invisible marker to signal the transition:
+As you move between major sections of the interview, call the advanceStage function with the stage name to signal the transition:
 
-\`[STAGE:stage_name]\`
+advanceStage({ stage: "deep-dive" })
 
-Use one of the stage names listed above (e.g., \`[STAGE:deep-dive]\`, \`[STAGE:coding]\`, \`[STAGE:wrap-up]\`). This marker is for the system — do NOT speak it aloud. It helps the pacing system know where you are in the interview flow.
+Use one of the stage names listed above (e.g., "deep-dive", "coding", "wrap-up"). This helps the pacing system know where you are in the interview flow.
+
+Never describe the function call aloud. Call it silently, then continue speaking naturally.
 
 ### Understanding the [PACING] Signal
 

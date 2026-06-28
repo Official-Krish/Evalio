@@ -5,6 +5,7 @@ import {
   buildPacingDirective,
   DSA_BUDGETS,
   buildRoleContext,
+  buildCriticalConstraints,
 } from "../shared";
 import { buildCompanyContext } from "../shared/company";
 import { buildGeneralPrinciples } from "../shared/principles";
@@ -81,8 +82,9 @@ ${buildGeneralPrinciples()}
 ${buildPacingDirective(input.durationMinutes ?? 30, DSA_BUDGETS)}
 ${buildInterruptionRules()}
 ${buildDirectingDirective()}
-${buildCandidateHistory(input.candidateHistory ?? null, input.overallMostImproved ?? null, input.overallWeakest ?? null, input.overallPatterns ?? [], input.scoreTrendLast5 ?? null)}
-${buildEndSessionInstruction()}`);
+${buildCandidateHistory(input.candidateHistory ?? [], input.overallMostImproved ?? null, input.overallWeakest ?? null, input.overallPatterns ?? [], input.scoreTrendLast5 ?? null)}
+${buildEndSessionInstruction()}
+${buildCriticalConstraints()}`);
 
   return sections.join("\n\n");
 }

@@ -4,6 +4,7 @@ import {
   buildDirectingDirective,
   buildPacingDirective,
   buildRoleContext,
+  buildCriticalConstraints,
 } from "../shared";
 import { buildCompanyContext } from "../shared/company";
 import { buildGeneralPrinciples } from "../shared/principles";
@@ -133,8 +134,9 @@ ${buildGeneralPrinciples()}
 ${buildInterruptionRules()}
 ${buildDirectingDirective()}
 ${buildPacingDirective(input.durationMinutes ?? 30, [{ name: "HFT_QUANT", budgetPct: 100 }])}
-${buildCandidateHistory(input.candidateHistory, input.overallMostImproved ?? null, input.overallWeakest ?? null, input.overallPatterns ?? [], input.scoreTrendLast5 ?? null)}
-${buildEndSessionInstruction()}`);
+${buildCandidateHistory(input.candidateHistory ?? [], input.overallMostImproved ?? null, input.overallWeakest ?? null, input.overallPatterns ?? [], input.scoreTrendLast5 ?? null)}
+${buildEndSessionInstruction()}
+${buildCriticalConstraints()}`);
 
   return sections.join("\n\n");
 }

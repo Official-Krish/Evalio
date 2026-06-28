@@ -1085,6 +1085,20 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Android Engineer",
+        description:
+          "Android platform development, mobile architecture, performance",
+        category: "mobile",
+        topics: ["Android", "Kotlin", "Mobile Architecture", "Performance"],
+        evaluationCriteria: ["Technical Depth", "System Design", "User Focus"],
+        mustProbe: [
+          "Android architecture",
+          "Mobile performance",
+          "Cross-platform experience",
+        ],
+        duration: 12,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -1474,6 +1488,29 @@ export const companies: CompanyConfig[] = [
           "Team leadership",
           "Strategy definition",
           "Cross-functional influence",
+        ],
+        duration: 10,
+      },
+      {
+        title: "Mobile Engineer",
+        description:
+          "WhatsApp, Instagram, Facebook mobile — scale and performance",
+        category: "mobile",
+        topics: [
+          "Mobile Architecture",
+          "Performance",
+          "iOS/Android",
+          "Cross-Platform",
+        ],
+        evaluationCriteria: [
+          "Technical Depth",
+          "Scalability",
+          "Product Thinking",
+        ],
+        mustProbe: [
+          "Mobile architecture at scale",
+          "Performance optimization",
+          "Product impact",
         ],
         duration: 10,
       },
@@ -2528,6 +2565,42 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "iOS Engineer",
+        description:
+          "iPhone/iPad app development, performance, user experience",
+        category: "mobile",
+        topics: ["iOS", "Swift", "UI Framework", "Performance"],
+        evaluationCriteria: ["Technical Depth", "Craftsmanship", "User Focus"],
+        mustProbe: [
+          "iOS architecture",
+          "Performance optimization",
+          "UI engineering",
+        ],
+        duration: 10,
+      },
+      {
+        title: "Hardware Engineer",
+        description: "Silicon design, system architecture, product engineering",
+        category: "hardware",
+        topics: [
+          "Silicon Design",
+          "System Architecture",
+          "PCB Design",
+          "Thermal",
+        ],
+        evaluationCriteria: [
+          "Technical Depth",
+          "System Thinking",
+          "Craftsmanship",
+        ],
+        mustProbe: [
+          "Hardware design",
+          "System architecture",
+          "Thermal management",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -2805,6 +2878,28 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 10,
       },
+      {
+        title: "Mobile Engineer",
+        description: "Rider/driver app development, real-time mobile systems",
+        category: "mobile",
+        topics: [
+          "iOS/Android",
+          "Real-time Systems",
+          "Maps Integration",
+          "Performance",
+        ],
+        evaluationCriteria: [
+          "Technical Depth",
+          "Product Thinking",
+          "Execution",
+        ],
+        mustProbe: [
+          "Mobile architecture",
+          "Real-time features",
+          "Performance at scale",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -3073,6 +3168,29 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Mobile Engineer",
+        description:
+          "iOS/Android app development, travel platform, UI engineering",
+        category: "mobile",
+        topics: [
+          "iOS/Android",
+          "UI Engineering",
+          "Performance",
+          "Cross-Platform",
+        ],
+        evaluationCriteria: [
+          "Technical Depth",
+          "Craftsmanship",
+          "Product Thinking",
+        ],
+        mustProbe: [
+          "Mobile architecture",
+          "UI engineering",
+          "Cross-platform experience",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -3312,6 +3430,29 @@ export const companies: CompanyConfig[] = [
           "Customer onboarding experience",
         ],
         duration: 12,
+      },
+      {
+        title: "Sales Engineer",
+        description:
+          "Technical pre-sales, observability demos, customer onboarding",
+        category: "sales_gtm",
+        topics: [
+          "Pre-sales",
+          "Observability",
+          "Product Demos",
+          "Customer Success",
+        ],
+        evaluationCriteria: [
+          "Technical Sales",
+          "Communication",
+          "Solution Design",
+        ],
+        mustProbe: [
+          "Pre-sales experience",
+          "Observability knowledge",
+          "Customer demos",
+        ],
+        duration: 10,
       },
     ],
     interviewRounds: [
@@ -3568,6 +3709,29 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Client Engagement Lead",
+        description:
+          "Client advisory, business development, account management",
+        category: "sales_gtm",
+        topics: [
+          "Client Management",
+          "Business Development",
+          "Account Strategy",
+          "Stakeholder Mgmt",
+        ],
+        evaluationCriteria: [
+          "Client Impact",
+          "Communication",
+          "Strategic Thinking",
+        ],
+        mustProbe: [
+          "Client engagement",
+          "Business development",
+          "Account strategy",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -3776,6 +3940,20 @@ export const companies: CompanyConfig[] = [
           "Threat modelling approach",
           "Compliance frameworks",
         ],
+        duration: 8,
+      },
+      {
+        title: "Investment Banking Analyst",
+        description:
+          "Financial analysis, M&A advisory, valuation, capital raising",
+        category: "finance",
+        topics: ["Financial Analysis", "Valuation", "M&A", "Capital Markets"],
+        evaluationCriteria: [
+          "Analytical Rigor",
+          "Domain Knowledge",
+          "Communication",
+        ],
+        mustProbe: ["Financial analysis", "Valuation", "Deal experience"],
         duration: 8,
       },
     ],
@@ -4843,6 +5021,29 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Client Engagement Lead",
+        description:
+          "Client relationship management, business development, account strategy",
+        category: "sales_gtm",
+        topics: [
+          "Client Management",
+          "Business Development",
+          "Account Strategy",
+          "Stakeholder Mgmt",
+        ],
+        evaluationCriteria: [
+          "Client Impact",
+          "Communication",
+          "Strategic Thinking",
+        ],
+        mustProbe: [
+          "Client engagement",
+          "Business development",
+          "Account strategy",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -4935,6 +5136,29 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Client Engagement Lead",
+        description:
+          "Client relationship management, business development, account strategy",
+        category: "sales_gtm",
+        topics: [
+          "Client Management",
+          "Business Development",
+          "Account Strategy",
+          "Stakeholder Mgmt",
+        ],
+        evaluationCriteria: [
+          "Client Impact",
+          "Communication",
+          "Strategic Thinking",
+        ],
+        mustProbe: [
+          "Client engagement",
+          "Business development",
+          "Account strategy",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -5025,6 +5249,29 @@ export const companies: CompanyConfig[] = [
           "Client relationship management",
         ],
         duration: 12,
+      },
+      {
+        title: "Client Engagement Lead",
+        description:
+          "Client relationship management, business development, account strategy",
+        category: "sales_gtm",
+        topics: [
+          "Client Management",
+          "Business Development",
+          "Account Strategy",
+          "Stakeholder Mgmt",
+        ],
+        evaluationCriteria: [
+          "Client Impact",
+          "Communication",
+          "Strategic Thinking",
+        ],
+        mustProbe: [
+          "Client engagement",
+          "Business development",
+          "Account strategy",
+        ],
+        duration: 10,
       },
     ],
     interviewRounds: [
@@ -5136,6 +5383,29 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Client Engagement Lead",
+        description:
+          "Client relationship management, business development, account strategy",
+        category: "sales_gtm",
+        topics: [
+          "Client Management",
+          "Business Development",
+          "Account Strategy",
+          "Stakeholder Mgmt",
+        ],
+        evaluationCriteria: [
+          "Client Impact",
+          "Communication",
+          "Strategic Thinking",
+        ],
+        mustProbe: [
+          "Client engagement",
+          "Business development",
+          "Account strategy",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -5245,6 +5515,29 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Client Engagement Lead",
+        description:
+          "Client advisory, business development, account management",
+        category: "sales_gtm",
+        topics: [
+          "Client Management",
+          "Business Development",
+          "Account Strategy",
+          "Stakeholder Mgmt",
+        ],
+        evaluationCriteria: [
+          "Client Impact",
+          "Communication",
+          "Strategic Thinking",
+        ],
+        mustProbe: [
+          "Client engagement",
+          "Business development",
+          "Account strategy",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -5337,6 +5630,29 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Client Engagement Lead",
+        description:
+          "Client advisory, business development, account management",
+        category: "sales_gtm",
+        topics: [
+          "Client Management",
+          "Business Development",
+          "Account Strategy",
+          "Stakeholder Mgmt",
+        ],
+        evaluationCriteria: [
+          "Client Impact",
+          "Communication",
+          "Strategic Thinking",
+        ],
+        mustProbe: [
+          "Client engagement",
+          "Business development",
+          "Account strategy",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -5428,6 +5744,29 @@ export const companies: CompanyConfig[] = [
           "Team development",
         ],
         duration: 12,
+      },
+      {
+        title: "Client Engagement Lead",
+        description:
+          "Client advisory, business development, account management",
+        category: "sales_gtm",
+        topics: [
+          "Client Management",
+          "Business Development",
+          "Account Strategy",
+          "Stakeholder Mgmt",
+        ],
+        evaluationCriteria: [
+          "Client Impact",
+          "Communication",
+          "Strategic Thinking",
+        ],
+        mustProbe: [
+          "Client engagement",
+          "Business development",
+          "Account strategy",
+        ],
+        duration: 10,
       },
     ],
     interviewRounds: [
@@ -5539,6 +5878,29 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Client Engagement Lead",
+        description:
+          "Client relationship management, account growth, delivery oversight",
+        category: "sales_gtm",
+        topics: [
+          "Client Management",
+          "Account Growth",
+          "Delivery Mgmt",
+          "Stakeholder Mgmt",
+        ],
+        evaluationCriteria: [
+          "Client Impact",
+          "Communication",
+          "Strategic Thinking",
+        ],
+        mustProbe: [
+          "Client engagement",
+          "Account growth",
+          "Delivery management",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -5636,6 +5998,29 @@ export const companies: CompanyConfig[] = [
           "Pipeline architecture",
           "Big data technologies",
           "Analytics approach",
+        ],
+        duration: 10,
+      },
+      {
+        title: "Client Engagement Lead",
+        description:
+          "Client relationship management, business development, account strategy",
+        category: "sales_gtm",
+        topics: [
+          "Client Management",
+          "Business Development",
+          "Account Strategy",
+          "Stakeholder Mgmt",
+        ],
+        evaluationCriteria: [
+          "Client Impact",
+          "Communication",
+          "Strategic Thinking",
+        ],
+        mustProbe: [
+          "Client engagement",
+          "Business development",
+          "Account strategy",
         ],
         duration: 10,
       },
@@ -5808,6 +6193,24 @@ export const companies: CompanyConfig[] = [
           "GPU kernel optimization",
           "ML deployment experience",
         ],
+        duration: 12,
+      },
+      {
+        title: "Hardware Engineer",
+        description: "GPU architecture, silicon design, system engineering",
+        category: "hardware",
+        topics: [
+          "GPU Architecture",
+          "Silicon Design",
+          "System Engineering",
+          "VLSI",
+        ],
+        evaluationCriteria: [
+          "Technical Depth",
+          "System Thinking",
+          "Innovation",
+        ],
+        mustProbe: ["GPU architecture", "Silicon design", "System engineering"],
         duration: 12,
       },
     ],
@@ -6001,6 +6404,24 @@ export const companies: CompanyConfig[] = [
           "Stakeholder management",
         ],
         duration: 12,
+      },
+      {
+        title: "Sales Engineer",
+        description:
+          "Technical pre-sales, solution architecture, product demonstrations",
+        category: "sales_gtm",
+        topics: ["Pre-sales", "Solution Architecture", "Product Demos", "CRM"],
+        evaluationCriteria: [
+          "Technical Sales",
+          "Communication",
+          "Solution Design",
+        ],
+        mustProbe: [
+          "Pre-sales experience",
+          "Solution architecture",
+          "Customer demos",
+        ],
+        duration: 10,
       },
     ],
     interviewRounds: [
@@ -6288,6 +6709,24 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Mobile Engineer",
+        description:
+          "Spotify mobile app, audio playback, offline-first experience",
+        category: "mobile",
+        topics: ["iOS/Android", "Audio", "Offline-first", "Performance"],
+        evaluationCriteria: [
+          "Technical Depth",
+          "Product Thinking",
+          "Craftsmanship",
+        ],
+        mustProbe: [
+          "Mobile development",
+          "Audio experience",
+          "Offline architecture",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -6367,6 +6806,28 @@ export const companies: CompanyConfig[] = [
           "Pipeline architecture",
           "Analytics experience",
           "Data modeling",
+        ],
+        duration: 10,
+      },
+      {
+        title: "Mobile Engineer",
+        description: "Shopify mobile app, merchant experience, cross-platform",
+        category: "mobile",
+        topics: [
+          "iOS/Android",
+          "Mobile Architecture",
+          "E-commerce",
+          "Performance",
+        ],
+        evaluationCriteria: [
+          "Technical Depth",
+          "Product Thinking",
+          "Execution",
+        ],
+        mustProbe: [
+          "Mobile architecture",
+          "E-commerce mobile",
+          "Cross-platform",
         ],
         duration: 10,
       },
@@ -6454,6 +6915,23 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Investment Banking Analyst",
+        description: "Financial analysis, M&A, valuation, client advisory",
+        category: "finance",
+        topics: ["Financial Analysis", "Valuation", "M&A", "Capital Markets"],
+        evaluationCriteria: [
+          "Analytical Rigor",
+          "Domain Knowledge",
+          "Communication",
+        ],
+        mustProbe: [
+          "Financial analysis",
+          "Valuation experience",
+          "Deal experience",
+        ],
+        duration: 12,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -6519,6 +6997,23 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Investment Banking Analyst",
+        description: "M&A, financial modelling, valuation, capital markets",
+        category: "finance",
+        topics: ["Financial Modelling", "Valuation", "M&A", "Capital Markets"],
+        evaluationCriteria: [
+          "Analytical Rigor",
+          "Domain Knowledge",
+          "Communication",
+        ],
+        mustProbe: [
+          "Financial modelling",
+          "Valuation experience",
+          "Deal experience",
+        ],
+        duration: 12,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -6580,6 +7075,29 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Portfolio Management Analyst",
+        description:
+          "Investment strategy, portfolio construction, risk analytics",
+        category: "finance",
+        topics: [
+          "Portfolio Management",
+          "Risk Analytics",
+          "Asset Allocation",
+          "Financial Modelling",
+        ],
+        evaluationCriteria: [
+          "Analytical Rigor",
+          "Domain Knowledge",
+          "Strategic Thinking",
+        ],
+        mustProbe: [
+          "Portfolio analysis",
+          "Risk management",
+          "Investment strategy",
+        ],
+        duration: 12,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -6588,7 +7106,6 @@ export const companies: CompanyConfig[] = [
       "Behavioral / Experience",
     ],
   },
-  // ── Other ──
   {
     id: "johnson-johnson",
     name: "Johnson & Johnson",
@@ -6947,6 +7464,28 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Hardware Engineer",
+        description: "Embedded systems, vehicle electronics, battery systems",
+        category: "hardware",
+        topics: [
+          "Embedded Systems",
+          "Vehicle Electronics",
+          "Battery Systems",
+          "Firmware",
+        ],
+        evaluationCriteria: [
+          "Technical Depth",
+          "System Thinking",
+          "Reliability",
+        ],
+        mustProbe: [
+          "Embedded systems",
+          "Hardware design",
+          "Firmware experience",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -7027,6 +7566,28 @@ export const companies: CompanyConfig[] = [
           "Industrial data pipelines",
           "IIoT experience",
           "Analytics platform",
+        ],
+        duration: 10,
+      },
+      {
+        title: "Hardware Engineer",
+        description: "Industrial hardware, embedded systems, automation",
+        category: "hardware",
+        topics: [
+          "Embedded Systems",
+          "Industrial Hardware",
+          "Automation",
+          "Firmware",
+        ],
+        evaluationCriteria: [
+          "Technical Depth",
+          "System Thinking",
+          "Reliability",
+        ],
+        mustProbe: [
+          "Embedded systems",
+          "Industrial hardware",
+          "Firmware experience",
         ],
         duration: 10,
       },
@@ -7112,6 +7673,28 @@ export const companies: CompanyConfig[] = [
           "Trading system design",
           "C++ optimization",
           "Research platform engineering",
+        ],
+        duration: 10,
+      },
+      {
+        title: "Trading Strategist",
+        description: "Quantitative strategy, risk analysis, alpha generation",
+        category: "hft",
+        topics: [
+          "Probability",
+          "Quantitative Strategy",
+          "Risk Management",
+          "Market Microstructure",
+        ],
+        evaluationCriteria: [
+          "Probabilistic Thinking",
+          "Quantitative Rigor",
+          "Decision Making",
+        ],
+        mustProbe: [
+          "Strategy development",
+          "Quantitative reasoning",
+          "Market understanding",
         ],
         duration: 10,
       },
@@ -7206,6 +7789,28 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Trading Strategist",
+        description: "Expected value reasoning, market making, risk strategy",
+        category: "hft",
+        topics: [
+          "Probability",
+          "Expected Value",
+          "Risk Management",
+          "Market Microstructure",
+        ],
+        evaluationCriteria: [
+          "Probabilistic Thinking",
+          "Decision Making",
+          "Risk Awareness",
+        ],
+        mustProbe: [
+          "Probability reasoning",
+          "Trading decisions",
+          "Risk management",
+        ],
+        duration: 12,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -7286,6 +7891,20 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Trading Strategist",
+        description:
+          "Data-driven strategy research, alpha generation, execution",
+        category: "hft",
+        topics: ["ML", "Statistics", "Alpha Research", "Data Mining"],
+        evaluationCriteria: ["Research Rigor", "ML Depth", "Creative Thinking"],
+        mustProbe: [
+          "ML model development",
+          "Research methodology",
+          "Alternative data",
+        ],
+        duration: 12,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -7356,6 +7975,29 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 12,
       },
+      {
+        title: "Algorithmic Trading Strategist",
+        description:
+          "Automated trading strategy design, execution algorithms, market microstructure",
+        category: "hft",
+        topics: [
+          "Algorithmic Trading",
+          "Market Microstructure",
+          "Statistics",
+          "Probability",
+        ],
+        evaluationCriteria: [
+          "Probabilistic Thinking",
+          "Quantitative Rigor",
+          "Research Depth",
+        ],
+        mustProbe: [
+          "Trading strategy design",
+          "Market microstructure",
+          "Statistical methods",
+        ],
+        duration: 12,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -7413,6 +8055,28 @@ export const companies: CompanyConfig[] = [
           "Probabilistic Thinking",
           "Decision Making",
           "Risk Awareness",
+        ],
+        mustProbe: [
+          "Trading experience",
+          "Risk management",
+          "Strategy development",
+        ],
+        duration: 12,
+      },
+      {
+        title: "Energy Trading Strategist",
+        description: "Commodity trading, risk modelling, quantitative strategy",
+        category: "hft",
+        topics: [
+          "Probability",
+          "Risk Management",
+          "Commodity Markets",
+          "Quantitative Strategy",
+        ],
+        evaluationCriteria: [
+          "Probabilistic Thinking",
+          "Risk Awareness",
+          "Decision Making",
         ],
         mustProbe: [
           "Trading experience",
@@ -7486,6 +8150,29 @@ export const companies: CompanyConfig[] = [
         ],
         duration: 10,
       },
+      {
+        title: "Trading Strategist",
+        description:
+          "HFT strategy development, execution optimization, alpha research",
+        category: "hft",
+        topics: [
+          "Probability",
+          "Statistics",
+          "Alpha Research",
+          "Market Microstructure",
+        ],
+        evaluationCriteria: [
+          "Research Rigor",
+          "Statistical Depth",
+          "Creative Thinking",
+        ],
+        mustProbe: [
+          "Research methodology",
+          "Alpha generation",
+          "Statistical modelling",
+        ],
+        duration: 10,
+      },
     ],
     interviewRounds: [
       "Phone Screen",
@@ -7544,6 +8231,29 @@ export const companies: CompanyConfig[] = [
           "Strategy implementation",
           "Trading system design",
           "Performance optimization",
+        ],
+        duration: 12,
+      },
+      {
+        title: "Market Making Strategist",
+        description:
+          "Electronic market making, liquidity strategy, risk modelling",
+        category: "hft",
+        topics: [
+          "Market Making",
+          "Probability",
+          "Risk Management",
+          "Market Microstructure",
+        ],
+        evaluationCriteria: [
+          "Probabilistic Thinking",
+          "Risk Awareness",
+          "Quantitative Rigor",
+        ],
+        mustProbe: [
+          "Market making experience",
+          "Risk modelling",
+          "Quantitative reasoning",
         ],
         duration: 12,
       },
@@ -7613,6 +8323,28 @@ export const companies: CompanyConfig[] = [
           "Trading experience",
           "Options knowledge",
           "Risk management",
+        ],
+        duration: 12,
+      },
+      {
+        title: "Options Trading Strategist",
+        description: "Options market making, volatility trading, risk strategy",
+        category: "hft",
+        topics: [
+          "Options Theory",
+          "Probability",
+          "Risk Management",
+          "Volatility",
+        ],
+        evaluationCriteria: [
+          "Probabilistic Thinking",
+          "Risk Awareness",
+          "Quantitative Rigor",
+        ],
+        mustProbe: [
+          "Options trading experience",
+          "Risk management",
+          "Volatility modelling",
         ],
         duration: 12,
       },

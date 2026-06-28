@@ -45,6 +45,9 @@ export class InterviewConnection {
   silencePromptActive = false;
   silenceTier: "standard" | "extended" | "design_critique" = "standard";
 
+  // Function calling
+  lastFunctionHash: string | null = null; // dedup: hash of last function call name + args
+
   // Pacing system
   pacing: PacingTracker | null = null;
   pacingTimer: ReturnType<typeof setInterval> | null = null;

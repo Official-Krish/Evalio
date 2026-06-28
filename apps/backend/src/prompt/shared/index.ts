@@ -1,6 +1,7 @@
 export { buildDirectingDirective } from "./directing";
 export { buildEndSessionInstruction } from "./end-session";
 export { buildInterruptionRules } from "./interruption";
+export { buildCriticalConstraints } from "./constraints";
 export { buildCompanyContext } from "./company";
 export { buildRoleContext } from "./role";
 export { buildRoundDirective } from "./round";

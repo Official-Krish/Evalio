@@ -23,6 +23,7 @@ import {
   buildSdPressureGroundRules,
   buildSdScopeSection,
   buildWhiteboardDirective,
+  buildCriticalConstraints,
 } from "../shared";
 
 export function buildHftSdPrompt(
@@ -199,6 +200,29 @@ ${buildSdStageWrapUp()}`);
     sections.push(`## Job Description\n${input.jobDescription}`);
   }
 
+  if (input.githubUsername) {
+    sections.push(`## GitHub Profile\nUsername: ${input.githubUsername}`);
+  }
+
+  if (input.githubSummary) {
+    sections.push(`Bio: ${input.githubSummary}`);
+  }
+
+  if (input.githubLanguages.length > 0) {
+    sections.push(
+      `Languages used across projects: ${input.githubLanguages.join(", ")}`,
+    );
+  }
+
+  if (input.githubProjects.length > 0) {
+    sections.push(`## Notable Projects`);
+    for (const p of input.githubProjects.slice(0, 10)) {
+      sections.push(
+        `- ${p.name}${p.description ? `: ${p.description}` : ""}${p.language ? ` [${p.language}]` : ""}${p.stars > 0 ? ` (${p.stars}★)` : ""}`,
+      );
+    }
+  }
+
   sections.push(
     buildCompanyContext(
       input.companyName,
@@ -233,6 +257,7 @@ ${buildSdStageWrapUp()}`);
   sections.push(buildDirectingDirective());
   sections.push(buildPacingDirective(input.durationMinutes, SD_BUDGETS));
   sections.push(buildEndSessionInstruction());
+  sections.push(buildCriticalConstraints());
 
   return sections.join("\n\n");
 }

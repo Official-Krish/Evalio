@@ -3,6 +3,10 @@ import { buildStyleDirective } from "../shared/style";
 import { buildDirectingDirective } from "../shared/directing";
 import { buildEndSessionInstruction } from "../shared/end-session";
 import { buildPacingDirective, DSA_BUDGETS } from "../shared/pacing";
+import { buildInterruptionRules } from "../shared/interruption";
+import { buildGeneralPrinciples } from "../shared/principles";
+import { buildCriticalConstraints } from "../shared/constraints";
+import { buildCandidateHistory } from "../shared/history";
 
 export function buildHftCodingPrompt(
   questions: Array<{
@@ -80,11 +84,12 @@ You evaluate candidates for one of the most demanding software engineering roles
 You are strict but fair. You push until you find the ceiling.
 
 ## Format
-- You communicate via audio. The candidate writes C++ code in the editor on their screen.
+- You communicate via audio. The candidate writes C++ code in the editor on their screen. The editor is locked to C++ — no other language is available.
 - You receive code previews every 20 seconds. Saved snapshots every 30 seconds.
 - You control the interview pace.
 
 ## C++-Specific Requirements
+- CRITICAL: Only C++ code is accepted. The editor is locked to C++ and the candidate cannot switch languages. Reject any non-C++ code written in the editor.
 - Code must be written in modern C++ (C++17/20).
 - No STL containers on the hot path unless explicitly discussed.
 - The candidate must understand move semantics, perfect forwarding, and RVO.
@@ -129,7 +134,8 @@ ${(() => {
 })()}
 
 ## Modifying Code
-To update code in the candidate's editor, wrap the full updated code in [CODE_UPDATE] and [/CODE_UPDATE] markers.
+To update code in the candidate's editor, call the updateCandidateCode function with the full updated source code as the code parameter. This completely replaces whatever the candidate has in their editor.
+Never describe the function call aloud. Call it silently, then continue speaking naturally.
 
 ## Evaluation Criteria
 Evaluate strictly on:
@@ -140,15 +146,20 @@ Evaluate strictly on:
 5. **Systems Knowledge** — Memory ordering, compiler optimizations, hardware awareness
 
 ## Transitions
-- When moving to the next question: "READY_FOR_NEXT" or "READY_FOR_NEXT:n"
-- When done: "ALL_DONE"
+- When moving to the next question: call the advanceToNextQuestion function. Optionally pass skipToIndex (1-based) to jump ahead.
+- When done: call the allDone function.
 - Do NOT read the new question aloud.
+- Never describe the function call aloud. Call it silently, then continue speaking naturally.
 
 ## Response Format
-When you say "READY_FOR_NEXT" or "READY_FOR_NEXT:n" (to skip to a specific question) or "ALL_DONE" at the end of your response, it will be detected and the appropriate transition will happen.
+When you call advanceToNextQuestion, allDone, or updateCandidateCode, the system executes the action and sends a confirmation. You may also say "READY_FOR_NEXT", "READY_FOR_NEXT:n", or "ALL_DONE" as a spoken fallback — these will be detected from your speech.
 
 ${buildStyleDirective(styleLevel)}
+${buildGeneralPrinciples()}
 ${buildPacingDirective(durationMinutes ?? 30, DSA_BUDGETS)}
+${buildInterruptionRules()}
 ${buildDirectingDirective()}
-${buildEndSessionInstruction()}`;
+${buildCandidateHistory(history?.pastSessions?.map((s) => ({ date: s.date, role: null, overallScore: s.overallScore, strengths: [], weaknesses: [], summary: null })) ?? [], history?.mostImproved ?? null, history?.weakest ?? null, [], history?.scoreTrendLast5 ?? null)}
+${buildEndSessionInstruction()}
+${buildCriticalConstraints()}`;
 }

@@ -28,7 +28,7 @@ export async function handleAudioChunk(
         realtimeInput: {
           mediaChunks: [
             {
-              mimeType: "audio/pcm",
+              mimeType: "audio/pcm;rate=16000",
               data: msg.data as string,
             },
           ],

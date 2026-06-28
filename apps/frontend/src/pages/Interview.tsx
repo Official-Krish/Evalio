@@ -101,6 +101,8 @@ export function InterviewPage() {
   const isDsa = interviewMeta?.mode === "LIVE_CODE";
   const isSql = interviewMeta?.interviewRound === "SQL & Analytics";
   const isQuant = interviewMeta?.interviewRound === "Quantitative Analysis";
+  const isHftCoding =
+    interviewMeta?.interviewRound === "Low-Latency C++ Coding";
   const isSystemDesign = interviewMeta?.mode === "LIVE_CANVAS";
   const isDiscussion = interviewMeta?.mode === "DISCUSSION";
   const roundLabel = interviewMeta?.interviewRound;
@@ -170,6 +172,42 @@ export function InterviewPage() {
         currentIndex,
         language: (session.language as string) ?? "sql",
       });
+    },
+    onError: () => setDsaLoading(false),
+  });
+
+  const { mutate: loadHftSession } = useMutation({
+    mutationFn: () => {
+      setDsaLoading(true);
+      return api.startHftSession(id!);
+    },
+    onSuccess: (data) => {
+      setDsaLoading(false);
+      const session = data.session as Record<string, unknown>;
+      if (!session) return;
+      const currentIndex = (session.currentIndex as number) ?? 0;
+      const problems =
+        (session.problems as Array<{
+          id: string;
+          index: number;
+          title: string;
+          slug: string;
+          difficulty: string;
+          description: string;
+          code: string | null;
+          codeSnapshots: Record<string, string> | null;
+          currentPhase: string;
+          phasesCompleted: string[];
+        }>) ?? [];
+      setDsaSessionData({
+        problems,
+        currentIndex,
+        language: (session.language as string) ?? "cpp",
+      });
+      const firstProblem = problems[0];
+      if (firstProblem) {
+        setDsaCode((firstProblem.code as string) ?? "");
+      }
     },
     onError: () => setDsaLoading(false),
   });
@@ -373,14 +411,17 @@ export function InterviewPage() {
     if (!id) return;
     if (isQuant) loadQuantSession();
     else if (isSql) loadSqlSession();
+    else if (isHftCoding) loadHftSession();
     else if (isDsa) loadDsaSession();
   }, [
     isQuant,
     isSql,
+    isHftCoding,
     isDsa,
     id,
     loadQuantSession,
     loadSqlSession,
+    loadHftSession,
     loadDsaSession,
   ]);
 
@@ -854,6 +895,8 @@ export function InterviewPage() {
 
     try {
       isUserSpeakingRef.current = true;
+      const vadTimeoutMs =
+        isDsa || isSystemDesign ? 60000 : isDiscussion ? 30000 : 20000;
       await startMic(
         (base64) => {
           if (!endedRef.current) {
@@ -861,6 +904,7 @@ export function InterviewPage() {
           }
         },
         {
+          timeoutMs: vadTimeoutMs,
           onSilenceEnd: () => {
             if (
               endedRef.current ||
@@ -1033,7 +1077,7 @@ export function InterviewPage() {
               onRequestHint={() =>
                 socketRef.current?.sendRequestHint(dsaSessionData.currentIndex)
               }
-              {...(isSql
+              {...(isSql || isHftCoding
                 ? {}
                 : {
                     onLanguageChange: (lang: string) => {

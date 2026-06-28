@@ -100,7 +100,7 @@ export function useMicrophone() {
 
         if (vadOptions?.onSilenceEnd) {
           const threshold = vadOptions.threshold ?? 0.02;
-          const timeoutMs = vadOptions.timeoutMs ?? 5000;
+          const timeoutMs = vadOptions.timeoutMs ?? 30000;
           stopVad();
           const dataArray = new Uint8Array(analyser.frequencyBinCount);
           vadTimerRef.current = setInterval(() => {

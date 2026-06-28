@@ -102,6 +102,7 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
             data: {
               interviewId,
               userId: user.id,
+              ...(body.language ? { language: body.language } : {}),
               problems: {
                 create: enriched.map((q, idx) => ({
                   index: idx,
@@ -125,6 +126,7 @@ export const dsaRoutes = new Elysia({ prefix: "/dsa" })
           body: t.Object({
             interviewId: t.String(),
             questionCount: t.Optional(t.Number()),
+            language: t.Optional(t.String()),
           }),
         },
       )

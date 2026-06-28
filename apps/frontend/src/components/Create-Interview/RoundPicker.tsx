@@ -109,6 +109,64 @@ const descriptions: Record<string, string> = {
   "CI/CD & Automation":
     "Pipeline design, deployment strategies, and automation at scale",
   Behavioral: "General behavioral assessment covering collaboration and growth",
+
+  // hft rounds
+  "Quantitative & Probability":
+    "Quantitative reasoning, probability puzzles, and mental math under pressure",
+  "Low-Latency C++ Coding":
+    "C++ systems programming, lock-free data structures, memory optimization",
+  "Low-Latency System Design":
+    "Nanosecond-level trading systems, kernel bypass, hardware co-design",
+  "Behavioral / HFT Fit":
+    "HFT culture fit, risk awareness, decision-making under uncertainty",
+
+  // security rounds
+  "Threat Modeling":
+    "Security architecture review, threat identification, and mitigation strategies",
+  "Vulnerability Analysis":
+    "Code review, exploit identification, and defensive programming",
+
+  // mobile rounds
+  "Mobile Architecture":
+    "iOS/Android architecture, offline-first, performance, cross-platform tradeoffs",
+
+  // research rounds
+  "Paper Critique":
+    "Critical analysis of ML/systems research papers — methodology, results, impact",
+  "Research Deep Dive":
+    "In-depth exploration of past research, experimental design, and scientific rigor",
+
+  // finance rounds
+  "Quantitative Case":
+    "Financial modeling, derivatives pricing, risk analytics, and structured problem-solving",
+  "Market & Risk Scenario":
+    "Market dynamics, portfolio risk, and scenario-based decision-making",
+
+  // hardware rounds
+  "Hardware Design":
+    "Embedded systems, silicon design, PCB architecture, and firmware",
+  "Debugging Scenario":
+    "Hardware fault diagnosis, root cause analysis, and systematic debugging",
+
+  // sales_gtm rounds
+  "Mock Pitch":
+    "Stakeholder presentation, value proposition, and objection handling",
+  "Discovery Call Simulation":
+    "Customer needs discovery, qualification, and consultative selling",
+
+  // company-specific rounds
+  "Googleyness & Leadership":
+    "Culture fit, collaboration, and Google's unique leadership attributes",
+  "Technical & Architecture":
+    "Deep architecture discussion, technical strategy, and solution design",
+  "Quantitative & Behavioural":
+    "Quantitative reasoning combined with behavioral and cultural fit assessment",
+  "Partner & Fit":
+    "Partnership potential, client relationship skills, and cultural alignment",
+  "Technical Discussion":
+    "Domain-specific technical conversation covering depth and breadth",
+  "Product & Behaviour":
+    "Product thinking combined with behavioral and collaboration assessment",
 };
 
 const hoverProps = {

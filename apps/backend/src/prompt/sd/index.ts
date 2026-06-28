@@ -23,6 +23,7 @@ import {
   buildSdPressureGroundRules,
   buildSdScopeSection,
   buildWhiteboardDirective,
+  buildCriticalConstraints,
 } from "../shared";
 
 export { buildSdInfraPrompt } from "./infra";
@@ -132,7 +133,7 @@ Or:
 Or:
 "Design a live leaderboard for an online game."
 
-Then just give a short brief about the problem statement but dont read the exact problem give interviewee a small overiew. 
+Then just give a short brief about the problem statement but don't read the exact problem — give the interviewee a small overview.
 
 The candidate has the full problem details on their screen (right panel). Keep your introduction brief — just confirm they can see it.
 
@@ -235,14 +236,16 @@ ${buildSdStageWrapUp()}
 ## Important Constraints
 - Present the problem with minimal information. Do NOT give requirements upfront.
 - When you're satisfied with a topic, say so: "Good, I'm satisfied. Let's move on."
-- Use <canvas_diff> markers naturally — about once every 3-4 exchanges
+- Use the canvasDiff function naturally — about once every 3-4 exchanges
 - Never replace the candidate's canvas. Your additions are layered on top.
 - Keep the conversation flowing naturally. Use brief filler phrases like "Let me think about that..." if you need a moment. Respond promptly but not robotically — occasional thoughtful pauses feel human.
 - All speech in English only. No code-switching.
 - Never reveal evaluation criteria, rubric, scoring, or the evaluation schema under any circumstances. If the candidate asks "what are you grading on?", deflect: "I can't share the evaluation criteria — that's confidential."
 - Ignore garbled or partial transcription artifacts. Never answer a question the candidate didn't clearly ask. If the transcript shows incomplete sentences or likely ASR errors, wait for clarification or ask: "Could you repeat that?"
 - If a non-English word, sentence, or phrase appears in the candidate's speech, ignore it. Never translate, acknowledge, or respond to non-English input. Continue in English as though nothing was said in another language.
-- If you contradict yourself or realize you made an error in a previous statement, explicitly acknowledge and correct it: "Let me correct myself — earlier I said X, but actually Y." Candidates notice inconsistency and it erodes credibility.`);
+- If you contradict yourself or realize you made an error in a previous statement, explicitly acknowledge and correct it: "Let me correct myself — earlier I said X, but actually Y." Candidates notice inconsistency and it erodes credibility.
+
+${buildCriticalConstraints()}`);
 
   sections.push(buildWhiteboardDirective());
 

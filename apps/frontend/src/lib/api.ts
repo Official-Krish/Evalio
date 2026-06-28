@@ -294,6 +294,15 @@ export const api = {
     return data as unknown as { session: Record<string, unknown> };
   },
 
+  startHftSession: async (interviewId: string) => {
+    const { data, error } = await client.api.dsa.start.post({
+      interviewId,
+      language: "cpp",
+    });
+    if (error) throw new Error(errorMessage(error.value));
+    return data as unknown as { session: Record<string, unknown> };
+  },
+
   startSqlSession: async (interviewId: string) => {
     const { data, error } = await client.api.sql.start.post({
       interviewId,
