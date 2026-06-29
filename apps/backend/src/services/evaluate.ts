@@ -3,6 +3,33 @@ import { prisma } from "../lib/prisma";
 import { updateCandidateProfile } from "./profile";
 import { aggregateFailurePatterns } from "./failurePatterns";
 import { aggregateIdentityTraits } from "./identityTraits";
+import type { LiveAssessment } from "../ws/tools";
+
+function buildLiveObservationsBlock(
+  liveAssessments?: LiveAssessment[],
+  interruptionCount?: number,
+): string {
+  if (!liveAssessments || liveAssessments.length === 0) {
+    if (!interruptionCount) return "";
+    return `The candidate interrupted the interviewer ${interruptionCount} time(s). Frequent interruptions may indicate assertiveness but can also reflect poor listening. Factor this into the communication score.`;
+  }
+
+  const blocks = liveAssessments
+    .map(
+      (a) =>
+        `Turn ${a.orderNumber}:
+  confidence: ${a.confidence} | nervousness: ${a.nervousness} | engagement: ${a.engagement}
+  clarity: ${a.clarity} | fluency: ${a.fluency} | signal: ${a.signal}${a.hesitationLevel ? `\n  hesitation: ${a.hesitationLevel}` : ""}${a.fillerLevel ? ` | fillers: ${a.fillerLevel}` : ""}
+  Note: ${a.rationale}`,
+    )
+    .join("\n\n");
+
+  return `## Live Behavioral Observations
+${blocks}
+
+The observations above reflect delivery cues (tone, pacing, hesitation) captured during the live interview when audio was available. These cues are not recoverable from transcript text alone. Use them to calibrate your scores and per-turn feedback. If the transcript suggests a different conclusion than the live observations, explain the discrepancy in your feedback.
+${interruptionCount ? `\nThe candidate interrupted the interviewer ${interruptionCount} time(s). Frequent interruptions may indicate assertiveness but can also reflect poor listening. Factor this into the communication score.` : ""}`;
+}
 
 interface TurnEvaluation {
   orderNumber: number;
@@ -114,6 +141,8 @@ function buildEvaluationPrompt(input: {
   githubSummary: string | null;
   githubLanguages: string[];
   turns: { orderNumber: number; questionText: string; answerText: string }[];
+  liveAssessments?: LiveAssessment[];
+  interruptionCount?: number;
 }) {
   const questions = input.turns
     .map(
@@ -123,6 +152,11 @@ function buildEvaluationPrompt(input: {
     .join("\n\n");
 
   const numQuestions = input.turns.length;
+
+  const liveBlock = buildLiveObservationsBlock(
+    input.liveAssessments,
+    input.interruptionCount,
+  );
 
   return `You are an expert technical interviewer. Evaluate the following interview.
 
@@ -144,6 +178,8 @@ ${numQuestions > 1 ? "Check for contradictions across questions. If a candidate'
 
 ## Accuracy Calibration
 Calibrate your scores against what is expected for this specific position (${input.position || "general software engineering"}). A correct but shallow answer should score lower than one that demonstrates depth and seniority-appropriate insight. Consider the resume context when judging whether the candidate met the bar for the role they are applying for.
+
+${liveBlock}
 
 ## Behavioral Signals
 Infer candidate state from the transcript: nervousness (hesitation, hedging), engagement (detailed vs curt answers), and confidence (assertive language vs qualifiers). Factor these into the communication score and relevant turn feedback — a confident well-structured answer should score higher than a hesitant one with the same factual content.`;
@@ -261,7 +297,14 @@ async function writeEvaluation(
   }
 }
 
-export async function evaluateInterview(interviewId: string, _retries = 1) {
+export async function evaluateInterview(
+  interviewId: string,
+  liveData?: {
+    liveAssessments?: LiveAssessment[];
+    interruptionCount?: number;
+  },
+  _retries = 1,
+) {
   const interview = await prisma.interviewSession.findUnique({
     where: { id: interviewId },
     select: {
@@ -305,7 +348,10 @@ export async function evaluateInterview(interviewId: string, _retries = 1) {
       githubSummary: null,
       githubLanguages: [],
       turns: [],
+      liveAssessments: liveData?.liveAssessments,
+      interruptionCount: liveData?.interruptionCount,
     });
+
     // Still generate a basic evaluation even with no turns
     const result = await generateEvaluation(prompt);
     if (result) {
@@ -331,6 +377,8 @@ export async function evaluateInterview(interviewId: string, _retries = 1) {
     githubSummary: github?.summary ?? null,
     githubLanguages: (github?.languages as string[]) ?? [],
     turns: interview.turns,
+    liveAssessments: liveData?.liveAssessments,
+    interruptionCount: liveData?.interruptionCount,
   });
 
   const result = await generateEvaluation(prompt);
@@ -456,7 +504,11 @@ async function generateDsaEvaluation(
   return null;
 }
 
-export async function evaluateDsaSession(interviewId: string) {
+export async function evaluateDsaSession(
+  interviewId: string,
+  liveAssessments?: LiveAssessment[],
+  interruptionCount?: number,
+) {
   try {
     const dsaSession = await prisma.dsaSession.findUnique({
       where: { interviewId },
@@ -490,6 +542,10 @@ export async function evaluateDsaSession(interviewId: string) {
       .join("\n\n");
 
     const problemCount = problems.length;
+    const liveBlock = buildLiveObservationsBlock(
+      liveAssessments,
+      interruptionCount,
+    );
 
     const prompt = `Evaluate the candidate's DSA coding interview performance.
 
@@ -515,6 +571,8 @@ Calibrate scores by difficulty: a correct easy solution should score lower than 
 
 ## Behavioral Signals
 Infer candidate state from their responses: do they dive into edge cases confidently or wait to be prompted? Do they backtrack or correct themselves? Factor observed confidence and clarity into the Communication (15%) score.
+
+${liveBlock}
 
 Provide specific, actionable feedback for each question. Return ONLY valid JSON matching the schema.`;
 
@@ -716,7 +774,11 @@ async function generateSystemDesignEvaluation(
   return null;
 }
 
-export async function evaluateSystemDesignSession(interviewId: string) {
+export async function evaluateSystemDesignSession(
+  interviewId: string,
+  liveAssessments?: LiveAssessment[],
+  interruptionCount?: number,
+) {
   try {
     const interview = await prisma.interviewSession.findUnique({
       where: { id: interviewId },
@@ -751,6 +813,10 @@ export async function evaluateSystemDesignSession(interviewId: string) {
       .join("\n\n");
 
     const turnCount = interview.turns.length;
+    const liveBlock = buildLiveObservationsBlock(
+      liveAssessments,
+      interruptionCount,
+    );
 
     const prompt = `Evaluate the candidate's system design interview performance.
 
@@ -781,6 +847,8 @@ Calibrate scores against seniority level: juniors are not expected to dive deep 
 
 ## Behavioral Signals
 Infer candidate state from the transcript: confidence in design choices, comfort with ambiguity, ability to accept redirections. Factor these into the overall score — a candidate who owns their design decisions and clearly articulates tradeoffs demonstrates senior-level communication.
+
+${liveBlock}
 
 ## Canvas Feedback
 Analyze the final diagram. What's missing? What strong decisions were made? What weak decisions?

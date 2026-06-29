@@ -4,8 +4,20 @@ import {
   evaluateDsaSession,
   evaluateSystemDesignSession,
 } from "../services/evaluate";
-
-export async function finalizeInterview(interviewId: string) {
+export async function finalizeInterview(
+  interviewId: string,
+  liveAssessments?: Array<{
+    orderNumber: number;
+    confidence: "low" | "medium" | "high";
+    nervousness: "low" | "medium" | "high";
+    engagement: "low" | "medium" | "high";
+    clarity: "low" | "medium" | "high";
+    fluency: "low" | "medium" | "high";
+    signal: "none" | "strong" | "struggling" | "off_track" | "going_deep";
+    rationale: string;
+  }>,
+  interruptionCount?: number,
+) {
   try {
     const interview = await prisma.interviewSession.findUnique({
       where: { id: interviewId },
@@ -33,15 +45,24 @@ export async function finalizeInterview(interviewId: string) {
     );
 
     if (interview.mode === "LIVE_CODE") {
-      evaluateDsaSession(interviewId).catch((err) => {
-        console.error("DSA evaluation failed:", err);
-      });
+      evaluateDsaSession(interviewId, liveAssessments, interruptionCount).catch(
+        (err) => {
+          console.error("DSA evaluation failed:", err);
+        },
+      );
     } else if (interview.mode === "LIVE_CANVAS") {
-      evaluateSystemDesignSession(interviewId).catch((err) => {
+      evaluateSystemDesignSession(
+        interviewId,
+        liveAssessments,
+        interruptionCount,
+      ).catch((err) => {
         console.error("System Design evaluation failed:", err);
       });
     } else {
-      evaluateInterview(interviewId).catch((err) => {
+      evaluateInterview(interviewId, {
+        liveAssessments,
+        interruptionCount,
+      }).catch((err) => {
         console.error("Evaluation failed:", err);
         prisma.interviewSession
           .update({

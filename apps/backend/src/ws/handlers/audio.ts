@@ -59,6 +59,9 @@ export async function handleAudioStreamEnd(
   }
 
   const isInterrupted = (msg as { interrupted?: boolean }).interrupted === true;
+  if (isInterrupted) {
+    conn.interruptionCount++;
+  }
   const MIN_MEANINGFUL_CHUNKS = 3;
 
   // Hallucination guardrail: if the user barely spoke, silently keep listening

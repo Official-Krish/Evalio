@@ -39,7 +39,11 @@ export async function cleanup(conn: InterviewConnection, reason?: string) {
         await mergeAnswerBuf(conn);
       }
 
-      await finalizeInterview(conn.interviewId);
+      await finalizeInterview(
+        conn.interviewId,
+        conn.liveAssessments,
+        conn.interruptionCount,
+      );
 
       await releaseSlot(conn.interviewId);
       conn.wsMap.delete(conn.interviewId);
@@ -104,7 +108,11 @@ export async function handleTurnCompleteDuringClosing(
   } else if (conn.currentTurnId && conn.answerBuf) {
     await mergeAnswerBuf(conn);
   }
-  await finalizeInterview(conn.interviewId);
+  await finalizeInterview(
+    conn.interviewId,
+    conn.liveAssessments,
+    conn.interruptionCount,
+  );
   await conn.safeSend({ type: "feedback_ready" });
   conn.gemini?.close();
   conn.client.close();

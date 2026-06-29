@@ -1,7 +1,7 @@
 import { WebSocket as WsWebSocket } from "ws";
 import type { GeminiSession } from "../gemini";
 import { cleanup, initiateClosing } from "./helpers/cleanup";
-import { safeIndex, safePhase } from "./orchestrator";
+import { safeIndex, safePhase, type LiveAssessment } from "./tools";
 import { handleInit } from "./handlers/init";
 import { handleAudioChunk, handleAudioStreamEnd } from "./handlers/audio";
 import { prisma } from "../lib/prisma";
@@ -13,6 +13,8 @@ export interface CandidateState {
   confidence: "low" | "medium" | "high";
   currentSignal: "none" | "struggling" | "going_deep" | "off_track" | "strong";
 }
+
+export type { LiveAssessment };
 
 export class InterviewConnection {
   interviewId: string | null = null;
@@ -64,6 +66,10 @@ export class InterviewConnection {
   lastSilencePromptTime = 0;
   silencePromptActive = false;
   silenceTier: "standard" | "extended" | "design_critique" = "standard";
+
+  // Live assessments
+  liveAssessments: LiveAssessment[] = [];
+  interruptionCount = 0;
 
   // Function calling
   lastFunctionHash: string | null = null; // dedup: hash of last function call name + args
