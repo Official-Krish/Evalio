@@ -3,6 +3,10 @@ import type { GeminiSession } from "../gemini";
 import { cleanup, initiateClosing } from "./helpers/cleanup";
 import { safeIndex, safePhase, type LiveAssessment } from "./tools";
 import { createDefaultRuntime, type InterviewerRuntime } from "./runtime";
+import {
+  createDeterministicState,
+  type DeterministicState,
+} from "./deterministic";
 import { handleInit } from "./handlers/init";
 import { handleAudioChunk, handleAudioStreamEnd } from "./handlers/audio";
 import { prisma } from "../lib/prisma";
@@ -35,6 +39,7 @@ export class InterviewConnection {
   isDsaMode = false;
   isSqlMode = false;
   isQuantMode = false;
+  isHftMode = false;
   dsaTransitioned = false;
   candidateState: CandidateState = {
     nervousness: "low",
@@ -74,6 +79,9 @@ export class InterviewConnection {
 
   // Interviewer runtime state
   runtime: InterviewerRuntime = createDefaultRuntime();
+
+  // Deterministic scoring state
+  deterministic: DeterministicState = createDeterministicState();
 
   // Function calling
   lastFunctionHash: string | null = null; // dedup: hash of last function call name + args
@@ -188,6 +196,9 @@ export class InterviewConnection {
         if (prevMsg.code === undefined || prevMsg.code.length > 100000) break;
         const idx = safeIndex(prevMsg.questionIndex);
         const phase = safePhase(prevMsg.phase);
+        const effectiveLang = this.isHftMode
+          ? "cpp"
+          : (prevMsg.language ?? "javascript");
         this.gemini.send(
           JSON.stringify({
             clientContent: {
@@ -196,7 +207,7 @@ export class InterviewConnection {
                   role: "user",
                   parts: [
                     {
-                      text: `[Code Preview — Question ${idx}, ${phase} phase, not yet saved]\n\n\`\`\`${prevMsg.language ?? "javascript"}\n${prevMsg.code}\n\`\`\``,
+                      text: `[Code Preview — Question ${idx}, ${phase} phase, not yet saved]\n\n\`\`\`${effectiveLang}\n${prevMsg.code}\n\`\`\``,
                     },
                   ],
                 },
@@ -219,7 +230,10 @@ export class InterviewConnection {
         if (codeMsg.code === undefined || codeMsg.code.length > 100000) break;
         const idx = safeIndex(codeMsg.questionIndex);
         const phase = safePhase(codeMsg.phase);
-        const codeText = `\`\`\`${codeMsg.language ?? "javascript"}\n${codeMsg.code}\n\`\`\``;
+        const effectiveLang = this.isHftMode
+          ? "cpp"
+          : (codeMsg.language ?? "javascript");
+        const codeText = `\`\`\`${effectiveLang}\n${codeMsg.code}\n\`\`\``;
         this.gemini.send(
           JSON.stringify({
             clientContent: {
@@ -321,6 +335,18 @@ export class InterviewConnection {
         const langMsg = msg as { language?: string };
         const newLang = langMsg.language;
         if (!newLang) break;
+
+        if (this.isHftMode) {
+          console.log(
+            `[hft] rejecting language change to "${newLang}" — HFT mode locks C++`,
+          );
+          this.safeSend({
+            type: "language_change_rejected",
+            language: "cpp",
+            reason: "HFT coding mode is locked to C++",
+          });
+          break;
+        }
         console.log(`[dsa] language change to "${newLang}"`);
 
         try {
@@ -403,7 +429,6 @@ export class InterviewConnection {
         if (!this.waitingForAiResponse) {
           const silenceMs = Date.now() - this.lastAudioTime;
           if (silenceMs > 8_000 && !this.canvasInactivityTimer) {
-            const startedAt = Date.now();
             this.canvasInactivityTimer = setTimeout(() => {
               this.canvasInactivityTimer = null;
               // If audio arrived while timer was pending, skip to avoid race

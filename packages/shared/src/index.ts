@@ -152,9 +152,15 @@ export interface InterviewSession {
   position: string | null;
   jobDescription: string | null;
   overallScore: number | null;
+  overallConfidence: number | null;
   communicationScore: number | null;
+  communicationConfidence: number | null;
   technicalScore: number | null;
+  technicalConfidence: number | null;
   problemSolvingScore: number | null;
+  problemSolvingConfidence: number | null;
+  momentum: string | null;
+  momentumSlope: number | null;
   durationSeconds: number | null;
   startedAt: Date | null;
   endedAt: Date | null;
@@ -180,6 +186,8 @@ export interface InterviewTurn {
   questionText: string;
   answerText: string;
   score: number | null;
+  weight: number | null;
+  evidence: string | null;
   feedback: string | null;
   createdAt: Date;
   questionStartMs?: number | null;

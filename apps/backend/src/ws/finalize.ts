@@ -5,6 +5,7 @@ import {
   evaluateSystemDesignSession,
 } from "../services/evaluate";
 import type { InterviewerRuntime } from "./runtime";
+import type { DeterministicState } from "./deterministic";
 export async function finalizeInterview(
   interviewId: string,
   liveAssessments?: Array<{
@@ -27,6 +28,7 @@ export async function finalizeInterview(
     | "overconfidenceDetected"
     | "constraints"
   >,
+  deterministic?: DeterministicState,
 ) {
   try {
     const interview = await prisma.interviewSession.findUnique({
@@ -60,6 +62,7 @@ export async function finalizeInterview(
         liveAssessments,
         interruptionCount,
         runtime,
+        deterministic,
       ).catch((err) => {
         console.error("DSA evaluation failed:", err);
       });
@@ -69,6 +72,7 @@ export async function finalizeInterview(
         liveAssessments,
         interruptionCount,
         runtime,
+        deterministic,
       ).catch((err) => {
         console.error("System Design evaluation failed:", err);
       });
@@ -77,6 +81,7 @@ export async function finalizeInterview(
         liveAssessments,
         interruptionCount,
         runtime,
+        deterministic,
       }).catch((err) => {
         console.error("Evaluation failed:", err);
         prisma.interviewSession

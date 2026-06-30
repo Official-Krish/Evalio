@@ -127,7 +127,7 @@ function buildContextSilencePrompt(
   escalation: "gentle" | "firm" | "direct",
   stage: string,
   canvasData: unknown,
-  hasVisualContext: boolean,
+  _hasVisualContext: boolean,
 ): string {
   const tone =
     escalation === "gentle"

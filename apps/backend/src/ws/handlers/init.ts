@@ -139,6 +139,7 @@ export async function handleInit(
   console.log("[init] resolved route:", route);
   conn.isSqlMode = route.builder === "dsa_sql";
   conn.isQuantMode = route.builder === "quant_standard";
+  conn.isHftMode = route.builder === "hft_coding";
 
   // Set silence tier based on round variant
   const roundLabel = (interview as { interviewRound?: string | null })

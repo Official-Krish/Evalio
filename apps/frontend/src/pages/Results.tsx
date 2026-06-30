@@ -14,6 +14,8 @@ import { ResumeAlignment } from "../components/Result/ResumeAlignment";
 import { StudyRecommendations } from "../components/Result/StudyRecommendations";
 import { FeedbackCTA } from "../components/Result/FeedbackCTA";
 import { TurnRow } from "../components/Result/TurnRow";
+import { MomentumGraph } from "../components/Result/MomentumGraph";
+import { DiscrepancyPanel } from "../components/Result/DiscrepancyPanel";
 import { DsaResultsSection } from "../components/Result/DsaResultsSection";
 import type { DsaSessionData } from "../components/Result/types";
 import { SdDesignSection } from "../components/Result/SdDesignSection";
@@ -211,6 +213,23 @@ export function ResultsPage() {
   const recommendedTopics: string[] =
     (interview.summary?.recommendedTopics as string[] | undefined) ?? [];
 
+  const discrepancies: Array<{
+    turnNumber: number;
+    liveScore: number;
+    calibratedScore: number;
+    direction: "up" | "down" | "unchanged";
+    reason: string;
+  }> =
+    ((interview as unknown as Record<string, unknown>).discrepancies as
+      | Array<{
+          turnNumber: number;
+          liveScore: number;
+          calibratedScore: number;
+          direction: "up" | "down" | "unchanged";
+          reason: string;
+        }>
+      | undefined) ?? [];
+
   const interviewMode = (interview as unknown as Record<string, unknown>)
     .mode as string | undefined;
   const isLiveCanvas = interviewMode === "LIVE_CANVAS";
@@ -226,9 +245,13 @@ export function ResultsPage() {
       <ScoreBlock
         showScore={interview.overallScore != null}
         overall={overall}
+        overallConfidence={interview.overallConfidence}
         comm={comm}
+        commConfidence={interview.communicationConfidence}
         tech={tech}
+        techConfidence={interview.technicalConfidence}
         prob={prob}
+        probConfidence={interview.problemSolvingConfidence}
         verdict={verdict}
         retryingEval={retryingEval}
         evalStuck={evalStuck}
@@ -272,6 +295,21 @@ export function ResultsPage() {
                 : "Your performance has been consistent."}
           </span>
         </div>
+      )}
+
+      {turns.filter((t) => t.score != null).length >= 2 && (
+        <MomentumGraph
+          turns={turns.map((t) => ({
+            orderNumber: t.orderNumber,
+            score: t.score ?? 0,
+          }))}
+          momentum={interview.momentum}
+          momentumSlope={interview.momentumSlope}
+        />
+      )}
+
+      {discrepancies.length > 0 && (
+        <DiscrepancyPanel discrepancies={discrepancies} />
       )}
 
       {interview.summary && (

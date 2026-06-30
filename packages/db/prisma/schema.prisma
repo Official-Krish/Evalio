@@ -102,11 +102,18 @@ model InterviewSession {
   interviewRound      String?
   startedAt           DateTime?
   endedAt             DateTime?
-  overallScore        Float?
-  communicationScore  Float?
-  technicalScore      Float?
-  problemSolvingScore Float?
-  durationSeconds     Int?
+  overallScore              Float?
+  overallConfidence         Float?
+  communicationScore        Float?
+  communicationConfidence   Float?
+  technicalScore            Float?
+  technicalConfidence       Float?
+  problemSolvingScore       Float?
+  problemSolvingConfidence  Float?
+  momentum                  String?
+  momentumSlope             Float?
+  discrepancies             Json?
+  durationSeconds           Int?
   position            String?
   jobDescription      String?            @db.Text
   resumeId            String?
@@ -218,6 +225,8 @@ model InterviewTurn {
   answerStartMs   Int?
   answerEndMs     Int?
   score           Float?
+  weight          Float?
+  evidence        String?          @db.Text
   feedback        String?          @db.Text
   createdAt       DateTime         @default(now())
   interview       InterviewSession @relation(fields: [interviewId], references: [id])

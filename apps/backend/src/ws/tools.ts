@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { DSA_PHASES } from "../prompt/dsa";
 import type { InterviewConnection } from "./session";
+import { addScoredTurn, getMomentum, getRunningScore } from "./deterministic";
 
 // ── Utility ──
 
@@ -148,6 +149,15 @@ const ChangeConstraintSchema = z.object({
 
 const ChallengeCandidateSchema = z.object({
   topic: z.string().min(1).max(300),
+});
+
+// ── Phase 5 tools ──
+
+const ScoreTurnSchema = z.object({
+  turnNumber: z.number().int().min(0),
+  score: z.number().min(0).max(100),
+  weight: z.number().min(0.1).max(5.0).default(1.0),
+  evidence: z.string().min(1).max(500),
 });
 
 // ── Function handler types ──
@@ -627,6 +637,27 @@ async function handleChallengeCandidate(
   return { success: true };
 }
 
+async function handleScoreTurn(
+  conn: InterviewConnection,
+  args: unknown,
+): Promise<FunctionResult> {
+  const { turnNumber, score, weight, evidence } = args as z.infer<
+    typeof ScoreTurnSchema
+  >;
+  console.log(`[fn] scoreTurn #${turnNumber}: score=${score} weight=${weight}`);
+
+  addScoredTurn(conn.deterministic, { turnNumber, score, weight, evidence });
+  const momentum = getMomentum(conn.deterministic);
+  const running = getRunningScore(conn.deterministic);
+
+  return {
+    success: true,
+    runningScore: running,
+    momentum: momentum.direction,
+    momentumSlope: Math.round(momentum.slope * 10) / 10,
+  };
+}
+
 async function handleSimplifyQuestion(
   conn: InterviewConnection,
   args: unknown,
@@ -710,6 +741,10 @@ export const functionHandlers: Record<string, FunctionHandler> = {
   challengeCandidate: {
     schema: ChallengeCandidateSchema,
     handler: handleChallengeCandidate,
+  },
+  scoreTurn: {
+    schema: ScoreTurnSchema,
+    handler: handleScoreTurn,
   },
 };
 
@@ -1111,6 +1146,35 @@ export const FUNCTION_DECLARATIONS = [
         },
       },
       required: ["topic"],
+    },
+  },
+  {
+    name: "scoreTurn",
+    description:
+      "Score the candidate's just-completed turn. Call this AFTER assessTurn, before asking the next question. Provide a score and weight — the system computes a running weighted average. Weight reflects question importance: 0.5 for warm-up, 1.0 for standard, 2.0 for core/architecture, 2.5 for deep follow-ups. Evidence must explain what earned or lost points.",
+    parameters: {
+      type: "OBJECT" as any,
+      properties: {
+        turnNumber: {
+          type: "INTEGER" as any,
+          description: "The current turn number (1-based).",
+        },
+        score: {
+          type: "NUMBER" as any,
+          description: "Score for this turn 0-100.",
+        },
+        weight: {
+          type: "NUMBER" as any,
+          description:
+            "Question importance weight. 0.5 = warm-up/generic, 1.0 = standard technical, 2.0 = core domain/architecture, 2.5 = deep follow-up/stress test. Defaults to 1.0.",
+        },
+        evidence: {
+          type: "STRING" as any,
+          description:
+            "1-2 sentence explanation of what specifically earned or lost points. This appears on the results page so the candidate understands the score (max 500 chars).",
+        },
+      },
+      required: ["turnNumber", "score", "evidence"],
     },
   },
   {

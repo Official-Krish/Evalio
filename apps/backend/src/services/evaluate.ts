@@ -5,6 +5,8 @@ import { aggregateFailurePatterns } from "./failurePatterns";
 import { aggregateIdentityTraits } from "./identityTraits";
 import type { LiveAssessment } from "../ws/tools";
 import type { InterviewerRuntime } from "../ws/runtime";
+import type { DeterministicState } from "../ws/deterministic";
+import { getMomentum, getScoreConfidence } from "../ws/deterministic";
 
 function buildLiveObservationsBlock(
   liveAssessments?: LiveAssessment[],
@@ -43,7 +45,6 @@ function buildRuntimeBlock(
     | "constraints"
   >,
   liveAssessments?: LiveAssessment[],
-  interruptionCount?: number,
 ): string {
   if (!runtime) return "";
   const parts: string[] = [];
@@ -130,14 +131,30 @@ function buildRuntimeBlock(
 interface TurnEvaluation {
   orderNumber: number;
   score: number;
+  weight: number;
+  evidence: string;
   feedback: string;
+}
+
+interface Discrepancy {
+  turnNumber: number;
+  liveScore: number;
+  calibratedScore: number;
+  direction: "up" | "down" | "unchanged";
+  reason: string;
 }
 
 interface EvaluationResult {
   overallScore: number;
+  overallConfidence: number;
   communicationScore: number;
+  communicationConfidence: number;
   technicalScore: number;
+  technicalConfidence: number;
   problemSolvingScore: number;
+  problemSolvingConfidence: number;
+  momentum: "improving" | "stable" | "declining";
+  momentumSlope: number;
   summary: string;
   keyStrengths: string[];
   areasForImprovement: string[];
@@ -145,6 +162,7 @@ interface EvaluationResult {
   resumeStrengths: string[];
   resumeWeaknesses: string[];
   turns: TurnEvaluation[];
+  discrepancies: Discrepancy[];
 }
 
 const EVALUATION_SCHEMA = {
@@ -154,17 +172,79 @@ const EVALUATION_SCHEMA = {
       type: "number",
       description: "Overall interview score 0-100",
     },
+    overallConfidence: {
+      type: "number",
+      description:
+        "Confidence in the overall score 0-95% based on evidence volume",
+    },
     communicationScore: {
       type: "number",
       description: "Communication skills score 0-100",
+    },
+    communicationConfidence: {
+      type: "number",
+      description: "Confidence in communication score 0-95%",
     },
     technicalScore: {
       type: "number",
       description: "Technical knowledge score 0-100",
     },
+    technicalConfidence: {
+      type: "number",
+      description: "Confidence in technical score 0-95%",
+    },
     problemSolvingScore: {
       type: "number",
       description: "Problem solving ability score 0-100",
+    },
+    problemSolvingConfidence: {
+      type: "number",
+      description: "Confidence in problem solving score 0-95%",
+    },
+    momentum: {
+      type: "string",
+      enum: ["improving", "stable", "declining"],
+      description: "Score trajectory across the interview",
+    },
+    momentumSlope: {
+      type: "number",
+      description: "Linear regression slope of scores over last 5 turns",
+    },
+    discrepancies: {
+      type: "array",
+      description:
+        "Per-turn score adjustments when live scores conflict with transcript evidence",
+      items: {
+        type: "object",
+        properties: {
+          turnNumber: { type: "number" },
+          liveScore: {
+            type: "number",
+            description: "Score assigned by scoreTurn live",
+          },
+          calibratedScore: {
+            type: "number",
+            description: "Score after calibration against transcript",
+          },
+          direction: {
+            type: "string",
+            enum: ["up", "down", "unchanged"],
+            description:
+              "Whether the score was adjusted up, down, or unchanged",
+          },
+          reason: {
+            type: "string",
+            description: "Why the score was adjusted or why it stayed the same",
+          },
+        },
+        required: [
+          "turnNumber",
+          "liveScore",
+          "calibratedScore",
+          "direction",
+          "reason",
+        ],
+      },
     },
     summary: {
       type: "string",
@@ -206,20 +286,35 @@ const EVALUATION_SCHEMA = {
             type: "number",
             description: "Score for this turn 0-100",
           },
+          weight: {
+            type: "number",
+            description: "Question importance weight used in weighted average",
+          },
+          evidence: {
+            type: "string",
+            description: "Brief evidence of what earned or lost points",
+          },
           feedback: {
             type: "string",
             description: "Specific feedback for this answer",
           },
         },
-        required: ["orderNumber", "score", "feedback"],
+        required: ["orderNumber", "score", "weight", "evidence", "feedback"],
       },
     },
   },
   required: [
     "overallScore",
+    "overallConfidence",
     "communicationScore",
+    "communicationConfidence",
     "technicalScore",
+    "technicalConfidence",
     "problemSolvingScore",
+    "problemSolvingConfidence",
+    "momentum",
+    "momentumSlope",
+    "discrepancies",
     "summary",
     "keyStrengths",
     "areasForImprovement",
@@ -229,6 +324,66 @@ const EVALUATION_SCHEMA = {
     "turns",
   ],
 } as const;
+
+function buildDeterministicBlock(deterministic?: DeterministicState): string {
+  if (!deterministic || deterministic.turns.length === 0) return "";
+
+  const scoredTurns = deterministic.turns
+    .map(
+      (t) =>
+        `Turn ${t.turnNumber}: score=${t.score} weight=${t.weight} "${t.evidence}"`,
+    )
+    .join("\n");
+
+  const runningScore = deterministic.runningScore;
+  const momentum = getMomentum(deterministic);
+  const confidence = getScoreConfidence(deterministic.turns.length);
+
+  return `## Live Scores (from scoreTurn)
+
+The interviewer scored each turn in real time. Your job is to VALIDATE and CALIBRATE these scores — not replace them. If the transcript supports the live scores, keep them. If the transcript contradicts a live score, adjust it and explain why.
+
+For EVERY turn, report a discrepancy entry: the liveScore, your calibratedScore, the direction, and the reason. If the score is correct as-is, set direction to "unchanged" and explain briefly why the live score was accurate.
+
+Per-turn scores:
+${scoredTurns}
+
+Running weighted score: ${runningScore}/100 (confidence: ${confidence}%)
+Momentum: ${momentum.direction} (slope: ${momentum.slope.toFixed(1)})
+
+${
+  confidence < 70
+    ? `Confidence is low (< 70%) because only ${deterministic.turns.length} turn(s) were scored. Focus on providing qualitative feedback for dimensions with thin evidence.`
+    : ""
+}`;
+}
+
+function buildDeterministicContextBlock(
+  deterministic?: DeterministicState,
+): string {
+  if (!deterministic || deterministic.turns.length === 0) return "";
+
+  const scoredTurns = deterministic.turns
+    .map(
+      (t) =>
+        `Turn ${t.turnNumber}: score=${t.score} weight=${t.weight} "${t.evidence}"`,
+    )
+    .join("\n");
+
+  const runningScore = deterministic.runningScore;
+  const momentum = getMomentum(deterministic);
+  const confidence = getScoreConfidence(deterministic.turns.length);
+
+  return `## Live Scores (for context)
+
+The interviewer scored each turn in real time. Use these as context alongside the transcript.
+
+Per-turn scores:
+${scoredTurns}
+
+Running weighted score: ${runningScore}/100 (confidence: ${confidence}%)
+Momentum: ${momentum.direction} (slope: ${momentum.slope.toFixed(1)})`;
+}
 
 function buildEvaluationPrompt(input: {
   position: string | null;
@@ -248,6 +403,7 @@ function buildEvaluationPrompt(input: {
     | "overconfidenceDetected"
     | "constraints"
   >;
+  deterministic?: DeterministicState;
 }) {
   const questions = input.turns
     .map(
@@ -263,11 +419,9 @@ function buildEvaluationPrompt(input: {
     input.interruptionCount,
   );
 
-  const runtimeBlock = buildRuntimeBlock(
-    input.runtime,
-    input.liveAssessments,
-    input.interruptionCount,
-  );
+  const runtimeBlock = buildRuntimeBlock(input.runtime, input.liveAssessments);
+
+  const deterministicBlock = buildDeterministicBlock(input.deterministic);
 
   return `You are an expert technical interviewer. Evaluate the following interview.
 
@@ -279,7 +433,6 @@ GitHub: ${input.githubSummary || "Not linked"} ${input.githubLanguages.length ? 
 --- Structured Q&A ---
 ${questions || "No structured Q&A recorded"}
 
-Score each turn individually (0-100) with specific feedback.
 Provide overall scores for communication, technical knowledge, and problem solving.
 List key strengths, areas for improvement, and recommended topics for further study.
 Also analyze the candidate's resume briefly — what are its strongest points (resumeStrengths) and what could be improved (resumeWeaknesses)? Keep each to 2-3 items.
@@ -293,6 +446,8 @@ Calibrate your scores against what is expected for this specific position (${inp
 ${liveBlock}
 
 ${runtimeBlock}
+
+${deterministicBlock}
 
 ## Behavioral Signals
 Infer candidate state from the transcript: nervousness (hesitation, hedging), engagement (detailed vs curt answers), and confidence (assertive language vs qualifiers). Factor these into the communication score and relevant turn feedback — a confident well-structured answer should score higher than a hesitant one with the same factual content.`;
@@ -384,9 +539,16 @@ async function writeEvaluation(
       where: { id: interviewId },
       data: {
         overallScore: result.overallScore,
+        overallConfidence: result.overallConfidence,
         communicationScore: result.communicationScore,
+        communicationConfidence: result.communicationConfidence,
         technicalScore: result.technicalScore,
+        technicalConfidence: result.technicalConfidence,
         problemSolvingScore: result.problemSolvingScore,
+        problemSolvingConfidence: result.problemSolvingConfidence,
+        momentum: result.momentum,
+        momentumSlope: result.momentumSlope,
+        discrepancies: result.discrepancies as any,
         durationSeconds,
       },
     }),
@@ -395,7 +557,12 @@ async function writeEvaluation(
       if (!dbTurn) return Promise.resolve();
       return prisma.interviewTurn.update({
         where: { id: dbTurn.id },
-        data: { score: t.score, feedback: t.feedback },
+        data: {
+          score: t.score,
+          weight: t.weight,
+          evidence: t.evidence,
+          feedback: t.feedback,
+        },
       });
     }),
   ]);
@@ -424,6 +591,7 @@ export async function evaluateInterview(
       | "overconfidenceDetected"
       | "constraints"
     >;
+    deterministic?: DeterministicState;
   },
   _retries = 1,
 ) {
@@ -473,6 +641,7 @@ export async function evaluateInterview(
       liveAssessments: liveData?.liveAssessments,
       interruptionCount: liveData?.interruptionCount,
       runtime: liveData?.runtime,
+      deterministic: liveData?.deterministic,
     });
 
     // Still generate a basic evaluation even with no turns
@@ -503,6 +672,7 @@ export async function evaluateInterview(
     liveAssessments: liveData?.liveAssessments,
     interruptionCount: liveData?.interruptionCount,
     runtime: liveData?.runtime,
+    deterministic: liveData?.deterministic,
   });
 
   const result = await generateEvaluation(prompt);
@@ -591,7 +761,7 @@ const DSA_EVALUATION_SCHEMA = {
 async function generateDsaEvaluation(
   prompt: string,
 ): Promise<DsaEvaluationResult | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = Bun.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY env not set");
 
   const ai = new GoogleGenAI({ apiKey });
@@ -641,6 +811,7 @@ export async function evaluateDsaSession(
     | "overconfidenceDetected"
     | "constraints"
   >,
+  deterministic?: DeterministicState,
 ) {
   try {
     const dsaSession = await prisma.dsaSession.findUnique({
@@ -680,11 +851,9 @@ export async function evaluateDsaSession(
       interruptionCount,
     );
 
-    const runtimeBlock = buildRuntimeBlock(
-      runtime,
-      liveAssessments,
-      interruptionCount,
-    );
+    const runtimeBlock = buildRuntimeBlock(runtime, liveAssessments);
+
+    const deterministicBlock = buildDeterministicContextBlock(deterministic);
 
     const prompt = `Evaluate the candidate's DSA coding interview performance.
 
@@ -714,6 +883,8 @@ Infer candidate state from their responses: do they dive into edge cases confide
 ${liveBlock}
 
 ${runtimeBlock}
+
+${deterministicBlock}
 
 Provide specific, actionable feedback for each question. Return ONLY valid JSON matching the schema.`;
 
@@ -883,7 +1054,7 @@ interface SystemDesignEvaluationResult {
 async function generateSystemDesignEvaluation(
   prompt: string,
 ): Promise<SystemDesignEvaluationResult | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = Bun.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY env not set");
 
   const ai = new GoogleGenAI({ apiKey });
@@ -928,6 +1099,7 @@ export async function evaluateSystemDesignSession(
     | "overconfidenceDetected"
     | "constraints"
   >,
+  deterministic?: DeterministicState,
 ) {
   try {
     const interview = await prisma.interviewSession.findUnique({
@@ -968,11 +1140,9 @@ export async function evaluateSystemDesignSession(
       interruptionCount,
     );
 
-    const runtimeBlock = buildRuntimeBlock(
-      runtime,
-      liveAssessments,
-      interruptionCount,
-    );
+    const runtimeBlock = buildRuntimeBlock(runtime, liveAssessments);
+
+    const deterministicBlock = buildDeterministicContextBlock(deterministic);
 
     const prompt = `Evaluate the candidate's system design interview performance.
 
@@ -1007,6 +1177,8 @@ Infer candidate state from the transcript: confidence in design choices, comfort
 ${liveBlock}
 
 ${runtimeBlock}
+
+${deterministicBlock}
 
 ## Canvas Feedback
 Analyze the final diagram. What's missing? What strong decisions were made? What weak decisions?
@@ -1067,7 +1239,7 @@ Return ONLY valid JSON matching the schema.`;
         },
       }),
     ]);
-  } catch {
-    /* evaluation failed silently */
+  } catch (err) {
+    console.error(`[sd-evaluate] error for interview ${interviewId}:`, err);
   }
 }

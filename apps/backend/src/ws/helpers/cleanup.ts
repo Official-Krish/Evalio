@@ -51,6 +51,7 @@ export async function cleanup(conn: InterviewConnection, reason?: string) {
           overconfidenceDetected: conn.runtime.overconfidenceDetected,
           constraints: conn.runtime.constraints,
         },
+        conn.deterministic,
       );
 
       await releaseSlot(conn.interviewId);
@@ -128,6 +129,7 @@ export async function handleTurnCompleteDuringClosing(
       overconfidenceDetected: conn.runtime.overconfidenceDetected,
       constraints: conn.runtime.constraints,
     },
+    conn.deterministic,
   );
   await conn.safeSend({ type: "feedback_ready" });
   conn.gemini?.close();

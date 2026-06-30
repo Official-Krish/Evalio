@@ -196,9 +196,6 @@ async function generateCanvasQuestions(
   primary: { title: string; description: string; fullBreakdown: string };
   backup?: { title: string; description: string; fullBreakdown: string };
 }> {
-  const basePrompt =
-    ROUND_GENERATION_PROMPTS[roundLabel] ??
-    ROUND_GENERATION_PROMPTS["Product Sense"]!;
   const categoryContext = roleCategory
     ? `\nTailor the question to the ${roleCategory} domain — the role is at ${company} for ${role}.`
     : `\nThe role is at ${company} for ${role}.`;
