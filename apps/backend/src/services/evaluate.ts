@@ -4,6 +4,7 @@ import { updateCandidateProfile } from "./profile";
 import { aggregateFailurePatterns } from "./failurePatterns";
 import { aggregateIdentityTraits } from "./identityTraits";
 import type { LiveAssessment } from "../ws/tools";
+import type { InterviewerRuntime } from "../ws/runtime";
 
 function buildLiveObservationsBlock(
   liveAssessments?: LiveAssessment[],
@@ -29,6 +30,101 @@ ${blocks}
 
 The observations above reflect delivery cues (tone, pacing, hesitation) captured during the live interview when audio was available. These cues are not recoverable from transcript text alone. Use them to calibrate your scores and per-turn feedback. If the transcript suggests a different conclusion than the live observations, explain the discrepancy in your feedback.
 ${interruptionCount ? `\nThe candidate interrupted the interviewer ${interruptionCount} time(s). Frequent interruptions may indicate assertiveness but can also reflect poor listening. Factor this into the communication score.` : ""}`;
+}
+
+function buildRuntimeBlock(
+  runtime?: Pick<
+    InterviewerRuntime,
+    | "notes"
+    | "simplifiedQuestions"
+    | "followUps"
+    | "recoveryEvents"
+    | "overconfidenceDetected"
+    | "constraints"
+  >,
+  liveAssessments?: LiveAssessment[],
+  interruptionCount?: number,
+): string {
+  if (!runtime) return "";
+  const parts: string[] = [];
+
+  // ── Behavioral Timeline ──
+  if (liveAssessments && liveAssessments.length > 0) {
+    const timelineItems: string[] = [];
+    for (let i = 0; i < liveAssessments.length; i++) {
+      const a = liveAssessments[i]!;
+      let entry = `Turn ${a.orderNumber}: confidence=${a.confidence}, signal=${a.signal}`;
+
+      const recovery = runtime.recoveryEvents?.find((r) => r.turn === i + 1);
+      if (recovery) entry += ` [RECOVERY: ${recovery.description}]`;
+
+      if (runtime.simplifiedQuestions?.find((sq) => sq.turn === i + 1)) {
+        entry += ` [QUESTION SIMPLIFIED]`;
+      }
+
+      timelineItems.push(entry);
+    }
+    parts.push(
+      `## Behavioral Timeline\nThe interview progression by turn:\n${timelineItems.join("\n")}\n\nThis timeline shows the trajectory of confidence, signal, recoveries, and simplifications. Use it to evaluate how the candidate handled pressure and adapted over the course of the interview.`,
+    );
+  }
+
+  if (runtime.recoveryEvents && runtime.recoveryEvents.length > 0) {
+    const details = runtime.recoveryEvents
+      .map((r) => `Turn ${r.turn}: ${r.description} (${r.type})`)
+      .join("\n");
+    parts.push(
+      `## Recovery Events\n${runtime.recoveryEvents.length} recovery event(s) detected:\n${details}\n\nRecovery is a strong signal of resilience and learning ability. Candidates who recover from struggle or low confidence should be recognized for adaptability.`,
+    );
+  }
+
+  if (runtime.constraints && runtime.constraints.length > 0) {
+    const details = runtime.constraints
+      .map(
+        (c) =>
+          `${c.constraint}=${c.value}${c.revertAfterMs ? ` (reverted after ${c.revertAfterMs}ms)` : ""}`,
+      )
+      .join("\n");
+    parts.push(
+      `## Constraints Introduced\n${runtime.constraints.length} constraint(s) were applied:\n${details}\n\nEvaluate how the candidate adapted to changing requirements. Strong candidates adjust their design without needing explicit guidance.`,
+    );
+  }
+
+  if (runtime.overconfidenceDetected) {
+    parts.push(
+      `## Overconfidence Flag\nAn overconfidence pattern was detected (3+ consecutive turns rated high confidence). If the transcript shows the candidate making unsupported claims or dismissing tradeoffs, reduce the relevant scores. However, if their high confidence was justified by strong answers, note it as a positive.`,
+    );
+  }
+
+  if (runtime.notes && runtime.notes.length > 0) {
+    const praise = runtime.notes.filter((n) => n.severity === "praise").length;
+    const minor = runtime.notes.filter((n) => n.severity === "minor").length;
+    const major = runtime.notes.filter((n) => n.severity === "major").length;
+    parts.push(
+      `## Interviewer Notes\n${runtime.notes.length} note(s) recorded: ${praise} praise, ${minor} minor concerns, ${major} major issues. Factor these into relevant scores.`,
+    );
+  }
+
+  if (runtime.simplifiedQuestions && runtime.simplifiedQuestions.length > 0) {
+    const details = runtime.simplifiedQuestions
+      .map(
+        (sq) =>
+          `Turn ${sq.turn}: simplified (reason: ${sq.reason}${sq.originalDifficulty ? `, originally: ${sq.originalDifficulty}` : ""})`,
+      )
+      .join("\n");
+    parts.push(
+      `## Question Simplifications\n${runtime.simplifiedQuestions.length} question(s) were simplified:\n${details}\n\nCandidates who recovered after simplification demonstrated resilience — adjust scores to reward recovery, not penalize the simplification.`,
+    );
+  }
+
+  const askedFollowUps = runtime.followUps?.filter((f) => f.asked).length ?? 0;
+  if (askedFollowUps > 0) {
+    parts.push(
+      `## Follow-up Tracking\n${askedFollowUps} follow-up(s) were injected. Candidates who engage well with follow-ups demonstrate strong conversational thread awareness. Factor this into the communication score.`,
+    );
+  }
+
+  return parts.join("\n\n");
 }
 
 interface TurnEvaluation {
@@ -143,6 +239,15 @@ function buildEvaluationPrompt(input: {
   turns: { orderNumber: number; questionText: string; answerText: string }[];
   liveAssessments?: LiveAssessment[];
   interruptionCount?: number;
+  runtime?: Pick<
+    InterviewerRuntime,
+    | "notes"
+    | "simplifiedQuestions"
+    | "followUps"
+    | "recoveryEvents"
+    | "overconfidenceDetected"
+    | "constraints"
+  >;
 }) {
   const questions = input.turns
     .map(
@@ -154,6 +259,12 @@ function buildEvaluationPrompt(input: {
   const numQuestions = input.turns.length;
 
   const liveBlock = buildLiveObservationsBlock(
+    input.liveAssessments,
+    input.interruptionCount,
+  );
+
+  const runtimeBlock = buildRuntimeBlock(
+    input.runtime,
     input.liveAssessments,
     input.interruptionCount,
   );
@@ -180,6 +291,8 @@ ${numQuestions > 1 ? "Check for contradictions across questions. If a candidate'
 Calibrate your scores against what is expected for this specific position (${input.position || "general software engineering"}). A correct but shallow answer should score lower than one that demonstrates depth and seniority-appropriate insight. Consider the resume context when judging whether the candidate met the bar for the role they are applying for.
 
 ${liveBlock}
+
+${runtimeBlock}
 
 ## Behavioral Signals
 Infer candidate state from the transcript: nervousness (hesitation, hedging), engagement (detailed vs curt answers), and confidence (assertive language vs qualifiers). Factor these into the communication score and relevant turn feedback — a confident well-structured answer should score higher than a hesitant one with the same factual content.`;
@@ -302,6 +415,15 @@ export async function evaluateInterview(
   liveData?: {
     liveAssessments?: LiveAssessment[];
     interruptionCount?: number;
+    runtime?: Pick<
+      InterviewerRuntime,
+      | "notes"
+      | "simplifiedQuestions"
+      | "followUps"
+      | "recoveryEvents"
+      | "overconfidenceDetected"
+      | "constraints"
+    >;
   },
   _retries = 1,
 ) {
@@ -350,6 +472,7 @@ export async function evaluateInterview(
       turns: [],
       liveAssessments: liveData?.liveAssessments,
       interruptionCount: liveData?.interruptionCount,
+      runtime: liveData?.runtime,
     });
 
     // Still generate a basic evaluation even with no turns
@@ -379,6 +502,7 @@ export async function evaluateInterview(
     turns: interview.turns,
     liveAssessments: liveData?.liveAssessments,
     interruptionCount: liveData?.interruptionCount,
+    runtime: liveData?.runtime,
   });
 
   const result = await generateEvaluation(prompt);
@@ -508,6 +632,15 @@ export async function evaluateDsaSession(
   interviewId: string,
   liveAssessments?: LiveAssessment[],
   interruptionCount?: number,
+  runtime?: Pick<
+    InterviewerRuntime,
+    | "notes"
+    | "simplifiedQuestions"
+    | "followUps"
+    | "recoveryEvents"
+    | "overconfidenceDetected"
+    | "constraints"
+  >,
 ) {
   try {
     const dsaSession = await prisma.dsaSession.findUnique({
@@ -547,6 +680,12 @@ export async function evaluateDsaSession(
       interruptionCount,
     );
 
+    const runtimeBlock = buildRuntimeBlock(
+      runtime,
+      liveAssessments,
+      interruptionCount,
+    );
+
     const prompt = `Evaluate the candidate's DSA coding interview performance.
 
 ## Questions
@@ -573,6 +712,8 @@ Calibrate scores by difficulty: a correct easy solution should score lower than 
 Infer candidate state from their responses: do they dive into edge cases confidently or wait to be prompted? Do they backtrack or correct themselves? Factor observed confidence and clarity into the Communication (15%) score.
 
 ${liveBlock}
+
+${runtimeBlock}
 
 Provide specific, actionable feedback for each question. Return ONLY valid JSON matching the schema.`;
 
@@ -778,6 +919,15 @@ export async function evaluateSystemDesignSession(
   interviewId: string,
   liveAssessments?: LiveAssessment[],
   interruptionCount?: number,
+  runtime?: Pick<
+    InterviewerRuntime,
+    | "notes"
+    | "simplifiedQuestions"
+    | "followUps"
+    | "recoveryEvents"
+    | "overconfidenceDetected"
+    | "constraints"
+  >,
 ) {
   try {
     const interview = await prisma.interviewSession.findUnique({
@@ -818,6 +968,12 @@ export async function evaluateSystemDesignSession(
       interruptionCount,
     );
 
+    const runtimeBlock = buildRuntimeBlock(
+      runtime,
+      liveAssessments,
+      interruptionCount,
+    );
+
     const prompt = `Evaluate the candidate's system design interview performance.
 
 ## Transcript
@@ -849,6 +1005,8 @@ Calibrate scores against seniority level: juniors are not expected to dive deep 
 Infer candidate state from the transcript: confidence in design choices, comfort with ambiguity, ability to accept redirections. Factor these into the overall score — a candidate who owns their design decisions and clearly articulates tradeoffs demonstrates senior-level communication.
 
 ${liveBlock}
+
+${runtimeBlock}
 
 ## Canvas Feedback
 Analyze the final diagram. What's missing? What strong decisions were made? What weak decisions?

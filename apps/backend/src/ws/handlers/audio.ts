@@ -152,15 +152,55 @@ export async function handleAudioStreamEnd(
     }
   }
 
-  try {
-    conn.gemini.send(
-      JSON.stringify({
-        realtimeInput: {
-          audioStreamEnd: true,
-        },
-      }),
-    );
-  } catch {
-    await conn.safeSend({ error: "Failed to end audio stream" });
+  // Inject pending follow-up before AI responds
+  const pendingFollowUp = conn.runtime.followUps.find((f) => !f.asked);
+  if (pendingFollowUp) {
+    pendingFollowUp.asked = true;
+    try {
+      conn.gemini.send(
+        JSON.stringify({
+          clientContent: {
+            turns: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: `[FOLLOW_UP] Earlier you mentioned "${pendingFollowUp.topic}". ${pendingFollowUp.context}`,
+                  },
+                ],
+              },
+            ],
+            turnComplete: false,
+          },
+        }),
+      );
+    } catch {
+      // Non-critical — follow-up is advisory
+    }
+  }
+
+  // Silent Observation Mode: delay the AI's response by 3-5 seconds
+  // when silenceMode is "extended". This creates pressure that candidates
+  // either fill with more detail (positive) or freeze (signal).
+  const sendAudioEnd = () => {
+    if (!conn.gemini) return;
+    try {
+      conn.gemini.send(
+        JSON.stringify({
+          realtimeInput: {
+            audioStreamEnd: true,
+          },
+        }),
+      );
+    } catch {
+      conn.safeSend({ error: "Failed to end audio stream" });
+    }
+  };
+
+  if (conn.runtime.silenceMode === "extended") {
+    const delay = 3000 + Math.floor(Math.random() * 2000);
+    setTimeout(sendAudioEnd, delay);
+  } else {
+    sendAudioEnd();
   }
 }

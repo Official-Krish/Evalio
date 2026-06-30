@@ -2,6 +2,7 @@ import { WebSocket as WsWebSocket } from "ws";
 import type { GeminiSession } from "../gemini";
 import { cleanup, initiateClosing } from "./helpers/cleanup";
 import { safeIndex, safePhase, type LiveAssessment } from "./tools";
+import { createDefaultRuntime, type InterviewerRuntime } from "./runtime";
 import { handleInit } from "./handlers/init";
 import { handleAudioChunk, handleAudioStreamEnd } from "./handlers/audio";
 import { prisma } from "../lib/prisma";
@@ -70,6 +71,9 @@ export class InterviewConnection {
   // Live assessments
   liveAssessments: LiveAssessment[] = [];
   interruptionCount = 0;
+
+  // Interviewer runtime state
+  runtime: InterviewerRuntime = createDefaultRuntime();
 
   // Function calling
   lastFunctionHash: string | null = null; // dedup: hash of last function call name + args

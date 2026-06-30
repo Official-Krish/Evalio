@@ -31,6 +31,7 @@ export function NewInterviewPage() {
   const [step, setStep] = useState(0);
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [customFieldRole, setCustomFieldRole] = useState("");
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
     null,
   );
@@ -225,8 +226,12 @@ export function NewInterviewPage() {
       : null;
 
   const effectivePosition =
-    selectedRole?.title ??
-    (selectedRoleTitle === "__ai_decide__" ? "General Interview" : customRole);
+    selectedCategory === "other" && customFieldRole.trim()
+      ? customFieldRole.trim()
+      : (selectedRole?.title ??
+        (selectedRoleTitle === "__ai_decide__"
+          ? "General Interview"
+          : customRole));
   const effectiveRound = selectedRound ?? (customRound || undefined);
   const effectiveCompanyName =
     selectedCompany?.name ??
@@ -369,7 +374,12 @@ export function NewInterviewPage() {
             {step === 0 && (
               <StepCategory
                 selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
+                customFieldRole={customFieldRole}
+                onSelectCategory={(id) => {
+                  setSelectedCategory(id);
+                  if (id !== "other") setCustomFieldRole("");
+                }}
+                onCustomFieldRoleChange={setCustomFieldRole}
                 onContinue={() => setStep(1)}
               />
             )}

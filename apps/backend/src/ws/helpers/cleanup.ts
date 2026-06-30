@@ -43,6 +43,14 @@ export async function cleanup(conn: InterviewConnection, reason?: string) {
         conn.interviewId,
         conn.liveAssessments,
         conn.interruptionCount,
+        {
+          notes: conn.runtime.notes,
+          simplifiedQuestions: conn.runtime.simplifiedQuestions,
+          followUps: conn.runtime.followUps,
+          recoveryEvents: conn.runtime.recoveryEvents,
+          overconfidenceDetected: conn.runtime.overconfidenceDetected,
+          constraints: conn.runtime.constraints,
+        },
       );
 
       await releaseSlot(conn.interviewId);
@@ -112,6 +120,14 @@ export async function handleTurnCompleteDuringClosing(
     conn.interviewId,
     conn.liveAssessments,
     conn.interruptionCount,
+    {
+      notes: conn.runtime.notes,
+      simplifiedQuestions: conn.runtime.simplifiedQuestions,
+      followUps: conn.runtime.followUps,
+      recoveryEvents: conn.runtime.recoveryEvents,
+      overconfidenceDetected: conn.runtime.overconfidenceDetected,
+      constraints: conn.runtime.constraints,
+    },
   );
   await conn.safeSend({ type: "feedback_ready" });
   conn.gemini?.close();

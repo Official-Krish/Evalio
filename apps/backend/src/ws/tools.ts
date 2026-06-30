@@ -98,6 +98,58 @@ const AssessTurnSchema = z.object({
 
 export type AssessTurnArgs = z.infer<typeof AssessTurnSchema>;
 
+// ── Phase 1 tools ──
+
+const MarkForFollowUpSchema = z.object({
+  topic: z.string().min(1).max(120),
+  context: z.string().min(1).max(500),
+});
+
+const TakeNoteSchema = z.object({
+  turn: z.number().int().min(0),
+  note: z.string().min(1).max(500),
+  severity: z.enum(["praise", "minor", "major"]),
+  category: z.enum([
+    "problem_solving",
+    "communication",
+    "technical",
+    "leadership",
+  ]),
+});
+
+const SimplifyQuestionSchema = z.object({
+  reason: z.enum(["struggling", "time", "misunderstood"]),
+  originalDifficulty: z.string().optional(),
+});
+
+// ── Phase 2 tools ──
+
+const ShowReactionSchema = z.object({
+  type: z.enum(["nod", "thinking", "impressed", "skeptical"]),
+});
+
+const RequestCanvasFocusSchema = z.object({
+  nodeIds: z.array(z.string()).min(1).max(20),
+  label: z.string().optional(),
+});
+
+const UpdateInterviewPaceSchema = z.object({
+  pace: z.enum(["normal", "fast"]),
+  reason: z.string().optional(),
+});
+
+// ── Phase 3 tools ──
+
+const ChangeConstraintSchema = z.object({
+  constraint: z.enum(["memory", "bandwidth", "latency", "storage", "users"]),
+  value: z.string().min(1).max(120),
+  revertAfterMs: z.number().int().min(1000).optional(),
+});
+
+const ChallengeCandidateSchema = z.object({
+  topic: z.string().min(1).max(300),
+});
+
 // ── Function handler types ──
 
 type FunctionResult = Record<string, unknown>;
@@ -304,6 +356,9 @@ async function handleAssessTurn(
     `[fn] assessTurn #${conn.liveAssessments.length + 1}: confidence=${assessment.confidence}, engagement=${assessment.engagement}, signal=${assessment.signal}`,
   );
 
+  const prevConfidence = conn.candidateState.confidence;
+  const prevSignal = conn.candidateState.currentSignal;
+
   // Persist assessment
   conn.liveAssessments.push({
     orderNumber: conn.nextOrderNumber,
@@ -318,6 +373,274 @@ async function handleAssessTurn(
     currentSignal: assessment.signal,
   };
 
+  // ── Confidence trajectory (overconfidence detection) ──
+  if (assessment.confidence === "high") {
+    conn.runtime.highConfidenceStreak++;
+    if (
+      conn.runtime.highConfidenceStreak >= 3 &&
+      !conn.runtime.overconfidenceDetected
+    ) {
+      conn.runtime.overconfidenceDetected = true;
+      console.log(
+        "[fn] assessTurn — overconfidence detected (3+ consecutive high)",
+      );
+    }
+  } else {
+    conn.runtime.highConfidenceStreak = 0;
+  }
+
+  // ── Recovery event detection ──
+  const turn = conn.liveAssessments.length;
+  if (
+    prevConfidence === "low" &&
+    (assessment.confidence === "medium" || assessment.confidence === "high")
+  ) {
+    conn.runtime.recoveryEvents.push({
+      turn,
+      type: "confidence_increase",
+      description: `Confidence improved from ${prevConfidence} to ${assessment.confidence}.`,
+    });
+    console.log("[fn] assessTurn — recovery: confidence increase");
+  }
+  if (
+    (prevSignal === "struggling" || prevSignal === "off_track") &&
+    (assessment.signal === "strong" || assessment.signal === "going_deep")
+  ) {
+    conn.runtime.recoveryEvents.push({
+      turn,
+      type: "signal_improvement",
+      description: `Signal improved from ${prevSignal} to ${assessment.signal}.`,
+    });
+    console.log("[fn] assessTurn — recovery: signal improvement");
+  }
+
+  return { success: true };
+}
+
+async function handleMarkForFollowUp(
+  conn: InterviewConnection,
+  args: unknown,
+): Promise<FunctionResult> {
+  const { topic, context } = args as z.infer<typeof MarkForFollowUpSchema>;
+  console.log(`[fn] markForFollowUp — topic="${topic}"`);
+  conn.runtime.followUps.push({ topic, context, asked: false });
+  return { success: true, queued: conn.runtime.followUps.length };
+}
+
+async function handleTakeNote(
+  conn: InterviewConnection,
+  args: unknown,
+): Promise<FunctionResult> {
+  const { turn, note, severity, category } = args as z.infer<
+    typeof TakeNoteSchema
+  >;
+  console.log(
+    `[fn] takeNote — turn=${turn} severity=${severity} category=${category}`,
+  );
+  conn.runtime.notes.push({
+    turn,
+    note,
+    severity,
+    category,
+    timestamp: Date.now(),
+  });
+  return { success: true, total: conn.runtime.notes.length };
+}
+
+const REACTION_COOLDOWN_MS = 10_000;
+
+async function handleShowReaction(
+  conn: InterviewConnection,
+  args: unknown,
+): Promise<FunctionResult> {
+  const { type } = args as z.infer<typeof ShowReactionSchema>;
+  const now = Date.now();
+
+  if (now - conn.runtime.reactionLastSentAt < REACTION_COOLDOWN_MS) {
+    return { success: false, skipped: true, reason: "rate limited" };
+  }
+
+  conn.runtime.lastReaction = type;
+  conn.runtime.reactionLastSentAt = now;
+  await conn.safeSend({ type: "interviewer_reaction", reaction: type });
+  return { success: true };
+}
+
+async function handleRequestCanvasFocus(
+  conn: InterviewConnection,
+  args: unknown,
+): Promise<FunctionResult> {
+  const { nodeIds, label } = args as z.infer<typeof RequestCanvasFocusSchema>;
+  console.log(`[fn] requestCanvasFocus — ${nodeIds.length} node(s)`);
+  await conn.safeSend({ type: "canvas:focus", nodeIds, label: label ?? null });
+  return { success: true };
+}
+
+async function handleUpdateInterviewPace(
+  conn: InterviewConnection,
+  args: unknown,
+): Promise<FunctionResult> {
+  const { pace, reason } = args as z.infer<typeof UpdateInterviewPaceSchema>;
+  conn.runtime.pace = pace;
+  console.log(
+    `[fn] updateInterviewPace — ${pace}${reason ? ` (${reason})` : ""}`,
+  );
+
+  // Notify Gemini of the pace change
+  if (conn.gemini) {
+    try {
+      conn.gemini.send(
+        JSON.stringify({
+          clientContent: {
+            turns: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: `[PACING: ${pace === "fast" ? "Fast mode" : "Normal mode"}]${reason ? ` Reason: ${reason}` : ""}`,
+                  },
+                ],
+              },
+            ],
+            turnComplete: false,
+          },
+        }),
+      );
+    } catch {
+      // Non-critical
+    }
+  }
+
+  return { success: true };
+}
+
+async function handleChangeConstraint(
+  conn: InterviewConnection,
+  args: unknown,
+): Promise<FunctionResult> {
+  const { constraint, value, revertAfterMs } = args as z.infer<
+    typeof ChangeConstraintSchema
+  >;
+  console.log(`[fn] changeConstraint — ${constraint}=${value}`);
+
+  conn.runtime.constraints.push({
+    constraint,
+    value,
+    revertAfterMs,
+    appliedAt: Date.now(),
+  });
+
+  // Inject constraint into Gemini context
+  if (conn.gemini) {
+    try {
+      conn.gemini.send(
+        JSON.stringify({
+          clientContent: {
+            turns: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: `[CONSTRAINT] New constraint: ${constraint}=${value}.${revertAfterMs ? ` This constraint reverts in ${revertAfterMs}ms.` : ""} Acknowledge it and ask the candidate how they would adapt.`,
+                  },
+                ],
+              },
+            ],
+            turnComplete: false,
+          },
+        }),
+      );
+    } catch {
+      // Non-critical
+    }
+  }
+
+  // Auto-revert timer
+  if (revertAfterMs) {
+    setTimeout(() => {
+      conn.runtime.constraints = conn.runtime.constraints.filter(
+        (c) => c.appliedAt !== Date.now(),
+      );
+      if (conn.gemini) {
+        try {
+          conn.gemini.send(
+            JSON.stringify({
+              clientContent: {
+                turns: [
+                  {
+                    role: "user",
+                    parts: [
+                      {
+                        text: `[CONSTRAINT REVERTED] The constraint ${constraint}=${value} has been removed. The system is back to normal parameters.`,
+                      },
+                    ],
+                  },
+                ],
+                turnComplete: false,
+              },
+            }),
+          );
+        } catch {
+          // Non-critical
+        }
+      }
+    }, revertAfterMs);
+  }
+
+  return { success: true };
+}
+
+async function handleChallengeCandidate(
+  conn: InterviewConnection,
+  args: unknown,
+): Promise<FunctionResult> {
+  const { topic } = args as z.infer<typeof ChallengeCandidateSchema>;
+  conn.runtime.challengeCount++;
+  console.log(
+    `[fn] challengeCandidate #${conn.runtime.challengeCount} — topic="${topic.slice(0, 80)}"`,
+  );
+
+  if (conn.gemini) {
+    try {
+      conn.gemini.send(
+        JSON.stringify({
+          clientContent: {
+            turns: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: `[CHALLENGE] Push back on the candidate: ${topic}. Challenge their assumptions and ask them to defend their reasoning. This is a deliberate confidence check — probe for depth behind their assertiveness.`,
+                  },
+                ],
+              },
+            ],
+            turnComplete: true,
+          },
+        }),
+      );
+    } catch {
+      // Non-critical
+    }
+  }
+
+  return { success: true };
+}
+
+async function handleSimplifyQuestion(
+  conn: InterviewConnection,
+  args: unknown,
+): Promise<FunctionResult> {
+  const { reason, originalDifficulty } = args as z.infer<
+    typeof SimplifyQuestionSchema
+  >;
+  const turn = conn.liveAssessments.length + 1;
+  console.log(`[fn] simplifyQuestion — turn=${turn} reason=${reason}`);
+  conn.runtime.simplifiedQuestions.push({
+    turn,
+    reason,
+    originalDifficulty,
+  });
   return { success: true };
 }
 
@@ -355,6 +678,38 @@ export const functionHandlers: Record<string, FunctionHandler> = {
   assessTurn: {
     schema: AssessTurnSchema,
     handler: handleAssessTurn,
+  },
+  markForFollowUp: {
+    schema: MarkForFollowUpSchema,
+    handler: handleMarkForFollowUp,
+  },
+  takeNote: {
+    schema: TakeNoteSchema,
+    handler: handleTakeNote,
+  },
+  simplifyQuestion: {
+    schema: SimplifyQuestionSchema,
+    handler: handleSimplifyQuestion,
+  },
+  showReaction: {
+    schema: ShowReactionSchema,
+    handler: handleShowReaction,
+  },
+  requestCanvasFocus: {
+    schema: RequestCanvasFocusSchema,
+    handler: handleRequestCanvasFocus,
+  },
+  updateInterviewPace: {
+    schema: UpdateInterviewPaceSchema,
+    handler: handleUpdateInterviewPace,
+  },
+  changeConstraint: {
+    schema: ChangeConstraintSchema,
+    handler: handleChangeConstraint,
+  },
+  challengeCandidate: {
+    schema: ChallengeCandidateSchema,
+    handler: handleChallengeCandidate,
   },
 };
 
@@ -601,6 +956,183 @@ export const FUNCTION_DECLARATIONS = [
         "signal",
         "rationale",
       ],
+    },
+  },
+  {
+    name: "markForFollowUp",
+    description:
+      "Remember a topic the candidate raised that you want to circle back to later. Call this when the candidate mentions something interesting that deserves follow-up, but you want to finish the current line of questioning first. The system will inject a follow-up question at a natural transition point.",
+    parameters: {
+      type: "OBJECT" as any,
+      properties: {
+        topic: {
+          type: "STRING" as any,
+          description: "The topic or claim to follow up on (max 120 chars).",
+        },
+        context: {
+          type: "STRING" as any,
+          description:
+            "Brief context of what the candidate said, so the follow-up feels natural (max 500 chars).",
+        },
+      },
+      required: ["topic", "context"],
+    },
+  },
+  {
+    name: "takeNote",
+    description:
+      "Record an observation about the candidate's performance. Use this to capture specific behaviors, strong moments, or concerns. Notes will appear in the final evaluation report so candidates understand the reasoning behind their scores.",
+    parameters: {
+      type: "OBJECT" as any,
+      properties: {
+        turn: {
+          type: "INTEGER" as any,
+          description:
+            "The turn number this note refers to (use the current turn number).",
+        },
+        note: {
+          type: "STRING" as any,
+          description:
+            "The observation text. Be specific and actionable (max 500 chars).",
+        },
+        severity: {
+          type: "STRING" as any,
+          enum: ["praise", "minor", "major"],
+          description:
+            "praise = positive observation, minor = small concern, major = significant issue.",
+        },
+        category: {
+          type: "STRING" as any,
+          enum: ["problem_solving", "communication", "technical", "leadership"],
+          description: "Which skill area this note pertains to.",
+        },
+      },
+      required: ["turn", "note", "severity", "category"],
+    },
+  },
+  {
+    name: "showReaction",
+    description:
+      "Show a subtle real-time facial reaction. Call this to make the interview feel more human. Use 'nod' when the candidate makes a valid point, 'thinking' when you're processing their response, 'impressed' when they exceed expectations, or 'skeptical' when their reasoning is questionable. Rate-limited to once per 10 seconds to avoid distraction.",
+    parameters: {
+      type: "OBJECT" as any,
+      properties: {
+        type: {
+          type: "STRING" as any,
+          enum: ["nod", "thinking", "impressed", "skeptical"],
+          description:
+            "The reaction to display: 'nod' (agreement/acknowledgment), 'thinking' (considering), 'impressed' (exceeded expectations), 'skeptical' (questionable reasoning).",
+        },
+      },
+      required: ["type"],
+    },
+  },
+  {
+    name: "requestCanvasFocus",
+    description:
+      "Ask the candidate to focus their attention on specific nodes on their whiteboard diagram. Use this to steer the conversation toward a particular part of the architecture during system design interviews. The specified nodes will briefly glow.",
+    parameters: {
+      type: "OBJECT" as any,
+      properties: {
+        nodeIds: {
+          type: "ARRAY" as any,
+          items: { type: "STRING" as any },
+          description:
+            "IDs of the canvas nodes to highlight (1-20 nodes). Use the node IDs from the canvas state.",
+        },
+        label: {
+          type: "STRING" as any,
+          description:
+            "Optional label to display alongside the highlight (e.g., 'Let's focus on the database layer').",
+        },
+      },
+      required: ["nodeIds"],
+    },
+  },
+  {
+    name: "updateInterviewPace",
+    description:
+      "Adjust the pace of the interview. Use 'fast' when time is running short or the candidate is spending too long on details. Use 'normal' to return to standard pace. The system will adjust silence thresholds — in fast mode, prompts come sooner. This replaces the old switchPersona approach.",
+    parameters: {
+      type: "OBJECT" as any,
+      properties: {
+        pace: {
+          type: "STRING" as any,
+          enum: ["normal", "fast"],
+          description: "'fast' to compress timing, 'normal' for standard pace.",
+        },
+        reason: {
+          type: "STRING" as any,
+          description:
+            "Optional reason for the pace change (e.g., '10 minutes remaining', 'candidate is verbose').",
+        },
+      },
+      required: ["pace"],
+    },
+  },
+  {
+    name: "changeConstraint",
+    description:
+      "Introduce a new system design constraint mid-interview (e.g., memory limit, bandwidth cap, latency requirement, storage quota, user scale). This changes the problem parameters and tests the candidate's ability to adapt. The constraint is announced to the candidate and optionally auto-reverts after a duration.",
+    parameters: {
+      type: "OBJECT" as any,
+      properties: {
+        constraint: {
+          type: "STRING" as any,
+          enum: ["memory", "bandwidth", "latency", "storage", "users"],
+          description:
+            "The type of constraint to introduce: 'memory' (RAM limit), 'bandwidth' (network capacity), 'latency' (response time), 'storage' (data retention), 'users' (user scale).",
+        },
+        value: {
+          type: "STRING" as any,
+          description:
+            "The constraint value (e.g., '512MB', '100ms p99', '10TB', '100M DAU').",
+        },
+        revertAfterMs: {
+          type: "INTEGER" as any,
+          description:
+            "Optional. Milliseconds after which the constraint is automatically reverted. Use this for temporary constraints that test adaptation. Minimum 1000ms.",
+        },
+      },
+      required: ["constraint", "value"],
+    },
+  },
+  {
+    name: "challengeCandidate",
+    description:
+      "Explicitly challenge the candidate's reasoning on a specific topic. Call this when the candidate seems overconfident, makes an unsupported claim, or you want to test the depth of their understanding. The system will push back and ask them to defend their position.",
+    parameters: {
+      type: "OBJECT" as any,
+      properties: {
+        topic: {
+          type: "STRING" as any,
+          description:
+            "The specific claim or reasoning to challenge. Describe what the candidate said and why it needs deeper scrutiny (max 300 chars).",
+        },
+      },
+      required: ["topic"],
+    },
+  },
+  {
+    name: "simplifyQuestion",
+    description:
+      "Indicate that the current question was simplified (because the candidate is struggling, time is running out, or they misunderstood). The evaluation system will adjust difficulty expectations accordingly — a candidate who recovers well after a simplification demonstrates resilience that should be rewarded, not penalized.",
+    parameters: {
+      type: "OBJECT" as any,
+      properties: {
+        reason: {
+          type: "STRING" as any,
+          enum: ["struggling", "time", "misunderstood"],
+          description:
+            "Why the question was simplified: 'struggling' = candidate is stuck, 'time' = running out of time, 'misunderstood' = candidate went in the wrong direction.",
+        },
+        originalDifficulty: {
+          type: "STRING" as any,
+          description:
+            "Optional. The original difficulty level of the question before simplification (e.g., 'hard', 'medium').",
+        },
+      },
+      required: ["reason"],
     },
   },
 ] as any;

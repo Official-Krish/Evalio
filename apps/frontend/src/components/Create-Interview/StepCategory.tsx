@@ -27,15 +27,21 @@ const hoverProps = {
 
 interface StepCategoryProps {
   selectedCategory: string | null;
+  customFieldRole: string;
   onSelectCategory: (id: string | null) => void;
+  onCustomFieldRoleChange: (value: string) => void;
   onContinue: () => void;
 }
 
 export function StepCategory({
   selectedCategory,
+  customFieldRole,
   onSelectCategory,
+  onCustomFieldRoleChange,
   onContinue,
 }: StepCategoryProps) {
+  const isOther = selectedCategory === "other";
+
   return (
     <motion.div
       key="step-0"
@@ -99,7 +105,7 @@ export function StepCategory({
                   onSelectCategory(null);
                 } else {
                   onSelectCategory(cat.id);
-                  onContinue();
+                  if (cat.id !== "other") onContinue();
                 }
               }}
               whileTap={{ scale: 0.98 }}
@@ -151,6 +157,63 @@ export function StepCategory({
             </motion.button>
           );
         })}
+
+        {isOther && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{ marginTop: "4px" }}
+          >
+            <input
+              autoFocus
+              value={customFieldRole}
+              onChange={(e) => onCustomFieldRoleChange(e.target.value)}
+              placeholder="e.g. ML Engineer, Product Manager, Quant Analyst..."
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                fontSize: "14px",
+                borderRadius: "10px",
+                border: "1.5px solid var(--app-accent, #b8a88a)",
+                background: "var(--color-bg-secondary, rgba(255,255,255,0.04))",
+                color: "var(--color-text)",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                marginTop: "12px",
+                justifyContent: "flex-end",
+              }}
+            >
+              <motion.button
+                onClick={onContinue}
+                whileTap={{ scale: 0.97 }}
+                disabled={!customFieldRole.trim()}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: customFieldRole.trim()
+                    ? "var(--app-accent, #b8a88a)"
+                    : "var(--color-border-light)",
+                  color: customFieldRole.trim()
+                    ? "var(--color-bg)"
+                    : "var(--color-text-muted)",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: customFieldRole.trim() ? "pointer" : "not-allowed",
+                }}
+              >
+                Continue
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );

@@ -3,13 +3,24 @@ import type { InterviewConnection } from "../session";
 const SILENCE_CHECK_INTERVAL = 10_000;
 const MAX_SILENCE_PROMPTS = 3;
 const SILENCE_COOLDOWN = 60_000;
-const VOICE_SILENCE_THRESHOLD = 30_000;
-const VOICE_EXTENDED_THRESHOLD = 45_000;
-const VOICE_DESIGN_CRITIQUE_THRESHOLD = 40_000;
-const DSA_SILENCE_THRESHOLD = 120_000;
-const SD_SILENCE_THRESHOLD = 180_000;
-const DSA_CODE_ACTIVITY_WINDOW = 30_000;
-const SD_CANVAS_ACTIVITY_WINDOW = 15_000;
+let VOICE_SILENCE_THRESHOLD = 30_000;
+let VOICE_EXTENDED_THRESHOLD = 45_000;
+let VOICE_DESIGN_CRITIQUE_THRESHOLD = 40_000;
+let DSA_SILENCE_THRESHOLD = 120_000;
+let SD_SILENCE_THRESHOLD = 180_000;
+let DSA_CODE_ACTIVITY_WINDOW = 30_000;
+let SD_CANVAS_ACTIVITY_WINDOW = 15_000;
+
+function applyPaceMultiplier(conn: InterviewConnection) {
+  const m = conn.runtime.pace === "fast" ? 0.5 : 1.0;
+  VOICE_SILENCE_THRESHOLD = Math.round(30_000 * m);
+  VOICE_EXTENDED_THRESHOLD = Math.round(45_000 * m);
+  VOICE_DESIGN_CRITIQUE_THRESHOLD = Math.round(40_000 * m);
+  DSA_SILENCE_THRESHOLD = Math.round(120_000 * m);
+  SD_SILENCE_THRESHOLD = Math.round(180_000 * m);
+  DSA_CODE_ACTIVITY_WINDOW = Math.round(30_000 * m);
+  SD_CANVAS_ACTIVITY_WINDOW = Math.round(15_000 * m);
+}
 
 export function startSilenceTimer(conn: InterviewConnection) {
   stopSilenceTimer(conn);
@@ -40,6 +51,8 @@ function checkSilence(conn: InterviewConnection) {
   if (conn.closingMode || conn.finalized) return;
   if (conn.waitingForAiResponse) return;
   if (conn.silencePromptCount >= MAX_SILENCE_PROMPTS) return;
+
+  applyPaceMultiplier(conn);
 
   const now = Date.now();
   if (now - conn.lastSilencePromptTime < SILENCE_COOLDOWN) return;

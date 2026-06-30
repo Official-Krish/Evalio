@@ -124,6 +124,21 @@ export function InterviewPage() {
     return isDsa && !!dsaSessionData;
   }, [isDsa, dsaSessionData]);
 
+  // Reaction state (from showReaction tool)
+  const [interviewerReaction, setInterviewerReaction] = useState<string | null>(
+    null,
+  );
+  const reactionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Canvas focus state (from requestCanvasFocus tool)
+  const [canvasFocus, setCanvasFocus] = useState<{
+    nodeIds: string[];
+    label: string | null;
+  } | null>(null);
+  const canvasFocusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
   // System Design state
   const [sdTopic, setSdTopic] = useState({
     title: "System Design",
@@ -807,6 +822,34 @@ export function InterviewPage() {
       });
     });
 
+    socket.on("interviewer_reaction", (data: unknown) => {
+      if (endedRef.current) return;
+      const msg = data as { reaction?: string };
+      if (!msg.reaction) return;
+      setInterviewerReaction(msg.reaction);
+      if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
+      reactionTimerRef.current = setTimeout(
+        () => setInterviewerReaction(null),
+        3000,
+      );
+    });
+
+    socket.on("canvas:focus", (data: unknown) => {
+      if (endedRef.current) return;
+      const msg = data as { nodeIds?: string[]; label?: string | null };
+      if (!msg.nodeIds?.length) return;
+      setCanvasFocus({
+        nodeIds: msg.nodeIds,
+        label: msg.label ?? null,
+      });
+      if (canvasFocusTimerRef.current)
+        clearTimeout(canvasFocusTimerRef.current);
+      canvasFocusTimerRef.current = setTimeout(
+        () => setCanvasFocus(null),
+        4000,
+      );
+    });
+
     // Time cap events
     socket.on("time_limit", (data: unknown) => {
       const msg = data as Record<string, unknown>;
@@ -1021,6 +1064,7 @@ export function InterviewPage() {
             messages={messages}
             phase={phase}
             thinking={aiTurnActive && !aiPlaying}
+            reaction={interviewerReaction}
           />
         </div>
 
@@ -1119,6 +1163,8 @@ export function InterviewPage() {
           }}
           canvasDiff={canvasDiff}
           onClearCanvasDiff={() => setCanvasDiff(null)}
+          canvasFocus={canvasFocus}
+          onClearCanvasFocus={() => setCanvasFocus(null)}
         />
       )}
 

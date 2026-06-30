@@ -10,9 +10,22 @@ interface LiveCaptionProps {
   messages: CaptionMessage[];
   phase: "connecting" | "ready" | "ai_speaking" | "user_speaking" | "ended";
   thinking?: boolean;
+  reaction?: string | null;
 }
 
-export function LiveCaption({ messages, phase, thinking }: LiveCaptionProps) {
+const REACTION_LABELS: Record<string, string> = {
+  nod: "nodded in agreement",
+  thinking: "considering your response",
+  impressed: "impressed with that answer",
+  skeptical: "skeptical about that reasoning",
+};
+
+export function LiveCaption({
+  messages,
+  phase,
+  thinking,
+  reaction,
+}: LiveCaptionProps) {
   const latest = messages[messages.length - 1];
   const previous = messages.length > 1 ? messages[messages.length - 2] : null;
 
@@ -66,6 +79,20 @@ export function LiveCaption({ messages, phase, thinking }: LiveCaptionProps) {
             ? `${previous.text.slice(0, 90)}…`
             : previous.text}
         </p>
+      )}
+
+      {reaction && (
+        <motion.p
+          key={reaction}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 0.7, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="interview-caption-reaction"
+        >
+          <span className="interview-caption-reaction-dot" />
+          Interviewer {REACTION_LABELS[reaction] ?? reaction}
+        </motion.p>
       )}
     </div>
   );
