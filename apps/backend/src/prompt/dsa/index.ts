@@ -21,7 +21,11 @@ import {
   buildDirectingDirective,
   buildPacingDirective,
   DSA_BUDGETS,
+  buildRoleContext,
+  buildCriticalConstraints,
 } from "../shared";
+
+export { buildDsaSqlPrompt } from "./sql";
 
 function buildDsaHistorySection(
   history?: {
@@ -95,6 +99,10 @@ export function buildDsaSystemPrompt(
     position?: string | null;
     interviewDepth?: string | null;
     interviewStyle?: string | null;
+    seniorityLabel?: string | null;
+    roleTopics?: string[] | null;
+    roleEvaluationCriteria?: string[] | null;
+    roleMustProbe?: string[] | null;
   },
   history?: {
     pastSessions: DsaHistoryEntry[];
@@ -111,16 +119,23 @@ export function buildDsaSystemPrompt(
     )
     .join("\n");
 
-  const contextBlock = context
+  const contextLines = context
     ? [
         context.companyName && `Company: ${context.companyName}`,
-        context.roleTitle && `Role: ${context.roleTitle}`,
         context.position && `Position: ${context.position}`,
         context.interviewRound && `Round: ${context.interviewRound}`,
       ]
         .filter(Boolean)
         .join("\n")
     : "";
+  const roleBlock = buildRoleContext(
+    context?.roleTitle ?? null,
+    context?.roleTopics ?? null,
+    context?.roleEvaluationCriteria ?? null,
+    context?.roleMustProbe ?? null,
+    context?.seniorityLabel ?? null,
+  );
+  const contextBlock = [contextLines, roleBlock].filter(Boolean).join("\n");
 
   const companyName = context?.companyName;
   const depthLevel = context?.interviewDepth ?? "STANDARD";
@@ -201,11 +216,12 @@ ${scalingBlock}
 
 ## Modifying Code
 You can directly modify the candidate's code to demonstrate a point, fix a bug, or add an example. Like a real interviewer sketching on a whiteboard:
-- To update code in their editor, wrap the full updated code in [CODE_UPDATE] and [/CODE_UPDATE] markers (no backticks needed around the markers themselves, just the markers). The entire code between these markers will replace their current code.
+- To update code in their editor, call the updateCandidateCode function with the full updated source code as the code parameter. This completely replaces whatever the candidate has in their editor.
 - Use this to: fix bugs, add inline comments explaining something, write example test cases as comments at the bottom, or show an alternative approach.
 - After modifying, say something like "I updated your code to show what I mean — take a look at line X" and ask a question about it.
-- When asking about a specific example or edge case, you can write it as a comment at the end of the code inside a CODE_UPDATE block.
+- When asking about a specific example or edge case, you can add it as a comment at the end of the code in the function call.
 - You can also ask the candidate to change something themselves and discuss it, like a real interview. Say "Try modifying line X to handle this case" and see what they do.
+- Never describe the function call aloud. Call it silently, then continue speaking naturally to the candidate.
 
 ## Reference Previous Questions
 Connect the dots between problems like a real interviewer:
@@ -219,9 +235,10 @@ ${buildPacingDirective(durationMinutes ?? 30, DSA_BUDGETS)}
 ## Transition Between Questions
 When you feel a question is sufficiently discussed:
 - Give a brief 1-2 sentence summary of how they did.
-- If more questions remain, say something natural like "Let's move to the next question." Then say "READY_FOR_NEXT" or "READY_FOR_NEXT:n" where n is the 1-based question number to skip to (e.g., "READY_FOR_NEXT:3" to jump directly to the third question). Use skipping when the candidate is clearly above the current question's difficulty level.
-- If all questions are done, use remaining time for depth. Only say "ALL_DONE" when the session is nearly up or the candidate clearly cannot continue.
+- If more questions remain, say something natural like "Let's move to the next question." Then call the advanceToNextQuestion function. Optionally pass skipToIndex (1-based) to jump ahead (e.g., skipToIndex: 3 to jump to the third question). Use skipping when the candidate is clearly above the current question's difficulty level.
+- If all questions are done, use remaining time for depth. Only call the allDone function when the session is nearly up or the candidate clearly cannot continue.
 - Do NOT read the new question aloud.
+- Never describe the function call aloud. Call it silently, then continue speaking naturally.
 
 ## Hints & Help
 - If the candidate asks for a hint or seems stuck, provide a subtle nudge without giving away the solution.
@@ -243,10 +260,11 @@ ${buildDsaHistorySection(history)}
 - Keep the conversation flowing naturally. Use brief filler phrases like "Let me think about that..." if you need a moment. Respond promptly but don't rush.
 
 ## Response Format
-When you say "READY_FOR_NEXT" or "READY_FOR_NEXT:n" (to skip to a specific question) or "ALL_DONE" at the end of your response, it will be detected and the appropriate transition will happen.
+When you call advanceToNextQuestion, allDone, or updateCandidateCode, the system executes the action and sends a confirmation. You may also say "READY_FOR_NEXT", "READY_FOR_NEXT:n", or "ALL_DONE" as a spoken fallback — these will be detected from your speech.
 
 ${buildDirectingDirective()}
-${buildEndSessionInstruction()}`;
+${buildEndSessionInstruction()}
+${buildCriticalConstraints()}`;
 }
 
 export const DSA_EVALUATION_SCHEMA = {
@@ -304,45 +322,3 @@ export const DSA_EVALUATION_SCHEMA = {
     "areasForImprovement",
   ],
 };
-
-export function buildDsaEvaluationPrompt(
-  questions: Array<{ index: number; title: string; difficulty: string }>,
-  attempts: Array<{
-    index: number;
-    code: string | null;
-    phasesCompleted: string[];
-    timeTaken: number | null;
-  }>,
-): string {
-  const questionsBlock = questions
-    .map((q) => `Question ${q.index + 1}: ${q.title} (${q.difficulty})`)
-    .join("\n");
-
-  const attemptsBlock = attempts
-    .map(
-      (a) =>
-        `Attempt ${a.index + 1}:
-- Phases completed: ${a.phasesCompleted.join(", ") || "none"}
-- Time taken: ${a.timeTaken ? `${a.timeTaken}s` : "N/A"}
-- Code: ${a.code ? `\`\`\`\n${a.code.slice(0, 2000)}\n\`\`\`` : "No code submitted"}`,
-    )
-    .join("\n\n");
-
-  return `Evaluate the candidate's DSA coding interview performance.
-
-## Questions
-${questionsBlock}
-
-## Attempts
-${attemptsBlock}
-
-## Evaluation Criteria
-Score each question 0-100 based on:
-- **Problem Understanding** (20%): Did they clarify requirements and edge cases?
-- **Approach** (25%): Did they discuss brute force and optimize?
-- **Implementation** (30%): Did they write correct, clean code?
-- **Testing** (10%): Did they verify with test cases?
-- **Communication** (15%): Did they explain their thinking clearly?
-
-Provide specific, actionable feedback for each question. Return ONLY valid JSON matching the schema.`;
-}

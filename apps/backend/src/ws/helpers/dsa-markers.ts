@@ -75,44 +75,4 @@ export async function handleDsaMarkers(conn: InterviewConnection) {
     await conn.safeSend({ type: "dsa_all_done" });
     conn.dsaTransitioned = true;
   }
-
-  // CODE_UPDATE
-  const codeUpdateMatch = buf.match(
-    /\[CODE_UPDATE\]\s*```(?:\w+)?\s*\n?([\s\S]*?)```\s*\[\/CODE_UPDATE\]/i,
-  );
-  if (codeUpdateMatch) {
-    console.log("[dsa] CODE_UPDATE detected");
-    const updatedCode = codeUpdateMatch[1]!.trim();
-    await conn.safeSend({
-      type: "dsa_code_update",
-      code: updatedCode,
-    });
-    console.log("[dsa] CODE_UPDATE detected — saving");
-    try {
-      const dsaSession = await prisma.dsaSession.findUnique({
-        where: { interviewId: conn.interviewId! },
-        include: { problems: { orderBy: { index: "asc" } } },
-      });
-      if (dsaSession) {
-        const problem = dsaSession.problems[dsaSession.currentIndex];
-        if (problem) {
-          const currentSnapshots = (problem.codeSnapshots ?? {}) as Record<
-            string,
-            string
-          >;
-          const currentPhase = problem.currentPhase;
-          currentSnapshots[currentPhase] = updatedCode;
-          await prisma.dsaProblem.update({
-            where: { id: problem.id },
-            data: {
-              code: updatedCode,
-              codeSnapshots: currentSnapshots,
-            },
-          });
-        }
-      }
-    } catch (err) {
-      console.error("[dsa] failed to persist CODE_UPDATE:", err);
-    }
-  }
 }

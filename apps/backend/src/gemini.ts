@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 import { GoogleGenAI, Modality, type Session } from "@google/genai";
+import { FUNCTION_DECLARATIONS } from "./ws/tools";
 
 export interface GeminiSession {
   on(
@@ -7,6 +8,13 @@ export interface GeminiSession {
     listener: (...args: unknown[]) => void,
   ): this;
   send(data: string): void;
+  sendToolResponse(
+    functionResponses: {
+      name: string;
+      id: string;
+      response: Record<string, unknown>;
+    }[],
+  ): void;
   close(): void;
 }
 
@@ -29,51 +37,75 @@ class GeminiSessionAdapter implements GeminiSession {
   }
 
   send(data: string) {
-    const message = JSON.parse(data) as {
-      clientContent?: {
-        turns?: Array<{
-          role?: string;
-          parts?: Array<{ text?: string }>;
-        }>;
-        turnComplete?: boolean;
+    try {
+      const message = JSON.parse(data) as {
+        clientContent?: {
+          turns?: Array<Record<string, unknown>>;
+          turnComplete?: boolean;
+        };
+        realtimeInput?: {
+          audioStreamEnd?: boolean;
+          mediaChunks?: Array<{
+            mimeType?: string;
+            data?: string;
+          }>;
+        };
       };
-      realtimeInput?: {
-        audioStreamEnd?: boolean;
-        mediaChunks?: Array<{
-          mimeType?: string;
-          data?: string;
-        }>;
-      };
-    };
 
-    if (message.clientContent) {
-      this.session.sendClientContent({
-        turns: message.clientContent.turns?.length
-          ? message.clientContent.turns
-          : undefined,
-        turnComplete: message.clientContent.turnComplete,
-      });
-      return;
+      if (message.clientContent) {
+        this.session.sendClientContent({
+          turns: message.clientContent.turns?.length
+            ? (message.clientContent.turns as Array<{
+                role?: string;
+                parts?: Array<Record<string, unknown>>;
+              }>)
+            : undefined,
+          turnComplete: message.clientContent.turnComplete,
+        });
+        return;
+      }
+
+      if (message.realtimeInput?.audioStreamEnd) {
+        this.session.sendRealtimeInput({ audioStreamEnd: true });
+        return;
+      }
+
+      for (const chunk of message.realtimeInput?.mediaChunks ?? []) {
+        if (!chunk.data || !chunk.mimeType) continue;
+        const dataLen = chunk.data.length;
+        if (dataLen > 0) {
+          this.session.sendRealtimeInput({
+            audio: { data: chunk.data, mimeType: chunk.mimeType },
+          });
+        }
+      }
+    } catch (err) {
+      console.error("[gemini adapter] send failed:", err);
     }
+  }
 
-    if (message.realtimeInput?.audioStreamEnd) {
-      this.session.sendRealtimeInput({ audioStreamEnd: true });
-      return;
-    }
-
-    for (const chunk of message.realtimeInput?.mediaChunks ?? []) {
-      if (!chunk.data || !chunk.mimeType) continue;
-      this.session.sendRealtimeInput({
-        media: {
-          data: chunk.data,
-          mimeType: chunk.mimeType,
-        },
+  sendToolResponse(
+    functionResponses: {
+      name: string;
+      id: string;
+      response: Record<string, unknown>;
+    }[],
+  ) {
+    try {
+      this.session.sendToolResponse({
+        functionResponses,
       });
+    } catch (err) {
+      console.error("[gemini adapter] sendToolResponse failed:", err);
     }
   }
 
   close() {
-    this.session.close();
+    try {
+      this.session.close();
+    } catch (err) {
+      console.error("[gemini adapter] close failed:", err);
+    }
   }
 }
 
@@ -81,47 +113,60 @@ export async function createGeminiSession(systemPrompt: string) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY env not set");
   const bus = new EventEmitter();
+  bus.setMaxListeners(20);
 
   const session = await ai.live.connect({
     model: "gemini-2.5-flash-native-audio-preview-12-2025",
     config: {
       responseModalities: [Modality.AUDIO],
+      outputAudioTranscription: {},
       systemInstruction: systemPrompt,
+      tools: [{ functionDeclarations: FUNCTION_DECLARATIONS }],
     },
     callbacks: {
       onmessage: (message) => {
-        const json = JSON.stringify(message);
-        // Log first message content summary
-        if (message.serverContent?.modelTurn?.parts) {
-          const hasAudio = message.serverContent.modelTurn.parts.some(
-            (p) => "inlineData" in p,
-          );
-          const hasText = message.serverContent.modelTurn.parts.some(
-            (p) => "text" in p,
-          );
-          console.log(
-            `[gemini SDK] serverContent turnComplete=${!!message.serverContent.turnComplete} audio=${hasAudio} text=${hasText}`,
-          );
-        } else if (message.serverContent?.turnComplete) {
-          console.log("[gemini SDK] turnComplete (no parts)");
-        } else {
-          const sanitized = JSON.parse(json) as Record<string, unknown>;
-          if (
-            typeof sanitized.clientContent === "object" &&
-            sanitized.clientContent
-          ) {
-            (sanitized.clientContent as Record<string, unknown>).turns =
-              "[redacted]";
+        try {
+          const json = JSON.stringify(message);
+          // Log message content summary (skip verbose audio-only chunks)
+          if (message.serverContent?.modelTurn?.parts) {
+            const hasAudio = message.serverContent.modelTurn.parts.some(
+              (p) => "inlineData" in p,
+            );
+            const hasText = message.serverContent.modelTurn.parts.some(
+              (p) => "text" in p,
+            );
+            const hasFnCall = message.serverContent.modelTurn.parts.some(
+              (p) => "functionCall" in p,
+            );
+            // Only log non-audio-only messages to reduce noise
+            if (hasText || hasFnCall || message.serverContent.turnComplete) {
+              console.log(
+                `[gemini SDK] serverContent turnComplete=${!!message.serverContent.turnComplete} audio=${hasAudio} text=${hasText} functionCall=${hasFnCall}`,
+              );
+            }
+          } else if (message.serverContent?.turnComplete) {
+            console.log("[gemini SDK] turnComplete (no parts)");
+          } else {
+            const sanitized = JSON.parse(json) as Record<string, unknown>;
+            if (
+              typeof sanitized.clientContent === "object" &&
+              sanitized.clientContent
+            ) {
+              (sanitized.clientContent as Record<string, unknown>).turns =
+                "[redacted]";
+            }
+            if (sanitized.realtimeInput) {
+              sanitized.realtimeInput = "[redacted]";
+            }
+            console.log(
+              "[gemini SDK] message:",
+              JSON.stringify(sanitized).slice(0, 200),
+            );
           }
-          if (sanitized.realtimeInput) {
-            sanitized.realtimeInput = "[redacted]";
-          }
-          console.log(
-            "[gemini SDK] message:",
-            JSON.stringify(sanitized).slice(0, 200),
-          );
+          bus.emit("message", Buffer.from(json));
+        } catch (err) {
+          console.error("[gemini SDK] onmessage error:", err);
         }
-        bus.emit("message", Buffer.from(json));
       },
       onerror: (event) => {
         const detail =

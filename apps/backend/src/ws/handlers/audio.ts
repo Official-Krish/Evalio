@@ -10,7 +10,7 @@ export async function handleAudioChunk(
   conn: InterviewConnection,
   msg: Record<string, unknown>,
 ) {
-  if (conn.closingMode) return;
+  if (conn.closingMode || conn.finalized) return;
   if (!conn.gemini) {
     await conn.safeSend({
       error: "Not initialized. Send init first.",
@@ -18,6 +18,12 @@ export async function handleAudioChunk(
     return;
   }
   conn.lastAudioTime = Date.now();
+  conn.audioChunksSinceLastTurn++;
+  if (conn.audioChunksSinceLastTurn === 1) {
+    console.log(
+      `[audio] forwarding first audio chunk to Gemini (waitingForAiResponse=${conn.waitingForAiResponse})`,
+    );
+  }
   if (conn.canvasInactivityTimer) {
     clearTimeout(conn.canvasInactivityTimer);
     conn.canvasInactivityTimer = null;
@@ -28,7 +34,7 @@ export async function handleAudioChunk(
         realtimeInput: {
           mediaChunks: [
             {
-              mimeType: "audio/pcm",
+              mimeType: "audio/pcm;rate=16000",
               data: msg.data as string,
             },
           ],
@@ -44,7 +50,7 @@ export async function handleAudioStreamEnd(
   conn: InterviewConnection,
   msg: Record<string, unknown>,
 ) {
-  if (conn.closingMode) return;
+  if (conn.closingMode || conn.finalized) return;
   if (!conn.gemini) {
     await conn.safeSend({
       error: "Not initialized. Send init first.",
@@ -58,6 +64,27 @@ export async function handleAudioStreamEnd(
   }
 
   const isInterrupted = (msg as { interrupted?: boolean }).interrupted === true;
+  if (isInterrupted) {
+    conn.interruptionCount++;
+  }
+  const MIN_MEANINGFUL_CHUNKS = 3;
+
+  // Hallucination guardrail: if the user barely spoke, silently keep listening
+  if (!isInterrupted && conn.audioChunksSinceLastTurn < MIN_MEANINGFUL_CHUNKS) {
+    conn.waitingForAiResponse = false;
+    conn.audioChunksSinceLastTurn = 0;
+    conn.gemini.send(
+      JSON.stringify({
+        clientContent: {
+          turns: [],
+          turnComplete: false,
+        },
+      }),
+    );
+    return;
+  }
+
+  conn.audioChunksSinceLastTurn = 0;
 
   if (isInterrupted) {
     if (conn.questionBuf) {
@@ -69,17 +96,8 @@ export async function handleAudioStreamEnd(
     conn.currentTurnId = null;
     conn.questionBuf = "";
     conn.cleanQuestionBuf = "";
-    conn.waitingForAiResponse = true;
-
-    try {
-      conn.gemini.send(
-        JSON.stringify({
-          realtimeInput: { audioStreamEnd: true },
-        }),
-      );
-    } catch {
-      await conn.safeSend({ error: "Failed to end audio stream" });
-    }
+    conn.waitingForAiResponse = false;
+    conn.audioChunksSinceLastTurn = 0;
     return;
   }
 
@@ -103,36 +121,31 @@ export async function handleAudioStreamEnd(
   conn.waitingForAiResponse = true;
   conn.dsaTransitioned = false;
 
-  // Inject [PACING] signal as context (no AI response triggered)
-  if (conn.pacing) {
+  const signalTurnEnd = () => {
+    if (!conn.gemini) return;
+    try {
+      conn.gemini.send(
+        JSON.stringify({ realtimeInput: { audioStreamEnd: true } }),
+      );
+    } catch {
+      // Non-critical
+    }
     try {
       conn.gemini.send(
         JSON.stringify({
-          clientContent: {
-            turns: [
-              {
-                role: "user",
-                parts: [{ text: conn.pacing.buildMessage() }],
-              },
-            ],
-            turnComplete: false,
-          },
+          clientContent: { turns: [], turnComplete: true },
         }),
       );
     } catch {
-      // Non-critical — pacing is advisory
+      // Non-critical
     }
-  }
+  };
 
-  try {
-    conn.gemini.send(
-      JSON.stringify({
-        realtimeInput: {
-          audioStreamEnd: true,
-        },
-      }),
-    );
-  } catch {
-    await conn.safeSend({ error: "Failed to end audio stream" });
+  // Silent Observation Mode: delay the AI's response by 3-5 seconds
+  if (conn.runtime.silenceMode === "extended") {
+    const delay = 3000 + Math.floor(Math.random() * 2000);
+    setTimeout(() => signalTurnEnd(), delay);
+  } else {
+    signalTurnEnd();
   }
 }

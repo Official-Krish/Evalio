@@ -1,11 +1,25 @@
 import { WebSocket as WsWebSocket } from "ws";
 import type { GeminiSession } from "../gemini";
 import { cleanup, initiateClosing } from "./helpers/cleanup";
-import { safeIndex, safePhase } from "./orchestrator";
+import { safeIndex, safePhase, type LiveAssessment } from "./tools";
+import { createDefaultRuntime, type InterviewerRuntime } from "./runtime";
+import {
+  createDeterministicState,
+  type DeterministicState,
+} from "./deterministic";
 import { handleInit } from "./handlers/init";
 import { handleAudioChunk, handleAudioStreamEnd } from "./handlers/audio";
 import { prisma } from "../lib/prisma";
 import type { PacingTracker } from "./helpers/pacing";
+
+export interface CandidateState {
+  nervousness: "low" | "medium" | "high";
+  engagement: "low" | "medium" | "high";
+  confidence: "low" | "medium" | "high";
+  currentSignal: "none" | "struggling" | "going_deep" | "off_track" | "strong";
+}
+
+export type { LiveAssessment };
 
 export class InterviewConnection {
   interviewId: string | null = null;
@@ -23,12 +37,31 @@ export class InterviewConnection {
   waitingForAiResponse = false;
   isQueued = false;
   isDsaMode = false;
+  isSqlMode = false;
+  isQuantMode = false;
+  isHftMode = false;
   dsaTransitioned = false;
+  candidateState: CandidateState = {
+    nervousness: "low",
+    engagement: "medium",
+    confidence: "medium",
+    currentSignal: "none",
+  };
   isSystemDesign = false;
+  isCanvasMode = false;
+  canvasQuestionIndex = 0;
+  isDiscussionMode = false;
   heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   pongTimeoutId: ReturnType<typeof setTimeout> | null = null;
   lastAudioTime = 0;
+  audioChunksSinceLastTurn = 0;
   canvasInactivityTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Canvas rate-limiting (per-connection to avoid cross-interview interference)
+  canvasDiffCount = 0;
+  canvasExampleCount = 0;
+  lastCanvasDiffTime = 0;
+  lastCanvasExampleTime = 0;
 
   // Silence detection
   silenceTimer: ReturnType<typeof setInterval> | null = null;
@@ -38,6 +71,20 @@ export class InterviewConnection {
   silencePromptCount = 0;
   lastSilencePromptTime = 0;
   silencePromptActive = false;
+  silenceTier: "standard" | "extended" | "design_critique" = "standard";
+
+  // Live assessments
+  liveAssessments: LiveAssessment[] = [];
+  interruptionCount = 0;
+
+  // Interviewer runtime state
+  runtime: InterviewerRuntime = createDefaultRuntime();
+
+  // Deterministic scoring state
+  deterministic: DeterministicState = createDeterministicState();
+
+  // Function calling
+  lastFunctionHash: string | null = null; // dedup: hash of last function call name + args
 
   // Pacing system
   pacing: PacingTracker | null = null;
@@ -83,18 +130,29 @@ export class InterviewConnection {
       try {
         const msg = JSON.parse(rawData.toString());
         await this.handleMessage(msg);
-      } catch {
-        this.safeSend({ error: "Invalid JSON" });
+      } catch (err) {
+        // Log unexpected errors to prevent silent crashes
+        if (err instanceof SyntaxError) {
+          this.safeSend({ error: "Invalid JSON" });
+        } else {
+          console.error("[ws] error handling message:", err);
+          this.safeSend({ error: "Internal error processing message" });
+        }
       }
     });
 
     this.client.on("close", () => {
       console.log("[ws] candidate disconnected");
-      cleanup(this);
+      cleanup(this).catch((err) => {
+        console.error("[ws] cleanup on close failed:", err);
+      });
     });
 
-    this.client.on("error", () => {
-      cleanup(this);
+    this.client.on("error", (err) => {
+      console.error("[ws] client error:", err);
+      cleanup(this).catch((cleanupErr) => {
+        console.error("[ws] cleanup on error failed:", cleanupErr);
+      });
     });
   }
 
@@ -149,6 +207,9 @@ export class InterviewConnection {
         if (prevMsg.code === undefined || prevMsg.code.length > 100000) break;
         const idx = safeIndex(prevMsg.questionIndex);
         const phase = safePhase(prevMsg.phase);
+        const effectiveLang = this.isHftMode
+          ? "cpp"
+          : (prevMsg.language ?? "javascript");
         this.gemini.send(
           JSON.stringify({
             clientContent: {
@@ -157,7 +218,7 @@ export class InterviewConnection {
                   role: "user",
                   parts: [
                     {
-                      text: `[Code Preview — Question ${idx}, ${phase} phase, not yet saved]\n\n\`\`\`${prevMsg.language ?? "javascript"}\n${prevMsg.code}\n\`\`\``,
+                      text: `[Code Preview — Question ${idx}, ${phase} phase, not yet saved]\n\n\`\`\`${effectiveLang}\n${prevMsg.code}\n\`\`\``,
                     },
                   ],
                 },
@@ -180,7 +241,10 @@ export class InterviewConnection {
         if (codeMsg.code === undefined || codeMsg.code.length > 100000) break;
         const idx = safeIndex(codeMsg.questionIndex);
         const phase = safePhase(codeMsg.phase);
-        const codeText = `\`\`\`${codeMsg.language ?? "javascript"}\n${codeMsg.code}\n\`\`\``;
+        const effectiveLang = this.isHftMode
+          ? "cpp"
+          : (codeMsg.language ?? "javascript");
+        const codeText = `\`\`\`${effectiveLang}\n${codeMsg.code}\n\`\`\``;
         this.gemini.send(
           JSON.stringify({
             clientContent: {
@@ -282,6 +346,18 @@ export class InterviewConnection {
         const langMsg = msg as { language?: string };
         const newLang = langMsg.language;
         if (!newLang) break;
+
+        if (this.isHftMode) {
+          console.log(
+            `[hft] rejecting language change to "${newLang}" — HFT mode locks C++`,
+          );
+          this.safeSend({
+            type: "language_change_rejected",
+            language: "cpp",
+            reason: "HFT coding mode is locked to C++",
+          });
+          break;
+        }
         console.log(`[dsa] language change to "${newLang}"`);
 
         try {
@@ -366,6 +442,8 @@ export class InterviewConnection {
           if (silenceMs > 8_000 && !this.canvasInactivityTimer) {
             this.canvasInactivityTimer = setTimeout(() => {
               this.canvasInactivityTimer = null;
+              // If audio arrived while timer was pending, skip to avoid race
+              if (Date.now() - this.lastAudioTime < 5_000) return;
               if (this.gemini && !this.closingMode && !this.finalized) {
                 this.gemini.send(
                   JSON.stringify({
