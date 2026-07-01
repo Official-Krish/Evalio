@@ -13,59 +13,63 @@ import {
 import { stopSilenceTimer } from "./silence";
 
 export async function cleanup(conn: InterviewConnection, reason?: string) {
-  stopHeartbeat(conn);
-  stopSilenceTimer(conn);
-  if (conn.pacingTimer) clearInterval(conn.pacingTimer);
-  if (conn.timeWarningTimer) clearTimeout(conn.timeWarningTimer);
-  if (conn.timeCapTimer) clearTimeout(conn.timeCapTimer);
-  if (conn.canvasInactivityTimer) clearTimeout(conn.canvasInactivityTimer);
+  try {
+    stopHeartbeat(conn);
+    stopSilenceTimer(conn);
+    if (conn.pacingTimer) clearInterval(conn.pacingTimer);
+    if (conn.timeWarningTimer) clearTimeout(conn.timeWarningTimer);
+    if (conn.timeCapTimer) clearTimeout(conn.timeCapTimer);
+    if (conn.canvasInactivityTimer) clearTimeout(conn.canvasInactivityTimer);
 
-  if (conn.interviewId) {
-    if (conn.isQueued) {
-      console.log(
-        `[ws] cleanup queued ${conn.interviewId} reason=${reason ?? "unknown"}`,
-      );
-      await removeFromQueue(conn.interviewId);
-      conn.wsMap.delete(conn.interviewId);
-      conn.startCallbacks.delete(conn.interviewId);
-      await conn.onPositionUpdate();
-    } else if (!conn.finalized) {
-      conn.finalized = true;
-      if (isChallengeMode(conn) && conn.currentTurnId) {
-        await flushChallengeTurn(conn);
-      } else if (conn.questionBuf) {
-        await flushTurn(conn);
-      } else if (conn.currentTurnId && conn.answerBuf) {
-        await mergeAnswerBuf(conn);
+    if (conn.interviewId) {
+      if (conn.isQueued) {
+        console.log(
+          `[ws] cleanup queued ${conn.interviewId} reason=${reason ?? "unknown"}`,
+        );
+        await removeFromQueue(conn.interviewId);
+        conn.wsMap.delete(conn.interviewId);
+        conn.startCallbacks.delete(conn.interviewId);
+        await conn.onPositionUpdate();
+      } else if (!conn.finalized) {
+        conn.finalized = true;
+        if (isChallengeMode(conn) && conn.currentTurnId) {
+          await flushChallengeTurn(conn);
+        } else if (conn.questionBuf) {
+          await flushTurn(conn);
+        } else if (conn.currentTurnId && conn.answerBuf) {
+          await mergeAnswerBuf(conn);
+        }
+
+        await finalizeInterview(
+          conn.interviewId,
+          conn.liveAssessments,
+          conn.interruptionCount,
+          {
+            notes: conn.runtime.notes,
+            simplifiedQuestions: conn.runtime.simplifiedQuestions,
+            followUps: conn.runtime.followUps,
+            recoveryEvents: conn.runtime.recoveryEvents,
+            overconfidenceDetected: conn.runtime.overconfidenceDetected,
+            constraints: conn.runtime.constraints,
+          },
+          conn.deterministic,
+        );
+
+        await releaseSlot(conn.interviewId);
+        conn.wsMap.delete(conn.interviewId);
+        conn.startCallbacks.delete(conn.interviewId);
+        await conn.onDequeue();
       }
-
-      await finalizeInterview(
-        conn.interviewId,
-        conn.liveAssessments,
-        conn.interruptionCount,
-        {
-          notes: conn.runtime.notes,
-          simplifiedQuestions: conn.runtime.simplifiedQuestions,
-          followUps: conn.runtime.followUps,
-          recoveryEvents: conn.runtime.recoveryEvents,
-          overconfidenceDetected: conn.runtime.overconfidenceDetected,
-          constraints: conn.runtime.constraints,
-        },
-        conn.deterministic,
-      );
-
-      await releaseSlot(conn.interviewId);
-      conn.wsMap.delete(conn.interviewId);
-      conn.startCallbacks.delete(conn.interviewId);
-      await conn.onDequeue();
     }
-  }
 
-  if (conn.interviewId) {
-    clearCanvasQuestion(conn.interviewId);
-    clearSdQuestion(conn.interviewId);
+    if (conn.interviewId) {
+      clearCanvasQuestion(conn.interviewId);
+      clearSdQuestion(conn.interviewId);
+    }
+    conn.gemini?.close();
+  } catch (err) {
+    console.error(`[ws] cleanup error (reason=${reason ?? "unknown"}):`, err);
   }
-  conn.gemini?.close();
 }
 
 export async function initiateClosing(conn: InterviewConnection) {
@@ -77,28 +81,34 @@ export async function initiateClosing(conn: InterviewConnection) {
 
   await conn.safeSend({ type: "closing_started" });
 
-  conn.gemini?.send(
-    JSON.stringify({
-      clientContent: {
-        turns: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: "The interview is now complete. Give a brief closing summary highlighting one key strength and one area for improvement. Thank the candidate for interviewing with Evalio, and mention that this was an Evalio AI-powered practice interview. Invite them to share feedback about their experience. Then say goodbye.",
-              },
-            ],
-          },
-        ],
-        turnComplete: true,
-      },
-    }),
-  );
+  try {
+    conn.gemini?.send(
+      JSON.stringify({
+        clientContent: {
+          turns: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: "The interview is now complete. Give a brief closing summary highlighting one key strength and one area for improvement. Thank the candidate for interviewing with Evalio, and mention that this was an Evalio AI-powered practice interview. Invite them to share feedback about their experience. Then say goodbye.",
+                },
+              ],
+            },
+          ],
+          turnComplete: true,
+        },
+      }),
+    );
+  } catch (err) {
+    console.error("[ws] failed to send closing message to Gemini:", err);
+  }
 
   setTimeout(() => {
     if (!conn.finalized) {
       console.log("[ws] closing safety timeout — forcing cleanup");
-      cleanup(conn);
+      cleanup(conn).catch((err) => {
+        console.error("[ws] cleanup after safety timeout failed:", err);
+      });
     }
   }, 120_000);
 }
@@ -110,28 +120,41 @@ export async function handleTurnCompleteDuringClosing(
   conn.finalized = true;
   console.log("[ws] closing turn complete — finalizing");
 
-  if (isChallengeMode(conn) && conn.currentTurnId) {
-    await flushChallengeTurn(conn);
-  } else if (conn.questionBuf) {
-    await flushTurn(conn);
-  } else if (conn.currentTurnId && conn.answerBuf) {
-    await mergeAnswerBuf(conn);
+  try {
+    if (isChallengeMode(conn) && conn.currentTurnId) {
+      await flushChallengeTurn(conn);
+    } else if (conn.questionBuf) {
+      await flushTurn(conn);
+    } else if (conn.currentTurnId && conn.answerBuf) {
+      await mergeAnswerBuf(conn);
+    }
+    await finalizeInterview(
+      conn.interviewId,
+      conn.liveAssessments,
+      conn.interruptionCount,
+      {
+        notes: conn.runtime.notes,
+        simplifiedQuestions: conn.runtime.simplifiedQuestions,
+        followUps: conn.runtime.followUps,
+        recoveryEvents: conn.runtime.recoveryEvents,
+        overconfidenceDetected: conn.runtime.overconfidenceDetected,
+        constraints: conn.runtime.constraints,
+      },
+      conn.deterministic,
+    );
+    await conn.safeSend({ type: "feedback_ready" });
+  } catch (err) {
+    console.error("[ws] handleTurnCompleteDuringClosing error:", err);
   }
-  await finalizeInterview(
-    conn.interviewId,
-    conn.liveAssessments,
-    conn.interruptionCount,
-    {
-      notes: conn.runtime.notes,
-      simplifiedQuestions: conn.runtime.simplifiedQuestions,
-      followUps: conn.runtime.followUps,
-      recoveryEvents: conn.runtime.recoveryEvents,
-      overconfidenceDetected: conn.runtime.overconfidenceDetected,
-      constraints: conn.runtime.constraints,
-    },
-    conn.deterministic,
-  );
-  await conn.safeSend({ type: "feedback_ready" });
-  conn.gemini?.close();
-  conn.client.close();
+
+  try {
+    conn.gemini?.close();
+  } catch {
+    /* already handled in adapter */
+  }
+  try {
+    conn.client.close();
+  } catch {
+    /* client may already be disconnected */
+  }
 }

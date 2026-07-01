@@ -42,27 +42,9 @@ function sendFunctionResponse(
   result: Record<string, unknown>,
 ) {
   if (!callId || !conn.gemini) return;
-  conn.gemini.send(
-    JSON.stringify({
-      clientContent: {
-        turns: [
-          {
-            role: "user",
-            parts: [
-              {
-                functionResponse: {
-                  id: callId,
-                  name: fnName,
-                  response: result,
-                },
-              },
-            ],
-          },
-        ],
-        turnComplete: false,
-      },
-    }),
-  );
+  conn.gemini.sendToolResponse([
+    { name: fnName, id: callId, response: result },
+  ]);
 }
 
 // ── Orchestrator ──
@@ -144,221 +126,268 @@ export async function startInterview(
   );
 
   conn.gemini.on("message", async (event) => {
-    const data = event instanceof Buffer ? event.toString() : String(event);
-
     try {
-      const parsed = JSON.parse(data);
+      const data = event instanceof Buffer ? event.toString() : String(event);
 
-      if (parsed.error) {
-        console.error("[gemini] ERROR:", JSON.stringify(parsed.error));
-      }
+      try {
+        const parsed = JSON.parse(data);
 
-      const hasContent = !!parsed.serverContent;
-      const hasSetup = !!parsed.setupComplete;
-      if (hasContent || hasSetup) {
-        const label = hasSetup ? "setupComplete" : "serverContent";
-        const hasAudio = !!parsed.serverContent?.modelTurn?.parts?.some(
-          (p: Record<string, unknown>) => p.inlineData,
-        );
-        console.log(
-          `[gemini] \u2192 ${label}${hasAudio ? " (with audio)" : ""} turnComplete=${!!parsed.serverContent?.turnComplete}`,
-        );
-      } else if (!parsed.setupComplete) {
-        const sanitized = { ...parsed };
-        if (
-          typeof sanitized.clientContent === "object" &&
-          sanitized.clientContent
-        ) {
-          (sanitized.clientContent as Record<string, unknown>).turns =
-            "[redacted]";
-        }
-        if (sanitized.realtimeInput) {
-          sanitized.realtimeInput = "[redacted]";
-        }
-        console.log(
-          "[gemini] \u2192 other message:",
-          JSON.stringify(sanitized).slice(0, 300),
-        );
-      }
-
-      if (!parsed.setupComplete) {
-        await conn.safeSendRaw(data);
-      }
-
-      const inputText = parsed.serverContent?.inputTranscription?.text;
-      const outputText = stripCtrl(
-        parsed.serverContent?.outputTranscription?.text ?? "",
-      );
-
-      // Also grab raw text from modelTurn.parts
-      const rawText = stripCtrl(
-        parsed.serverContent?.modelTurn?.parts
-          ?.filter((p: Record<string, unknown>) => typeof p.text === "string")
-          .map((p: Record<string, unknown>) => p.text as string)
-          .join(" ") ?? "",
-      );
-
-      // Accumulate raw text for fallback marker extraction
-      const markerText =
-        ((conn.isDsaMode || conn.isSystemDesign) && rawText) || outputText;
-
-      // Accumulate clean spoken text for DB storage
-      const cleanText = outputText || rawText;
-
-      if (markerText && conn.interviewId) {
-        conn.questionBuf = dedupAppend(conn.questionBuf, markerText);
-      }
-
-      if (cleanText && conn.interviewId) {
-        conn.cleanQuestionBuf = dedupAppend(conn.cleanQuestionBuf, cleanText);
-      }
-
-      if (inputText && conn.interviewId) {
-        conn.answerBuf = dedupAppend(conn.answerBuf, inputText);
-      }
-
-      const turnComplete = parsed.serverContent?.turnComplete === true;
-
-      // ── Function call handling (preferred path) ──
-      const fnCalls: Array<Record<string, unknown>> = [];
-      for (const part of parsed.serverContent?.modelTurn?.parts ?? []) {
-        if (part.functionCall) fnCalls.push(part);
-      }
-      for (const call of parsed.toolCall?.functionCalls ?? []) {
-        fnCalls.push({ functionCall: call });
-      }
-
-      for (const part of fnCalls) {
-        const fnCall = part.functionCall as {
-          name?: string;
-          args?: Record<string, unknown>;
-          id?: string;
-        };
-        const { name, args, id: callId } = fnCall;
-        if (!name) continue;
-
-        // Dedup: skip if same function + args already processed
-        const hash = `${name}:${JSON.stringify(args ?? {})}`;
-        if (hash === conn.lastFunctionHash) {
-          console.log(`[fn] skipping duplicate: ${name}`);
-          continue;
-        }
-        conn.lastFunctionHash = hash;
-
-        const handler = functionHandlers[name];
-        if (!handler) {
-          console.error(`[fn] unknown function: ${name}`);
-          sendFunctionResponse(conn, callId, name, {
-            success: false,
-            error: `Unknown function: ${name}`,
-            requestId: callId ?? null,
-            timestamp: Date.now(),
-          });
-          continue;
+        if (parsed.error) {
+          console.error("[gemini] ERROR:", JSON.stringify(parsed.error));
         }
 
-        // Validate
-        const parsed = handler.schema.safeParse(args);
-        if (!parsed.success) {
-          console.error(`[fn] invalid args for ${name}:`, parsed.error);
-          sendFunctionResponse(conn, callId, name, {
-            success: false,
-            error: `Invalid arguments: ${parsed.error.message}`,
-            requestId: callId ?? null,
-            timestamp: Date.now(),
-          });
-          continue;
-        }
-
-        // Execute and await completion
-        console.log(`[fn] executing: ${name}`);
-        const result = await handler.handler(conn, parsed.data);
-
-        // Send response only after execution completed
-        sendFunctionResponse(conn, callId, name, {
-          ...result,
-          requestId: callId ?? null,
-          timestamp: Date.now(),
-        });
-        console.log(`[fn] completed: ${name}`, result);
-      }
-
-      // ── Tool call cancellation ──
-      if (parsed.toolCallCancellation?.ids?.length > 0) {
-        console.log(
-          "[fn] tool call cancelled:",
-          parsed.toolCallCancellation.ids,
-        );
-      }
-
-      // ── Fallback: text marker detection (preferred over function calls) ──
-      if (fnCalls.length === 0) {
-        // DSA/SQL mode: detect READY_FOR_NEXT / ALL_DONE / CODE_UPDATE
-        if (
-          turnComplete &&
-          conn.isDsaMode &&
-          !conn.isQuantMode &&
-          !conn.dsaTransitioned
-        ) {
-          console.log(
-            "[dsa] turnComplete, buf:",
-            JSON.stringify(conn.questionBuf).slice(0, 200),
+        const hasContent = !!parsed.serverContent;
+        const hasSetup = !!parsed.setupComplete;
+        if (hasContent || hasSetup) {
+          const label = hasSetup ? "setupComplete" : "serverContent";
+          const hasAudio = !!parsed.serverContent?.modelTurn?.parts?.some(
+            (p: Record<string, unknown>) => p.inlineData,
           );
-          await handleDsaMarkers(conn);
+          const hasText = !!parsed.serverContent?.modelTurn?.parts?.some(
+            (p: Record<string, unknown>) => typeof p.text === "string",
+          );
+          const hasFnCall = !!parsed.serverContent?.modelTurn?.parts?.some(
+            (p: Record<string, unknown>) => p.functionCall,
+          );
+          const tc = !!parsed.serverContent?.turnComplete;
+          // Only log non-audio-only messages to reduce noise
+          if (
+            hasText ||
+            hasFnCall ||
+            tc ||
+            hasSetup ||
+            parsed.serverContent?.outputTranscription ||
+            parsed.serverContent?.inputTranscription
+          ) {
+            console.log(
+              `[gemini] → ${label}${hasAudio ? " (with audio)" : ""} turnComplete=${tc}`,
+            );
+          }
+        } else if (!parsed.setupComplete) {
+          const sanitized = { ...parsed };
+          if (
+            typeof sanitized.clientContent === "object" &&
+            sanitized.clientContent
+          ) {
+            (sanitized.clientContent as Record<string, unknown>).turns =
+              "[redacted]";
+          }
+          if (sanitized.realtimeInput) {
+            sanitized.realtimeInput = "[redacted]";
+          }
+          console.log(
+            "[gemini] \u2192 other message:",
+            JSON.stringify(sanitized).slice(0, 300),
+          );
         }
 
-        // System Design mode: detect canvas_diff / canvas_example markers
-        if (turnComplete && conn.isSystemDesign) {
-          await handleSdMarkers(conn);
-        }
-      }
-
-      // ── Parse stage and question markers (fallback) ──
-      const markers = markerText || "";
-      if (turnComplete && fnCalls.length === 0) {
-        if (conn.pacing) {
-          const stageMatch = markers.match(/\[STAGE:(\w+(?:-\w+)*)\]/);
-          const stageName = stageMatch?.[1];
-          if (stageName) {
-            conn.pacing.advanceTo(stageName);
+        if (!parsed.setupComplete) {
+          // When generationComplete arrives without turnComplete, inject turnComplete
+          // so the frontend knows the AI finished speaking.
+          if (
+            parsed.serverContent?.generationComplete === true &&
+            parsed.serverContent?.turnComplete !== true
+          ) {
+            const enhanced = {
+              ...parsed,
+              serverContent: {
+                ...parsed.serverContent,
+                turnComplete: true,
+              },
+            };
+            await conn.safeSendRaw(JSON.stringify(enhanced));
+          } else {
+            await conn.safeSendRaw(data);
           }
         }
 
-        const questionMatch = markers.match(/\[QUESTION:next\]/i);
-        if (questionMatch && conn.isCanvasMode) {
-          console.log("[orchestrator] [QUESTION:next] detected for canvas");
-          conn.canvasQuestionIndex = safeIndex(conn.canvasQuestionIndex + 1);
-          conn.safeSend({
-            type: "canvas:next",
-            questionIndex: conn.canvasQuestionIndex,
+        const inputText = parsed.serverContent?.inputTranscription?.text;
+        const outputText = stripCtrl(
+          parsed.serverContent?.outputTranscription?.text ?? "",
+        );
+
+        // Also grab raw text from modelTurn.parts
+        const rawText = stripCtrl(
+          parsed.serverContent?.modelTurn?.parts
+            ?.filter((p: Record<string, unknown>) => typeof p.text === "string")
+            .map((p: Record<string, unknown>) => p.text as string)
+            .join(" ") ?? "",
+        );
+
+        // Accumulate raw text for fallback marker extraction
+        const markerText =
+          ((conn.isDsaMode || conn.isSystemDesign) && rawText) || outputText;
+
+        // Accumulate clean spoken text for DB storage
+        const cleanText = outputText || rawText;
+
+        if (markerText && conn.interviewId) {
+          conn.questionBuf = dedupAppend(conn.questionBuf, markerText);
+        }
+
+        if (cleanText && conn.interviewId) {
+          conn.cleanQuestionBuf = dedupAppend(conn.cleanQuestionBuf, cleanText);
+        }
+
+        if (inputText && conn.interviewId) {
+          conn.answerBuf = dedupAppend(conn.answerBuf, inputText);
+        }
+
+        const turnComplete = parsed.serverContent?.turnComplete === true;
+        const generationComplete =
+          parsed.serverContent?.generationComplete === true;
+        const turnEnded = turnComplete || generationComplete;
+        if (generationComplete && !turnComplete) {
+          console.log(
+            "[gemini] generationComplete without turnComplete — treating as turn end",
+          );
+        }
+
+        // ── Function call handling (preferred path) ──
+        const fnCalls: Array<Record<string, unknown>> = [];
+        for (const part of parsed.serverContent?.modelTurn?.parts ?? []) {
+          if (part.functionCall) fnCalls.push(part);
+        }
+        for (const call of parsed.toolCall?.functionCalls ?? []) {
+          fnCalls.push({ functionCall: call });
+        }
+
+        for (const part of fnCalls) {
+          const fnCall = part.functionCall as {
+            name?: string;
+            args?: Record<string, unknown>;
+            id?: string;
+          };
+          const { name, args, id: callId } = fnCall;
+          if (!name) continue;
+
+          // Dedup: skip if same function + args already processed
+          const hash = `${name}:${JSON.stringify(args ?? {})}`;
+          if (hash === conn.lastFunctionHash) {
+            console.log(`[fn] skipping duplicate: ${name}`);
+            continue;
+          }
+          conn.lastFunctionHash = hash;
+
+          const handler = functionHandlers[name];
+          if (!handler) {
+            console.error(`[fn] unknown function: ${name}`);
+            sendFunctionResponse(conn, callId, name, {
+              success: false,
+              error: `Unknown function: ${name}`,
+              requestId: callId ?? null,
+              timestamp: Date.now(),
+            });
+            continue;
+          }
+
+          // Validate
+          const parsed = handler.schema.safeParse(args);
+          if (!parsed.success) {
+            console.error(`[fn] invalid args for ${name}:`, parsed.error);
+            sendFunctionResponse(conn, callId, name, {
+              success: false,
+              error: `Invalid arguments: ${parsed.error.message}`,
+              requestId: callId ?? null,
+              timestamp: Date.now(),
+            });
+            continue;
+          }
+
+          // Execute and await completion
+          console.log(`[fn] executing: ${name}`);
+          const result = await handler.handler(conn, parsed.data);
+
+          // Send response only after execution completed
+          sendFunctionResponse(conn, callId, name, {
+            ...result,
+            requestId: callId ?? null,
+            timestamp: Date.now(),
           });
-        }
-      }
-
-      // Reset waitingForAiResponse on turnComplete
-      if (turnComplete && conn.waitingForAiResponse && !conn.closingMode) {
-        conn.waitingForAiResponse = false;
-
-        if (conn.silencePromptActive) {
-          conn.lastAudioTime = Date.now();
-          conn.silencePromptActive = false;
+          console.log(`[fn] completed: ${name}`, result);
         }
 
-        if (isChallengeMode(conn) && isNewQuestion(conn, conn.questionBuf)) {
-          await flushChallengeTurn(conn);
-          conn.currentTurnId = null;
+        // ── Tool call cancellation ──
+        if (parsed.toolCallCancellation?.ids?.length > 0) {
+          console.log(
+            "[fn] tool call cancelled:",
+            parsed.toolCallCancellation.ids,
+          );
         }
-      }
 
-      if (conn.closingMode && turnComplete) {
-        await handleTurnCompleteDuringClosing(conn);
+        // ── Fallback: text marker detection (preferred over function calls) ──
+        if (fnCalls.length === 0) {
+          // DSA/SQL mode: detect READY_FOR_NEXT / ALL_DONE / CODE_UPDATE
+          if (
+            turnComplete &&
+            conn.isDsaMode &&
+            !conn.isQuantMode &&
+            !conn.dsaTransitioned
+          ) {
+            console.log(
+              "[dsa] turnComplete, buf:",
+              JSON.stringify(conn.questionBuf).slice(0, 200),
+            );
+            await handleDsaMarkers(conn);
+          }
+
+          // System Design mode: detect canvas_diff / canvas_example markers
+          if (turnComplete && conn.isSystemDesign) {
+            await handleSdMarkers(conn);
+          }
+        }
+
+        // ── Parse stage and question markers (fallback) ──
+        const markers = markerText || "";
+        if (turnComplete && fnCalls.length === 0) {
+          if (conn.pacing) {
+            const stageMatch = markers.match(/\[STAGE:(\w+(?:-\w+)*)\]/);
+            const stageName = stageMatch?.[1];
+            if (stageName) {
+              conn.pacing.advanceTo(stageName);
+            }
+          }
+
+          const questionMatch = markers.match(/\[QUESTION:next\]/i);
+          if (questionMatch && conn.isCanvasMode) {
+            console.log("[orchestrator] [QUESTION:next] detected for canvas");
+            conn.canvasQuestionIndex = safeIndex(conn.canvasQuestionIndex + 1);
+            conn.safeSend({
+              type: "canvas:next",
+              questionIndex: conn.canvasQuestionIndex,
+            });
+          }
+        }
+
+        // Reset waitingForAiResponse when turn ends (turnComplete or generationComplete)
+        if (turnEnded && conn.waitingForAiResponse && !conn.closingMode) {
+          conn.waitingForAiResponse = false;
+
+          if (conn.silencePromptActive) {
+            conn.lastAudioTime = Date.now();
+            conn.silencePromptActive = false;
+          }
+
+          if (isChallengeMode(conn) && isNewQuestion(conn, conn.questionBuf)) {
+            await flushChallengeTurn(conn);
+            conn.currentTurnId = null;
+          }
+        }
+
+        if (conn.closingMode && turnEnded) {
+          await handleTurnCompleteDuringClosing(conn);
+        }
+      } catch {
+        // Not JSON or parse error — just relay
       }
-    } catch {
-      // Not JSON or parse error — just relay
+    } catch (outerErr) {
+      // Defense-in-depth: catch any error that escapes the inner try-catch
+      // to prevent unhandled promise rejections from crashing the process
+      console.error("[gemini] unhandled error in message handler:", outerErr);
     }
   });
 
-  conn.gemini.on("close", (...args: unknown[]) => {
+  conn.gemini.on("close", async (...args: unknown[]) => {
     const code = args[0] as number | undefined;
     const reason = args[1] as string | undefined;
     if (!conn.finalized) {
@@ -372,13 +401,21 @@ export async function startInterview(
       console.log(
         `[gemini] connection closed code=${code} reason="${reason}" - triggering cleanup`,
       );
-      conn.cleanup("gemini_close");
+      try {
+        await conn.cleanup("gemini_close");
+      } catch (cleanupErr) {
+        console.error("[gemini] cleanup after close failed:", cleanupErr);
+      }
     }
   });
 
-  conn.gemini.on("error", (err) => {
+  conn.gemini.on("error", async (err) => {
     console.error("[gemini] error:", err);
-    conn.safeSend({ error: "Gemini connection error" });
+    try {
+      await conn.safeSend({ error: "Gemini connection error" });
+    } catch {
+      // Client may already be disconnected
+    }
   });
 
   // Start pacing timer (30s heartbeat)

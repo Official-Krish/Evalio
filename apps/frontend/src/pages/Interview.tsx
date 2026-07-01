@@ -941,11 +941,8 @@ export function InterviewPage() {
     }
 
     if (aiPlaying || aiTurnActive) {
-      isUserSpeakingRef.current = true;
-      stopAudio();
-      setAiTurnActive(false);
-      socketRef.current?.sendInterruptedStreamEnd();
-      // Fall through to start mic below
+      // AI is speaking — user cannot interrupt
+      return;
     }
 
     try {

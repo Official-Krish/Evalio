@@ -130,18 +130,29 @@ export class InterviewConnection {
       try {
         const msg = JSON.parse(rawData.toString());
         await this.handleMessage(msg);
-      } catch {
-        this.safeSend({ error: "Invalid JSON" });
+      } catch (err) {
+        // Log unexpected errors to prevent silent crashes
+        if (err instanceof SyntaxError) {
+          this.safeSend({ error: "Invalid JSON" });
+        } else {
+          console.error("[ws] error handling message:", err);
+          this.safeSend({ error: "Internal error processing message" });
+        }
       }
     });
 
     this.client.on("close", () => {
       console.log("[ws] candidate disconnected");
-      cleanup(this);
+      cleanup(this).catch((err) => {
+        console.error("[ws] cleanup on close failed:", err);
+      });
     });
 
-    this.client.on("error", () => {
-      cleanup(this);
+    this.client.on("error", (err) => {
+      console.error("[ws] client error:", err);
+      cleanup(this).catch((cleanupErr) => {
+        console.error("[ws] cleanup on error failed:", cleanupErr);
+      });
     });
   }
 

@@ -524,6 +524,27 @@ export async function handleInit(
     await startInterview(conn, systemPrompt, effectiveTimeLimitMs);
   };
 
+  // Duplicate connection detection: if another WS already holds the slot
+  // for this interview, close the old one (triggers cleanup & finalization),
+  // then reject the new one with a clear error.
+  const existingWs = conn.wsMap.get(conn.interviewId);
+  if (existingWs && existingWs.readyState === 1 /* OPEN */) {
+    console.log(
+      `[init] duplicate WS for ${conn.interviewId} — closing old session, rejecting new`,
+    );
+    try {
+      existingWs.close();
+    } catch {
+      /* already closing */
+    }
+    await conn.safeSend({
+      error:
+        "Interview already in progress in another tab. Please close the other tab and return to this one.",
+    });
+    conn.client.close();
+    return;
+  }
+
   const slotOpen = await tryActivate(conn.interviewId);
   console.log(
     "[init] slotOpen:",

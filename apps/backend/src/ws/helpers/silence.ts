@@ -110,14 +110,19 @@ function sendSilencePrompt(
     conn.isDsaMode || conn.isSystemDesign,
   );
 
-  conn.gemini.send(
-    JSON.stringify({
-      clientContent: {
-        turns: [{ role: "user", parts: [{ text }] }],
-        turnComplete: true,
-      },
-    }),
-  );
+  try {
+    conn.gemini.send(
+      JSON.stringify({
+        clientContent: {
+          turns: [{ role: "user", parts: [{ text }] }],
+          turnComplete: true,
+        },
+      }),
+    );
+  } catch (err) {
+    console.error("[silence] failed to send prompt:", err);
+    return;
+  }
 
   conn.waitingForAiResponse = true;
 }

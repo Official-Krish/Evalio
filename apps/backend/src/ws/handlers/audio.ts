@@ -10,7 +10,7 @@ export async function handleAudioChunk(
   conn: InterviewConnection,
   msg: Record<string, unknown>,
 ) {
-  if (conn.closingMode) return;
+  if (conn.closingMode || conn.finalized) return;
   if (!conn.gemini) {
     await conn.safeSend({
       error: "Not initialized. Send init first.",
@@ -19,6 +19,11 @@ export async function handleAudioChunk(
   }
   conn.lastAudioTime = Date.now();
   conn.audioChunksSinceLastTurn++;
+  if (conn.audioChunksSinceLastTurn === 1) {
+    console.log(
+      `[audio] forwarding first audio chunk to Gemini (waitingForAiResponse=${conn.waitingForAiResponse})`,
+    );
+  }
   if (conn.canvasInactivityTimer) {
     clearTimeout(conn.canvasInactivityTimer);
     conn.canvasInactivityTimer = null;
@@ -45,7 +50,7 @@ export async function handleAudioStreamEnd(
   conn: InterviewConnection,
   msg: Record<string, unknown>,
 ) {
-  if (conn.closingMode) return;
+  if (conn.closingMode || conn.finalized) return;
   if (!conn.gemini) {
     await conn.safeSend({
       error: "Not initialized. Send init first.",
@@ -91,17 +96,8 @@ export async function handleAudioStreamEnd(
     conn.currentTurnId = null;
     conn.questionBuf = "";
     conn.cleanQuestionBuf = "";
-    conn.waitingForAiResponse = true;
-
-    try {
-      conn.gemini.send(
-        JSON.stringify({
-          realtimeInput: { audioStreamEnd: true },
-        }),
-      );
-    } catch {
-      await conn.safeSend({ error: "Failed to end audio stream" });
-    }
+    conn.waitingForAiResponse = false;
+    conn.audioChunksSinceLastTurn = 0;
     return;
   }
 
@@ -125,82 +121,31 @@ export async function handleAudioStreamEnd(
   conn.waitingForAiResponse = true;
   conn.dsaTransitioned = false;
 
-  // Inject [PACING] signal as context (no AI response triggered)
-  if (conn.pacing) {
-    try {
-      conn.gemini.send(
-        JSON.stringify({
-          clientContent: {
-            turns: [
-              {
-                role: "user",
-                parts: [
-                  {
-                    text: conn.pacing.buildMessage(
-                      `n=${conn.candidateState.nervousness},e=${conn.candidateState.engagement},c=${conn.candidateState.confidence},sig=${conn.candidateState.currentSignal}`,
-                    ),
-                  },
-                ],
-              },
-            ],
-            turnComplete: false,
-          },
-        }),
-      );
-    } catch {
-      // Non-critical — pacing is advisory
-    }
-  }
-
-  // Inject pending follow-up before AI responds
-  const pendingFollowUp = conn.runtime.followUps.find((f) => !f.asked);
-  if (pendingFollowUp) {
-    pendingFollowUp.asked = true;
-    try {
-      conn.gemini.send(
-        JSON.stringify({
-          clientContent: {
-            turns: [
-              {
-                role: "user",
-                parts: [
-                  {
-                    text: `[FOLLOW_UP] Earlier you mentioned "${pendingFollowUp.topic}". ${pendingFollowUp.context}`,
-                  },
-                ],
-              },
-            ],
-            turnComplete: false,
-          },
-        }),
-      );
-    } catch {
-      // Non-critical — follow-up is advisory
-    }
-  }
-
-  // Silent Observation Mode: delay the AI's response by 3-5 seconds
-  // when silenceMode is "extended". This creates pressure that candidates
-  // either fill with more detail (positive) or freeze (signal).
-  const sendAudioEnd = () => {
+  const signalTurnEnd = () => {
     if (!conn.gemini) return;
     try {
       conn.gemini.send(
+        JSON.stringify({ realtimeInput: { audioStreamEnd: true } }),
+      );
+    } catch {
+      // Non-critical
+    }
+    try {
+      conn.gemini.send(
         JSON.stringify({
-          realtimeInput: {
-            audioStreamEnd: true,
-          },
+          clientContent: { turns: [], turnComplete: true },
         }),
       );
     } catch {
-      conn.safeSend({ error: "Failed to end audio stream" });
+      // Non-critical
     }
   };
 
+  // Silent Observation Mode: delay the AI's response by 3-5 seconds
   if (conn.runtime.silenceMode === "extended") {
     const delay = 3000 + Math.floor(Math.random() * 2000);
-    setTimeout(sendAudioEnd, delay);
+    setTimeout(() => signalTurnEnd(), delay);
   } else {
-    sendAudioEnd();
+    signalTurnEnd();
   }
 }
